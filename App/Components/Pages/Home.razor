@@ -1,7 +1,66 @@
-﻿@page "/"
+@page "/"
+@using BlazorApp.Services
+@rendermode InteractiveServer
+
+@inject ICsvConverterService CsvConverterService
+@inject IJSRuntime JS
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>CSV til PDF</h1>
 
-Welcome to your new app.
+<InputFile OnChange="HandleFileSelected" accept=".csv" />
+
+<button @onclick="ConvertToPdf" disabled="@(selectedFile is null || isConverting)">
+    @(isConverting ? "Konverterer..." : "Konverter til PDF")
+</button>
+
+@if (errorMessage is not null)
+{
+    <p style="color: red;">@errorMessage</p>
+}
+
+@code {
+    private IBrowserFile? selectedFile;
+    private bool isConverting;
+    private string? errorMessage;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            selectedFile = null;
+            errorMessage = "Kun CSV-filer er tilladt.";
+            return;
+        }
+
+        selectedFile = file;
+        errorMessage = null;
+    }
+
+    private async Task ConvertToPdf()
+    {
+        if (selectedFile is null) return;
+
+        isConverting = true;
+        errorMessage = null;
+
+        try
+        {
+            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            var pdfBytes = await CsvConverterService.ConvertCsvToPdfAsync(stream, selectedFile.Name);
+
+            var pdfFileName = Path.GetFileNameWithoutExtension(selectedFile.Name) + ".pdf";
+            await JS.InvokeVoidAsync("downloadFile", pdfFileName, "application/pdf", pdfBytes);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fejl under konvertering: {ex.Message}";
+        }
+        finally
+        {
+            isConverting = false;
+        }
+    }
+}
