@@ -1,0 +1,22 @@
+## .NET
+bin/
+obj/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## IDE
+.idea/
+.vs/
+*.swp
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Environment
+.env
+appsettings.*.local.json
