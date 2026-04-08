@@ -1,0 +1,5 @@
+**/.git
+**/.idea
+**/bin
+**/obj
+**/App.Tests
