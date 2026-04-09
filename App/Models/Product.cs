@@ -1,6 +1,6 @@
 namespace BlazorApp.Models;
 
-public class Vare
+public class Product
 {
     public required string Varenr { get; set; }
     public string? Varetekst { get; set; }
@@ -23,7 +23,7 @@ public class Vare
     public string? Type { get; set; }
     public required decimal Disponibel { get; set; }
 
-    protected bool Equals(Vare other)
+    protected bool Equals(Product other)
     {
         return Varenr == other.Varenr && Varetekst == other.Varetekst && Tekst2 == other.Tekst2 && Lokation == other.Lokation && Leverandor == other.Leverandor && Beholdning == other.Beholdning && Prisfaktor == other.Prisfaktor && Gennemsnit == other.Gennemsnit && Lagervaerdi == other.Lagervaerdi && Genanskaffelse == other.Genanskaffelse && LagervaerdiGenanskaffelse == other.LagervaerdiGenanskaffelse && Varegruppe == other.Varegruppe && Undergruppe == other.Undergruppe && Lagergruppe == other.Lagergruppe && Nullable.Equals(SidsteSalgsdato, other.SidsteSalgsdato) && Nullable.Equals(SidsteKobsdato, other.SidsteKobsdato) && Edbnr == other.Edbnr && Enhed == other.Enhed && Type == other.Type && Disponibel == other.Disponibel;
     }
@@ -33,7 +33,7 @@ public class Vare
         if (obj is null) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != GetType()) return false;
-        return Equals((Vare)obj);
+        return Equals((Product)obj);
     }
 
     public override int GetHashCode()

@@ -20,9 +20,9 @@ public class OctopusServiceTests
     [Fact]
     public void OctopusCsvToEntities_WithValidInput_ReturnsExpectedResult()
     {
-        var expected = new List<Vare>
+        var expected = new List<Product>
         {
-            new Vare
+            new Product
             {
                 Varenr = "13900",
                 Varetekst = "4x50 cl Amarcord i gavekasse",
@@ -45,7 +45,7 @@ public class OctopusServiceTests
                 Type = "P",
                 Disponibel = -24
             },
-            new Vare
+            new Product
             {
                 Varenr = "14500",
                 Varetekst = "Pallegavekassen i træ",
@@ -68,7 +68,7 @@ public class OctopusServiceTests
                 Type = "P",
                 Disponibel = -1
             },
-            new Vare
+            new Product
             {
                 Varenr = "14520",
                 Varetekst = "Trækasse med 6 x 50 cl",
