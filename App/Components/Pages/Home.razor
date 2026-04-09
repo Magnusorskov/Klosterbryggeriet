@@ -9,12 +9,15 @@
 
 <h1>CSV til PDF</h1>
 
-<InputFile OnChange="HandleFileSelected" accept=".csv" />
+<InputFile id="fileInput" OnChange="HandleFileSelected" accept=".csv" style="display:none" />
+<label for="fileInput" style="cursor:pointer; padding:6px 12px; border:1px solid #ccc; border-radius:4px;">
+    Vælg CSV-fil
+</label>
 
 <button @onclick="ConvertToPdf" disabled="@(selectedFile is null || isConverting)">
     @(isConverting ? "Konverterer..." : "Konverter til PDF")
 </button>
-
+<PriceList Products="new List<Product>()"></PriceList>
 @if (errorMessage is not null)
 {
     <p style="color: red;">@errorMessage</p>
