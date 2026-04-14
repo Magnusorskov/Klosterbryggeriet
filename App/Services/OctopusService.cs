@@ -25,15 +25,15 @@ public class OctopusService
             var columns = line.Split(';');
             if (columns.Length < 20) continue;
 
-            var vare = new Product
-            {
-                Varenr = columns[0].Trim(),
-                Varetekst = columns[1].Trim(),
-                Tekst2 = columns[2].Trim(),
-                Beholdning = ParseDecimal(columns[5]),
-                Disponibel = ParseDecimal(columns[19])
-            };
-            vareListe.Add(vare);
+            //var vare = new Product
+            //{
+                //Varenr = columns[0].Trim(),
+                //Varetekst = columns[1].Trim(),
+                //Tekst2 = columns[2].Trim(),
+                //Beholdning = ParseDecimal(columns[5]),
+                //Disponibel = ParseDecimal(columns[19])
+            //};
+            //vareListe.Add(vare);
         }
 
         return vareListe;
