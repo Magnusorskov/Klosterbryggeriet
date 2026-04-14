@@ -8,6 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 
