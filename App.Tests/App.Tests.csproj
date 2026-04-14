@@ -22,4 +22,8 @@
     <ProjectReference Include="..\App\BlazorApp.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

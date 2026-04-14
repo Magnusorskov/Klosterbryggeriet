@@ -1,0 +1,57 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+COMMIT_MSG_FILE="$1"
+
+if [ -z "$COMMIT_MSG_FILE" ] || [ ! -f "$COMMIT_MSG_FILE" ]; then
+  printf "ERROR: commit-msg hook did not receive a valid message file.\n" >&2
+  exit 1
+fi
+
+get_header_line() {
+  local file_path="$1"
+  local line
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      ""|\#*)
+        continue
+        ;;
+      *)
+        printf "%s" "$line"
+        return 0
+        ;;
+    esac
+  done < "$file_path"
+
+  return 1
+}
+
+HEADER="$(get_header_line "$COMMIT_MSG_FILE" || true)"
+
+if [ -z "$HEADER" ]; then
+  printf "ERROR: commit message is empty.\n" >&2
+  exit 1
+fi
+
+# Allow Git auto-generated merge/revert messages.
+if [[ "$HEADER" =~ ^Merge\  ]] || [[ "$HEADER" =~ ^Merged\ in\  ]] || [[ "$HEADER" =~ ^Merged\  ]] || [[ "$HEADER" =~ ^Revert\  ]]; then
+  exit 0
+fi
+
+CONVENTIONAL_REGEX='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]._/-]+\))?(!)?: [^[:space:]].*$'
+
+if [[ "$HEADER" =~ $CONVENTIONAL_REGEX ]]; then
+  exit 0
+fi
+
+printf "ERROR: commit message must follow Conventional Commits.\n" >&2
+printf "Expected format: type(scope)!: subject\n" >&2
+printf "Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test\n" >&2
+printf "Examples:\n" >&2
+printf "  feat(auth): add token refresh endpoint\n" >&2
+printf "  fix: handle nil cache client\n" >&2
+printf "  refactor(api)!: remove legacy response format\n" >&2
+printf "\nGot: %s\n" "$HEADER" >&2
+exit 1
