@@ -2,31 +2,51 @@ namespace BlazorApp.Models;
 
 public class Product
 {
-    public required string Varenr { get; set; }
-    public string? Varetekst { get; set; }
-    public string? Tekst2 { get; set; }
-    public string? Lokation { get; set; }
-    public string? Leverandor { get; set; }
-    public decimal Beholdning { get; set; }
-    public decimal Prisfaktor { get; set; }
-    public decimal Gennemsnit { get; set; }
-    public decimal Lagervaerdi { get; set; }
-    public decimal Genanskaffelse { get; set; }
-    public decimal LagervaerdiGenanskaffelse { get; set; }
-    public string? Varegruppe { get; set; }
-    public string? Undergruppe { get; set; }
-    public string? Lagergruppe { get; set; }
-    public DateTime? SidsteSalgsdato { get; set; }
-    public DateTime? SidsteKobsdato { get; set; }
-    public string? Edbnr { get; set; }
-    public string? Enhed { get; set; }
-    public string? Type { get; set; }
-    public required decimal Disponibel { get; set; }
+    // Tidligere VareNr
+    public required string OctopusId { get; set; }
+    
+    // PRODUCT_ID i title
+    public required string WebId { get; set; }
+    
+    // TITLE_DK from Henrik csv
+    public required string WebTitle { get; set; }
+    
+    public required string PdfTitle { get; set; }
+    
+    // Tidligere VareTekst
+    public required string OctopusTitle { get; set; }
+    
+    // Disponibel
+    public required decimal Available { get; set; }
+    
+    // Kasse kolli
+    public int? KegCollar { get; set; } = 0;
 
+    public double Str { get; set; } = 0.0;
+    
+    public double Alcohol { get; set; } = 0.0;
+    
+    public double PricePrUnit { get; set; } = 0.0;
+    
+    public String Category { get; set; }
+    
+
+    private const double TOLERANCE = 1e-6; // 0.000001 
     protected bool Equals(Product other)
     {
-        return Varenr == other.Varenr && Varetekst == other.Varetekst && Tekst2 == other.Tekst2 && Lokation == other.Lokation && Leverandor == other.Leverandor && Beholdning == other.Beholdning && Prisfaktor == other.Prisfaktor && Gennemsnit == other.Gennemsnit && Lagervaerdi == other.Lagervaerdi && Genanskaffelse == other.Genanskaffelse && LagervaerdiGenanskaffelse == other.LagervaerdiGenanskaffelse && Varegruppe == other.Varegruppe && Undergruppe == other.Undergruppe && Lagergruppe == other.Lagergruppe && Nullable.Equals(SidsteSalgsdato, other.SidsteSalgsdato) && Nullable.Equals(SidsteKobsdato, other.SidsteKobsdato) && Edbnr == other.Edbnr && Enhed == other.Enhed && Type == other.Type && Disponibel == other.Disponibel;
+        return OctopusId == other.OctopusId
+               && WebId == other.WebId
+               && WebTitle == other.WebTitle
+               && PdfTitle == other.PdfTitle
+               && OctopusTitle == other.OctopusTitle
+               && Available == other.Available
+               && KegCollar == other.KegCollar
+               && Math.Abs(Str - other.Str) < TOLERANCE
+               && Math.Abs(Alcohol - other.Alcohol) < TOLERANCE
+               && Math.Abs(PricePrUnit - other.PricePrUnit) < TOLERANCE
+               && Category == other.Category;
     }
+    
 
     public override bool Equals(object? obj)
     {
@@ -39,26 +59,17 @@ public class Product
     public override int GetHashCode()
     {
         var hashCode = new HashCode();
-        hashCode.Add(Varenr);
-        hashCode.Add(Varetekst);
-        hashCode.Add(Tekst2);
-        hashCode.Add(Lokation);
-        hashCode.Add(Leverandor);
-        hashCode.Add(Beholdning);
-        hashCode.Add(Prisfaktor);
-        hashCode.Add(Gennemsnit);
-        hashCode.Add(Lagervaerdi);
-        hashCode.Add(Genanskaffelse);
-        hashCode.Add(LagervaerdiGenanskaffelse);
-        hashCode.Add(Varegruppe);
-        hashCode.Add(Undergruppe);
-        hashCode.Add(Lagergruppe);
-        hashCode.Add(SidsteSalgsdato);
-        hashCode.Add(SidsteKobsdato);
-        hashCode.Add(Edbnr);
-        hashCode.Add(Enhed);
-        hashCode.Add(Type);
-        hashCode.Add(Disponibel);
+        hashCode.Add(OctopusId);
+        hashCode.Add(WebId);
+        hashCode.Add(WebTitle);
+        hashCode.Add(PdfTitle);
+        hashCode.Add(OctopusTitle);
+        hashCode.Add(Available);
+        hashCode.Add(KegCollar);
+        hashCode.Add(Str);
+        hashCode.Add(Alcohol);
+        hashCode.Add(PricePrUnit);
+        hashCode.Add(Category);
         return hashCode.ToHashCode();
     }
 }
