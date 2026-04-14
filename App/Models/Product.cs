@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace BlazorApp.Models;
 
 public class Product
 {
     // Tidligere VareNr
+    [Key]
     public required string OctopusId { get; set; }
     
     // PRODUCT_ID i title
@@ -17,7 +20,7 @@ public class Product
     public required string OctopusTitle { get; set; }
     
     // Disponibel
-    public required decimal Available { get; set; }
+    public required int Available { get; set; }
     
     // Kasse kolli
     public int? KegCollar { get; set; } = 0;
@@ -28,7 +31,7 @@ public class Product
     
     public double PricePrUnit { get; set; } = 0.0;
     
-    public String Category { get; set; }
+    public string Category { get; set; }
     
 
     private const double TOLERANCE = 1e-6; // 0.000001 
