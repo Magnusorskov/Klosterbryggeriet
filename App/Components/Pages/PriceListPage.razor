@@ -1,0 +1,123 @@
+@page "/prisliste"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Components.PriceList
+@rendermode InteractiveServer
+
+@inject IProductService ProductService
+@inject IJSRuntime JS
+
+<PageTitle>Prisliste</PageTitle>
+
+<div class="no-print toolbar">
+    <button @onclick="LoadProducts" disabled="@isLoading">
+        @(isLoading ? "Henter..." : "Generer prisliste")
+    </button>
+    @if (categories.Count > 0)
+    {
+        <button @onclick="ExportPdf">Eksporter PDF</button>
+    }
+</div>
+
+@if (categories.Count > 0)
+{
+    <div class="price-list-preview">
+        <div class="price-list-header">
+            <h1>Klosterbryggeriet....... .......når øl ér bedst!</h1>
+            <h2>& Import</h2>
+            <div class="price-list-subheader">
+                <strong>Sortiments liste</strong>
+                <span>@DateTime.Today.ToString("dd.MM.yyyy")</span>
+            </div>
+        </div>
+
+        @foreach (var category in categories)
+        {
+            <div class="category-section">
+                <div class="category-header">@category.Name</div>
+
+                @switch (category.Layout)
+                {
+                    case TableLayout.Gavekasser:
+                        <GavekasserTable Rows="category.Products" />
+                        break;
+                    case TableLayout.Saft:
+                        <SaftTable Rows="category.Products" />
+                        break;
+                    default:
+                        <StandardTable Rows="category.Products" />
+                        break;
+                }
+            </div>
+        }
+
+        <div class="price-list-contacts">
+            <textarea class="editable-block" @bind="contactsText"></textarea>
+        </div>
+
+        <div class="price-list-levering">
+            <textarea class="editable-block" @bind="leveringsText"></textarea>
+        </div>
+
+        <div class="price-list-footer">
+            <input class="footer-text-input" @bind="footerText" />
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProductCategory> categories = [];
+    private bool isLoading;
+    private string footerText = "Alle priser er + moms, + pant";
+
+    private string contactsText =
+        "Hoved nr.:                                    28 20 20 20\n" +
+        "Hele landet       Poul Erik Palm:             20 11 97 66\n" +
+        "Hele landet       Signe Palm:                 61 26 21 12\n" +
+        "Sjælland & Fyn:   Tony Knezovic:              30 71 22 20\n" +
+        "Fyn & Sydlige Jylland  Henrik Rostbøl:        60 58 57 20\n" +
+        "Lager m.m.        Lars Amby:                  40 51 29 00";
+
+    private string leveringsText =
+        "Leveringsbetingelser:\n" +
+        "Fragtfrit minimums leverance ved 15 enheder\n" +
+        "\n" +
+        "1 enhed ér:\n" +
+        "24 x 25-35 cl flasker\n" +
+        "12/15 x 50 cl flasker\n" +
+        "12 x 75 cl flasker\n" +
+        "Fustager:\n" +
+        "6 fustager 30 L fragtfri leveret\n" +
+        "\n" +
+        "Ovenstående leveringsbetingelser er gældende fra 1.november 2017.\n" +
+        "Levering under 15 enheder (300fl.25/33cl fl.), FRAGT;\n" +
+        "Pr.10.januar 2025 FRAGT;\n" +
+        "Sjælland 325 +moms\n" +
+        "Jylland & Fyn 275 +moms\n" +
+        "Ikke brofaste øer efter aftale.\n" +
+        "\n" +
+        "Fadølsanlæg:\n" +
+        "Leje af anlæg incl. kulsyre 300,- +moms\n" +
+        "Levering og afhentning 400,- +moms\n" +
+        "\n" +
+        "Fadølsvogn: Fadølshaner, køleskab og salgssider hele vejen rundt. 3000,- +moms (weekend)\n" +
+        "Udlejes kun ved særlig indgået aftale\n" +
+        "\n" +
+        "Pr.1.juni 2017 pålægges ekspeditionsgebyr på fakturaer under 2000kr ex moms\n" +
+        "\n" +
+        "Vi tager forbehold for udsolgte varer, samt uforudsete prisjusteringer\n" +
+        "\n" +
+        "Ved fejl i prislisten, er den fakturerede pris der er gældende";
+
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        categories = await ProductService.GetCategoriesAsync();
+        isLoading = false;
+    }
+
+    private async Task ExportPdf()
+    {
+        await JS.InvokeVoidAsync("printPriceList");
+    }
+}

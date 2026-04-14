@@ -1,0 +1,1 @@
+window.printPriceList = () => window.print();
