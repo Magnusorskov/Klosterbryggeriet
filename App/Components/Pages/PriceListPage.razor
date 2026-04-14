@@ -52,7 +52,39 @@
         }
 
         <div class="price-list-contacts">
-            <textarea class="editable-block" @bind="contactsText"></textarea>
+            <table class="contacts-table">
+                <tbody>
+                    <tr>
+                        <td colspan="2" contenteditable="true"><strong>Hoved nr.:</strong></td>
+                        <td class="phone" contenteditable="true">28 20 20 20</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Hele landet</td>
+                        <td contenteditable="true"><strong>Poul Erik Palm:</strong></td>
+                        <td class="phone" contenteditable="true">20 11 97 66</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Hele landet</td>
+                        <td contenteditable="true"><strong>Signe Palm:</strong></td>
+                        <td class="phone" contenteditable="true">61 26 21 12</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Sjælland &amp; Fyn:</td>
+                        <td contenteditable="true"><strong>Tony Knezovic:</strong></td>
+                        <td class="phone" contenteditable="true">30 71 22 20</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Fyn &amp; Sydlige Jylland</td>
+                        <td contenteditable="true"><strong>Henrik Rostbøl:</strong></td>
+                        <td class="phone" contenteditable="true">60 58 57 20</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Lager m.m.</td>
+                        <td contenteditable="true"><strong>Lars Amby:</strong></td>
+                        <td class="phone" contenteditable="true">40 51 29 00</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <div class="price-list-levering">
@@ -69,14 +101,6 @@
     private List<ProductCategory> categories = [];
     private bool isLoading;
     private string footerText = "Alle priser er + moms, + pant";
-
-    private string contactsText =
-        "Hoved nr.:                                    28 20 20 20\n" +
-        "Hele landet       Poul Erik Palm:             20 11 97 66\n" +
-        "Hele landet       Signe Palm:                 61 26 21 12\n" +
-        "Sjælland & Fyn:   Tony Knezovic:              30 71 22 20\n" +
-        "Fyn & Sydlige Jylland  Henrik Rostbøl:        60 58 57 20\n" +
-        "Lager m.m.        Lars Amby:                  40 51 29 00";
 
     private string leveringsText =
         "Leveringsbetingelser:\n" +

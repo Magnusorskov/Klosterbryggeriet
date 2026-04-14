@@ -314,6 +314,29 @@ tr:hover .row-color-ctrl { opacity: 1; }
     font-size: 10px;
 }
 
+.contacts-table {
+    border-collapse: collapse;
+    width: auto;
+    border: 1px solid #aaa;
+}
+
+.contacts-table td {
+    padding: 2px 8px;
+    white-space: nowrap;
+    vertical-align: middle;
+    border: 1px solid #aaa;
+}
+
+.contacts-table td.phone {
+    text-align: right;
+    font-weight: bold;
+}
+
+.contacts-table td[contenteditable]:focus {
+    background: #fffde7;
+    outline: 1px solid #f0c040;
+}
+
 .price-list-levering {
     margin-top: 1rem;
     font-size: 9px;
