@@ -2,22 +2,31 @@
 @using BlazorApp.Services
 @rendermode InteractiveServer
 
-@inject ICsvConverterService CsvConverterService
-@inject IJSRuntime JS
+@inject ICsvUploadService CsvUploadService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Importer CSV</PageTitle>
 
-<h1>CSV til PDF</h1>
+<h1>Importer CSV</h1>
 
 <InputFile id="fileInput" OnChange="HandleFileSelected" accept=".csv" style="display:none" />
 <label for="fileInput" style="cursor:pointer; padding:6px 12px; border:1px solid #ccc; border-radius:4px;">
     Vælg CSV-fil
 </label>
 
-<button @onclick="ConvertToPdf" disabled="@(selectedFile is null || isConverting)">
-    @(isConverting ? "Konverterer..." : "Konverter til PDF")
+@if (selectedFile is not null)
+{
+    <p>Valgt fil: <strong>@selectedFile.Name</strong></p>
+}
+
+<button @onclick="UploadCsv" disabled="@(selectedFile is null || isUploading)">
+    @(isUploading ? "Uploader..." : "Upload")
 </button>
-<PriceList Products="new List<Product>()"></PriceList>
+
+@if (successMessage is not null)
+{
+    <p style="color: green;">@successMessage</p>
+}
+
 @if (errorMessage is not null)
 {
     <p style="color: red;">@errorMessage</p>
@@ -25,7 +34,8 @@
 
 @code {
     private IBrowserFile? selectedFile;
-    private bool isConverting;
+    private bool isUploading;
+    private string? successMessage;
     private string? errorMessage;
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
@@ -35,35 +45,37 @@
         {
             selectedFile = null;
             errorMessage = "Kun CSV-filer er tilladt.";
+            successMessage = null;
             return;
         }
 
         selectedFile = file;
         errorMessage = null;
+        successMessage = null;
     }
 
-    private async Task ConvertToPdf()
+    private async Task UploadCsv()
     {
         if (selectedFile is null) return;
 
-        isConverting = true;
+        isUploading = true;
         errorMessage = null;
+        successMessage = null;
 
         try
         {
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            var pdfBytes = await CsvConverterService.ConvertCsvToPdfAsync(stream, selectedFile.Name);
-
-            var pdfFileName = Path.GetFileNameWithoutExtension(selectedFile.Name) + ".pdf";
-            await JS.InvokeVoidAsync("downloadFile", pdfFileName, "application/pdf", pdfBytes);
+            await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
+            successMessage = $"{selectedFile.Name} blev uploadet.";
+            selectedFile = null;
         }
         catch (Exception ex)
         {
-            errorMessage = $"Fejl under konvertering: {ex.Message}";
+            errorMessage = $"Fejl under upload: {ex.Message}";
         }
         finally
         {
-            isConverting = false;
+            isUploading = false;
         }
     }
 }

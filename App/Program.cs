@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<ICsvConverterService, CsvConverterService>();
+builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
 
 var app = builder.Build();
 
