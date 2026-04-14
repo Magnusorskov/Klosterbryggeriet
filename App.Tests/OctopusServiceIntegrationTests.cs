@@ -2,36 +2,26 @@ using BlazorApp.Data;
 using BlazorApp.Models;
 using BlazorApp.Services;
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.MySql;
 
 namespace App.Tests;
 
-public class OctopusServiceIntegrationTest : IAsyncLifetime
+public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsyncLifetime
 {
-    private readonly MySqlContainer _mysql = new MySqlBuilder()
-        .WithImage("mysql:8.0")
-        .Build();
+    private readonly DatabaseFixture _fixture;
 
-    private AppDbContext CreateDbContext()
+    public OctopusServiceIntegrationTest(DatabaseFixture fixture)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseMySql(_mysql.GetConnectionString(), ServerVersion.AutoDetect(_mysql.GetConnectionString()))
-            .Options;
-
-        return new AppDbContext(options);
+        _fixture = fixture;
     }
 
-    public async Task InitializeAsync()
-    {
-        await _mysql.StartAsync();
-
-        await using var db = CreateDbContext();
-        await db.Database.EnsureCreatedAsync();
-    }
+    public Task InitializeAsync() => Task.CompletedTask;
 
     public async Task DisposeAsync()
     {
-        await _mysql.DisposeAsync();
+        // Clean up data between tests so they stay isolated
+        await using var db = _fixture.CreateDbContext();
+        db.Products.RemoveRange(db.Products);
+        await db.SaveChangesAsync();
     }
 
     [Fact]
@@ -52,31 +42,31 @@ public class OctopusServiceIntegrationTest : IAsyncLifetime
             PricePrUnit = 0.0, // default value since not relevant for test case
             Category = "undefined" // default value since not relevant for test case
         };
-        
-        await using (var db = CreateDbContext())
+
+        await using (var db = _fixture.CreateDbContext())
         {
             await db.Products.AddAsync(product);
             await db.SaveChangesAsync();
         }
 
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
-        await using (var db = CreateDbContext())
+        await using (var db = _fixture.CreateDbContext())
         {
             var service = new OctopusService(db);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
-        await using (var db = CreateDbContext())
+        await using (var db = _fixture.CreateDbContext())
         {
             var saved = await db.Products.FindAsync("14500");
             Assert.NotNull(saved);
-            
+
             var previousValue = product.Available;
             Assert.NotEqual(saved.Available, previousValue);
             Assert.Equal(-500, saved.Available);
         }
     }
-    
+
     [Fact]
     public async Task UpdateAvailableFromOctopusCsv_ExcludedProductNotChanged()
     {
@@ -95,35 +85,32 @@ public class OctopusServiceIntegrationTest : IAsyncLifetime
             PricePrUnit = 0.0, // default value since not relevant for test case
             Category = "undefined" // default value since not relevant for test case
         };
-        
-        await using (var db = CreateDbContext())
+
+        await using (var db = _fixture.CreateDbContext())
         {
             await db.Products.AddAsync(product);
             await db.SaveChangesAsync();
         }
 
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
-        await using (var db = CreateDbContext())
+        await using (var db = _fixture.CreateDbContext())
         {
             var service = new OctopusService(db);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
-        await using (var db = CreateDbContext())
+        await using (var db = _fixture.CreateDbContext())
         {
             var saved = await db.Products.FindAsync("100");
             Assert.NotNull(saved);
-            
+
             var previousValue = product.Available;
             Assert.Equal(saved.Available, previousValue);
             Assert.NotEqual(-500, saved.Available);
         }
-
-        
-
     }
 
-    
+
     /**
     * Helper method for mocking the frontend passing a file to the
     * OctopusCsvToEntities method
