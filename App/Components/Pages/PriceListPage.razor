@@ -1,0 +1,145 @@
+@page "/prisliste"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Components.PriceList
+@rendermode InteractiveServer
+
+@inject IPriceListBuilder PriceListBuilder
+@inject IJSRuntime JS
+
+<PageTitle>Prisliste</PageTitle>
+
+<div class="no-print toolbar">
+    <button @onclick="LoadProducts" disabled="@isLoading">
+        @(isLoading ? "Henter..." : "Generer prisliste")
+    </button>
+    @if (categories.Count > 0)
+    {
+        <button @onclick="ExportPdf">Eksporter PDF</button>
+    }
+</div>
+
+@if (categories.Count > 0)
+{
+    <div class="price-list-preview">
+        <div class="price-list-header">
+            <h1>Klosterbryggeriet....... .......når øl ér bedst!</h1>
+            <h2>& Import</h2>
+            <div class="price-list-subheader">
+                <strong>Sortiments liste</strong>
+                <span>@DateTime.Today.ToString("dd.MM.yyyy")</span>
+            </div>
+        </div>
+
+        @foreach (var category in categories)
+        {
+            <div class="category-section">
+                <div class="category-header">@category.Name</div>
+
+                @switch (category.Layout)
+                {
+                    case TableLayout.Gavekasser:
+                        <GavekasserTable Rows="category.Products" />
+                        break;
+                    case TableLayout.Saft:
+                        <SaftTable Rows="category.Products" />
+                        break;
+                    default:
+                        <StandardTable Rows="category.Products" />
+                        break;
+                }
+            </div>
+        }
+
+        <div class="price-list-contacts">
+            <table class="contacts-table">
+                <tbody>
+                    <tr>
+                        <td colspan="2" contenteditable="true"><strong>Hoved nr.:</strong></td>
+                        <td class="phone" contenteditable="true">28 20 20 20</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Hele landet</td>
+                        <td contenteditable="true"><strong>Poul Erik Palm:</strong></td>
+                        <td class="phone" contenteditable="true">20 11 97 66</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Hele landet</td>
+                        <td contenteditable="true"><strong>Signe Palm:</strong></td>
+                        <td class="phone" contenteditable="true">61 26 21 12</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Sjælland &amp; Fyn:</td>
+                        <td contenteditable="true"><strong>Tony Knezovic:</strong></td>
+                        <td class="phone" contenteditable="true">30 71 22 20</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Fyn &amp; Sydlige Jylland</td>
+                        <td contenteditable="true"><strong>Henrik Rostbøl:</strong></td>
+                        <td class="phone" contenteditable="true">60 58 57 20</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Lager m.m.</td>
+                        <td contenteditable="true"><strong>Lars Amby:</strong></td>
+                        <td class="phone" contenteditable="true">40 51 29 00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="price-list-levering">
+            <div class="editable-block" contenteditable="true">
+                <strong>Leveringsbetingelser:</strong><br>
+                Fragtfrit minimums leverance ved 15 enheder<br>
+                <br>
+                <strong>1 enhed ér:</strong><br>
+                24 x 25-35 cl flasker<br>
+                12/15 x 50 cl flasker<br>
+                12 x 75 cl flasker<br>
+                <strong>Fustager:</strong><br>
+                6 fustager 30 L fragtfri leveret<br>
+                <br>
+                Ovenstående leveringsbetingelser er gældende fra 1.november 2017.<br>
+                Levering under 15 enheder (300fl.25/33cl fl.), <br>
+                FRAGT;<br>
+                Pr.10.januar 2025 FRAGT;<br>
+                Sjælland 325 +moms<br>
+                Jylland &amp; Fyn 275 +moms<br>
+                Ikke brofaste øer efter aftale.<br>
+                <br>
+                <strong>Fadølsanlæg:</strong><br>
+                Leje af anlæg incl. kulsyre 300,- +moms<br>
+                Levering og afhentning 400,- +moms<br>
+                <br>
+                <strong>Fadølsvogn:</strong> Fadølshaner, køleskab og salgssider hele vejen rundt. 3000,- +moms (weekend)<br>
+                Udlejes kun ved særlig indgået aftale<br>
+                <br>
+                Pr.1.juni 2017 pålægges ekspeditionsgebyr på fakturaer under 2000kr ex moms<br>
+                <br>
+                Vi tager forbehold for udsolgte varer, samt uforudsete prisjusteringer<br>
+                <br>
+                <strong>Ved fejl i prislisten, er den fakturerede pris der er gældende</strong>
+            </div>
+        </div>
+
+        <div class="price-list-footer">
+            <p class="footer-text-input" contenteditable="true"><strong>Alle priser er + moms, + pant</strong></p>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProductCategory> categories = [];
+    private bool isLoading;
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        categories = await PriceListBuilder.GetCategoriesAsync();
+        isLoading = false;
+    }
+
+    private async Task ExportPdf()
+    {
+        await JS.InvokeVoidAsync("printPriceList");
+    }
+}
