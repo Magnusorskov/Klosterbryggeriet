@@ -353,7 +353,7 @@ tr:hover .row-color-ctrl { opacity: 1; }
     padding: 0;
     outline: none;
     resize: none;
-    white-space: pre;
+    white-space: normal;
     overflow: hidden;
     field-sizing: content; /* auto-grows to fit content in modern browsers */
 }

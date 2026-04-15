@@ -88,11 +88,42 @@
         </div>
 
         <div class="price-list-levering">
-            <textarea class="editable-block" @bind="leveringsText"></textarea>
+            <div class="editable-block" contenteditable="true">
+                <strong>Leveringsbetingelser:</strong><br>
+                Fragtfrit minimums leverance ved 15 enheder<br>
+                <br>
+                <strong>1 enhed ér:</strong><br>
+                24 x 25-35 cl flasker<br>
+                12/15 x 50 cl flasker<br>
+                12 x 75 cl flasker<br>
+                <strong>Fustager:</strong><br>
+                6 fustager 30 L fragtfri leveret<br>
+                <br>
+                Ovenstående leveringsbetingelser er gældende fra 1.november 2017.<br>
+                Levering under 15 enheder (300fl.25/33cl fl.), <br>
+                FRAGT;<br>
+                Pr.10.januar 2025 FRAGT;<br>
+                Sjælland 325 +moms<br>
+                Jylland &amp; Fyn 275 +moms<br>
+                Ikke brofaste øer efter aftale.<br>
+                <br>
+                <strong>Fadølsanlæg:</strong><br>
+                Leje af anlæg incl. kulsyre 300,- +moms<br>
+                Levering og afhentning 400,- +moms<br>
+                <br>
+                <strong>Fadølsvogn:</strong> Fadølshaner, køleskab og salgssider hele vejen rundt. 3000,- +moms (weekend)<br>
+                Udlejes kun ved særlig indgået aftale<br>
+                <br>
+                Pr.1.juni 2017 pålægges ekspeditionsgebyr på fakturaer under 2000kr ex moms<br>
+                <br>
+                Vi tager forbehold for udsolgte varer, samt uforudsete prisjusteringer<br>
+                <br>
+                <strong>Ved fejl i prislisten, er den fakturerede pris der er gældende</strong>
+            </div>
         </div>
 
         <div class="price-list-footer">
-            <input class="footer-text-input" @bind="footerText" />
+            <p class="footer-text-input" contenteditable="true"><strong>Alle priser er + moms, + pant</strong></p>
         </div>
     </div>
 }
@@ -100,39 +131,6 @@
 @code {
     private List<ProductCategory> categories = [];
     private bool isLoading;
-    private string footerText = "Alle priser er + moms, + pant";
-
-    private string leveringsText =
-        "Leveringsbetingelser:\n" +
-        "Fragtfrit minimums leverance ved 15 enheder\n" +
-        "\n" +
-        "1 enhed ér:\n" +
-        "24 x 25-35 cl flasker\n" +
-        "12/15 x 50 cl flasker\n" +
-        "12 x 75 cl flasker\n" +
-        "Fustager:\n" +
-        "6 fustager 30 L fragtfri leveret\n" +
-        "\n" +
-        "Ovenstående leveringsbetingelser er gældende fra 1.november 2017.\n" +
-        "Levering under 15 enheder (300fl.25/33cl fl.), FRAGT;\n" +
-        "Pr.10.januar 2025 FRAGT;\n" +
-        "Sjælland 325 +moms\n" +
-        "Jylland & Fyn 275 +moms\n" +
-        "Ikke brofaste øer efter aftale.\n" +
-        "\n" +
-        "Fadølsanlæg:\n" +
-        "Leje af anlæg incl. kulsyre 300,- +moms\n" +
-        "Levering og afhentning 400,- +moms\n" +
-        "\n" +
-        "Fadølsvogn: Fadølshaner, køleskab og salgssider hele vejen rundt. 3000,- +moms (weekend)\n" +
-        "Udlejes kun ved særlig indgået aftale\n" +
-        "\n" +
-        "Pr.1.juni 2017 pålægges ekspeditionsgebyr på fakturaer under 2000kr ex moms\n" +
-        "\n" +
-        "Vi tager forbehold for udsolgte varer, samt uforudsete prisjusteringer\n" +
-        "\n" +
-        "Ved fejl i prislisten, er den fakturerede pris der er gældende";
-
     private async Task LoadProducts()
     {
         isLoading = true;

@@ -1,1 +1,6 @@
-window.printPriceList = () => window.print();
+window.printPriceList = () => {
+    const prev = document.title;
+    document.title = '';
+    window.print();
+    document.title = prev;
+};
