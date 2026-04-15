@@ -58,3 +58,373 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ── Price list preview ───────────────────────────────────────────────── */
+
+.toolbar {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.price-list-preview {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    max-width: 210mm;
+    margin: 0 auto;
+    background: white;
+    padding: 1.5cm;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.price-list-header h1 {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.price-list-header h2 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 0.5rem;
+}
+
+.price-list-subheader {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+    padding-bottom: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.category-section {
+    margin-bottom: 1.5rem;
+}
+
+.price-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.price-table th,
+.price-table td {
+    padding: 1px 3px;
+    border: 1px solid #ccc;
+}
+
+.price-table thead th {
+    font-weight: bold;
+    font-size: 10px;
+    background: #f0f0f0;
+}
+
+.category-header {
+    background: #f0f0f0;
+    border: 1px solid #999;
+    text-align: center;
+    font-weight: bold;
+    padding: 2px 4px;
+    font-size: 11px;
+}
+
+.col-name      { width: 44%; }
+.col-wide      { width: 22%; }
+.col-narrow    { width: 10%; }
+.col-price-gav { width: 22%; } /* wider price col for gavekasser */
+
+/* Editable cells */
+.edit-cell {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font: inherit;
+    padding: 0;
+    outline: none;
+}
+.edit-cell:focus {
+    background: #fffde7;
+    outline: 1px solid #f0c040;
+}
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+
+/* Row colors */
+.row-green  { background-color: #c8e6c9; }
+.row-yellow { background-color: #fff9c4; }
+.row-red    { background-color: #ffcdd2; }
+
+.row-check { cursor: pointer; }
+
+/* ── Row select + drag ctrl (left of table) ──────────────────────── */
+.cell-name {
+    position: relative;
+    overflow: visible !important;
+}
+
+.row-select-ctrl {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 100;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+tr:hover .row-select-ctrl      { opacity: 1; }
+.row-selected .row-select-ctrl  { opacity: 1; }
+
+.drag-handle {
+    cursor: grab;
+    color: #999;
+    font-size: 12px;
+    line-height: 1;
+    user-select: none;
+    padding: 0 1px;
+}
+.drag-handle:active { cursor: grabbing; }
+.drag-handle:hover  { color: #555; }
+
+.row-dragging { opacity: 0.35; }
+.row-drag-over td { border-top: 2px solid #1976d2 !important; }
+
+/* ── Add-row button ──────────────────────────────────────────────── */
+.add-row-btn {
+    display: block;
+    margin: 4px auto 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #4caf50;
+    color: white;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+.add-row-btn:hover { background: #388e3c; }
+
+/* ── Color picker overlay (right of table, inside Status td) ─────── */
+.cell-status {
+    position: relative;
+    overflow: visible !important;
+}
+
+.row-color-ctrl {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 100;
+    white-space: nowrap;
+}
+tr:hover .row-color-ctrl { opacity: 1; }
+
+.color-trigger {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.color-swatch {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #888;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.color-swatch:hover { border-color: #333; }
+
+.color-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 2px);
+    z-index: 300;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    min-width: 80px;
+    padding: 2px 0;
+}
+
+.color-opt {
+    display: block;
+    width: 100%;
+    padding: 3px 8px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 11px;
+    white-space: nowrap;
+}
+.color-opt:hover    { background: #f5f5f5; }
+.opt-green::before  { content: "●"; color: #4caf50; margin-right: 4px; }
+.opt-yellow::before { content: "●"; color: #e6b800; margin-right: 4px; }
+.opt-red::before    { content: "●"; color: #f44336; margin-right: 4px; }
+.opt-white::before  { content: "●"; color: #bbb;    margin-right: 4px; }
+
+
+/* ── Bulk action bar ─────────────────────────────────────────────── */
+.bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-bottom: 2px;
+}
+
+.bulk-btn {
+    padding: 2px 8px;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    background: white;
+}
+.bulk-green  { border-color: #4caf50; background: #c8e6c9; }
+.bulk-yellow { border-color: #f9a825; background: #fff9c4; }
+.bulk-red    { border-color: #f44336; background: #ffcdd2; }
+.bulk-delete { border-color: #f44336; color: #c62828; margin-left: auto; }
+.bulk-btn:hover { filter: brightness(0.93); }
+
+.price-list-contacts {
+    margin-top: 1.5rem;
+    font-size: 10px;
+}
+
+.contacts-table {
+    border-collapse: collapse;
+    width: auto;
+    border: 1px solid #aaa;
+}
+
+.contacts-table td {
+    padding: 2px 8px;
+    white-space: nowrap;
+    vertical-align: middle;
+    border: 1px solid #aaa;
+}
+
+.contacts-table td.phone {
+    text-align: right;
+    font-weight: bold;
+}
+
+.contacts-table td[contenteditable]:focus {
+    background: #fffde7;
+    outline: 1px solid #f0c040;
+}
+
+.price-list-levering {
+    margin-top: 1rem;
+    font-size: 9px;
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+}
+
+.editable-block {
+    display: block;
+    width: 100%;
+    border: none;
+    background: transparent;
+    font: inherit;
+    padding: 0;
+    outline: none;
+    resize: none;
+    white-space: normal;
+    overflow: hidden;
+    field-sizing: content; /* auto-grows to fit content in modern browsers */
+}
+.editable-block:focus {
+    background: #fffde7;
+    outline: 1px solid #f0c040;
+}
+
+.price-list-footer {
+    margin-top: 1rem;
+    text-align: right;
+    font-size: 10px;
+    border-top: 1px solid #000;
+    padding-top: 4px;
+}
+
+.footer-text-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: right;
+    padding: 0;
+    outline: none;
+    color: inherit;
+}
+.footer-text-input:focus {
+    background: #fffde7;
+    outline: 1px solid #f0c040;
+}
+
+/* ── Print styles ─────────────────────────────────────────────────────── */
+
+@media print {
+    .no-print { display: none !important; }
+
+    /* Hide layout chrome */
+    .sidebar { display: none !important; }
+    .top-row { display: none !important; }
+
+    /* Make main content fill the full page */
+    .page, main, article.content {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .price-list-preview {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    .edit-cell:focus {
+        background: transparent;
+        outline: none;
+    }
+
+    /* Force background colors to print */
+    .row-green, .row-yellow, .row-red {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .row-green  { background-color: #c8e6c9 !important; }
+    .row-yellow { background-color: #fff9c4 !important; }
+    .row-red    { background-color: #ffcdd2 !important; }
+}
+
+@page {
+    size: A4;
+    margin: 1.5cm;
+}
