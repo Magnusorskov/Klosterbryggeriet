@@ -2,7 +2,6 @@ using BlazorApp.Components;
 using BlazorApp.Data;
 using BlazorApp.Services;
 using Microsoft.EntityFrameworkCore;
-using BlazorApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +16,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
-builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
 
 var app = builder.Build();
 

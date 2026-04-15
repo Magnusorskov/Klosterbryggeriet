@@ -4,7 +4,7 @@
 @using BlazorApp.Components.PriceList
 @rendermode InteractiveServer
 
-@inject IProductService ProductService
+@inject IPriceListBuilder PriceListBuilder
 @inject IJSRuntime JS
 
 <PageTitle>Prisliste</PageTitle>
@@ -134,7 +134,7 @@
     private async Task LoadProducts()
     {
         isLoading = true;
-        categories = await ProductService.GetCategoriesAsync();
+        categories = await PriceListBuilder.GetCategoriesAsync();
         isLoading = false;
     }
 
