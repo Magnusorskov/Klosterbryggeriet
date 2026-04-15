@@ -58,7 +58,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var saved = await db.Products.FindAsync("14500");
+            var saved = await db.Products.FindAsync(14500);
             Assert.NotNull(saved);
 
             var previousValue = product.Available;
@@ -103,7 +103,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var saved = await db.Products.FindAsync("100");
+            var saved = await db.Products.FindAsync(100);
             Assert.NotNull(saved);
 
             var previousValue = product.Available;

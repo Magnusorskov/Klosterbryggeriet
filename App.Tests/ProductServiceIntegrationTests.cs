@@ -25,9 +25,9 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
     public async Task MapProductsByCategory_GroupsProductsByCategory()
     {
         // Arrange
-        var beer = CreateProduct("1", "Beer");
-        var beer2 = CreateProduct("2", "Beer");
-        var wine = CreateProduct("3", "Wine");
+        var beer = CreateProduct(1, "Beer");
+        var beer2 = CreateProduct(2 ,"Beer");
+        var wine = CreateProduct(3, "Wine");
 
         await using (var db = _fixture.CreateDbContext())
         {
@@ -68,8 +68,8 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
     public async Task MapProductsByCategory_SingleCategory_ReturnsSingleEntry()
     {
         // Arrange
-        var p1 = CreateProduct("10", "Soda");
-        var p2 = CreateProduct("11", "Soda");
+        var p1 = CreateProduct(10, "Soda");
+        var p2 = CreateProduct(11, "Soda");
 
         await using (var db = _fixture.CreateDbContext())
         {
@@ -90,12 +90,12 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Assert.Equal(2, result["Soda"].Count);
     }
 
-    private static Product CreateProduct(string octopusId, string category)
+    private static Product CreateProduct(int octopusId, string category)
     {
         return new Product
         {
             OctopusId = octopusId,
-            WebId = "0",
+            WebId = 0,
             WebTitle = "empty",
             PdfTitle = "empty",
             OctopusTitle = "empty",
