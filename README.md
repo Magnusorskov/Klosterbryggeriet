@@ -35,10 +35,18 @@ The app will be available at `http://localhost:5008`.
 ### Git hooks
 After cloning, run this once to enable shared git hooks (e.g. conventional commit message validation):
 ```bash
-git config core.hooksPath .github/hooks
+make setup
 ```
 
-### Run tests
-```bash
-make test
-```
+## Make commands
+
+| Command | Description |
+|---|---|
+| `make setup` | Configure git hooks for conventional commit validation |
+| `make init` | First-time setup: start containers, wait for DB, apply migrations, and seed data |
+| `make run` | Build and start the app with Docker Compose |
+| `make watch` | Run the app locally with hot reload (requires .NET SDK) |
+| `make test` | Run the xUnit test suite |
+| `make migrate name=MyMigrationName` | Create a new EF Core migration |
+| `make db-update` | Apply all pending migrations to the database |
+| `make db-seed` | Seed the database with product data |
