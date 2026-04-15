@@ -44,6 +44,7 @@ make setup
 |---|---|
 | `make setup` | Configure git hooks for conventional commit validation |
 | `make init` | First-time setup: start containers, wait for DB, apply migrations, and seed data |
+| `make build` | Build the full solution in Release mode (mirrors CI) |
 | `make run` | Build and start the app with Docker Compose |
 | `make watch` | Run the app locally with hot reload (requires .NET SDK) |
 | `make test` | Run the xUnit test suite |
