@@ -12,6 +12,9 @@ init:
 run:
 	docker compose up --build
 
+build:
+	dotnet build Klosterbryggeriet.slnx --configuration Release
+
 watch:
 	dotnet watch --project App/BlazorApp.csproj
 

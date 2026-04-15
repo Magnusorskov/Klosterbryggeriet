@@ -30,8 +30,8 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
         // Arrange
         var product = new Product
         {
-            OctopusId = "14500",
-            WebId = "0", // default value since not relevant for test case
+            OctopusId = 14500,
+            WebId = 0, // default value since not relevant for test case
             WebTitle = "empty", // default value since not relevant for test case
             PdfTitle = "empty", // default value since not relevant for test case
             OctopusTitle = "empty", // default value since not relevant for test case
@@ -40,7 +40,9 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
             Str = 0.0, // default value since not relevant for test case
             Alcohol = 0.0, // default value since not relevant for test case
             PricePrUnit = 0.0, // default value since not relevant for test case
-            Category = "undefined" // default value since not relevant for test case
+            Category = "undefined", // default value since not relevant for test case
+            VariantId1 = 0, // default value since not relevant for test case
+            VariantId2 = 0 // default value since not relevant for test case
         };
 
         await using (var db = _fixture.CreateDbContext())
@@ -63,8 +65,8 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
         // Arrange
         var product = new Product
         {
-            OctopusId = "14500",
-            WebId = "0", // default value since not relevant for test case
+            OctopusId = 14500,
+            WebId = 0, // default value since not relevant for test case
             WebTitle = "empty", // default value since not relevant for test case
             PdfTitle = "empty", // default value since not relevant for test case
             OctopusTitle = "empty", // default value since not relevant for test case
@@ -73,7 +75,9 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
             Str = 0.0, // default value since not relevant for test case
             Alcohol = 0.0, // default value since not relevant for test case
             PricePrUnit = 0.0, // default value since not relevant for test case
-            Category = "undefined" // default value since not relevant for test case
+            Category = "undefined", // default value since not relevant for test case
+            VariantId1 = 0, // default value since not relevant for test case
+            VariantId2 = 0 // default value since not relevant for test case
         };
 
         await using (var db = _fixture.CreateDbContext())
