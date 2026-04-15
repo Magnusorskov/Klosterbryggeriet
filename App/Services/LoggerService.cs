@@ -1,5 +1,6 @@
 using BlazorApp.Data;
 using BlazorApp.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorApp.Services;
 
@@ -19,18 +20,32 @@ public class LoggerService
         string newValue,
         string valueType)
     {
-        var entry = new LogEntry()
+        if (previousValue != newValue)
         {
-            ColumnName = columnName,
-            PreviousValue = previousValue,
-            NewValue = newValue,
-            ValueType = valueType,
-            OctopusId = changedProduct.OctopusId,
-            ProductName = changedProduct.PdfTitle,
+            var entry = new LogEntry()
+            {
+                ColumnName = columnName,
+                PreviousValue = previousValue,
+                NewValue = newValue,
+                ValueType = valueType,
+                OctopusId = changedProduct.OctopusId,
+                ProductName = changedProduct.PdfTitle,
 
-        };
-        await _context.LogEntries.AddAsync(entry);
-        await _context.SaveChangesAsync();
+            };
+            await _context.LogEntries.AddAsync(entry);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<List<LogEntry>> GetLogEntries()
+    {
+        return await _context.LogEntries.ToListAsync();
+    }
+
+    // TODO: Implementer rollback
+    public async Task RollBack()
+    {
+        return;
     }
     
 }

@@ -1,7 +1,5 @@
-using BlazorApp.Data;
 using BlazorApp.Models;
 using BlazorApp.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace App.Tests;
 
@@ -52,8 +50,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var loggerService = new LoggerService(db);
-            var service = new OctopusService(db,  loggerService);
+            var service = new OctopusService(db);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
@@ -96,8 +93,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var loggerService = new LoggerService(db);
-            var service = new OctopusService(db, loggerService);
+            var service = new OctopusService(db);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
