@@ -37,7 +37,7 @@ public class OctopusService
 
             var pair = new OctopusIdAvailablePair
             {
-                OctopusId = columns[0].Trim(),
+                OctopusId = int.Parse(columns[0]),
                 Available = int.Parse(columns[19])
             };
 
@@ -76,7 +76,7 @@ public class OctopusService
     // Helper class for storing OctopusId and its availability as a pair for quicker processing
     private class OctopusIdAvailablePair
     {
-        public required string OctopusId { get; set; }
+        public required int OctopusId { get; set; }
         public required int Available { get; set; }
     }
 
