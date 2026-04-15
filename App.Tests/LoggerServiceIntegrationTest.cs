@@ -21,12 +21,44 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
         // Clean up data between tests so they stay isolated
         await using var db = _fixture.CreateDbContext();
         db.LogEntries.RemoveRange(db.LogEntries);
+        db.Products.RemoveRange(db.Products);
         await db.SaveChangesAsync();
     }
-    
-    
-    [Fact]
-    public async Task UpdateAvailableFromOctopusCsv_Default()
+
+    private async Task<Product> TriggerLogEvent_ProductNotChanged()
+    {
+        // Arrange
+        var product = new Product
+        {
+            OctopusId = "14500",
+            WebId = "0", // default value since not relevant for test case
+            WebTitle = "empty", // default value since not relevant for test case
+            PdfTitle = "empty", // default value since not relevant for test case
+            OctopusTitle = "empty", // default value since not relevant for test case
+            Available = -500,
+            KegCollar = 0, // default value since not relevant for test case
+            Str = 0.0, // default value since not relevant for test case
+            Alcohol = 0.0, // default value since not relevant for test case
+            PricePrUnit = 0.0, // default value since not relevant for test case
+            Category = "undefined" // default value since not relevant for test case
+        };
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.Products.AddAsync(product);
+            await db.SaveChangesAsync();
+        }
+
+        var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new OctopusService(db);
+            await service.UpdateAvailableFromOctopusCsv(testFile);
+        }
+
+        return product;
+    }
+    private async Task<Product> TriggerLogEvent_ProductChanged()
     {
         // Arrange
         var product = new Product
@@ -53,10 +85,17 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var loggerService = new LoggerService(db);
-            var service = new OctopusService(db,  loggerService);
+            var service = new OctopusService(db);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
+
+        return product;
+    }
+    
+    [Fact]
+    public async Task LogProductChange_Default()
+    {
+        Product product = await TriggerLogEvent_ProductChanged();
 
         await using (var db = _fixture.CreateDbContext())
         {
@@ -72,6 +111,33 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
             Assert.Equal("-500", entry.NewValue);
             
             
+        }
+    }
+
+    [Fact]
+    public async Task GetLogEntries_Default()
+    {
+        Product product = await TriggerLogEvent_ProductChanged(); 
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new LoggerService(db);
+            var foundEntries = await service.GetLogEntries();
+            Assert.Single(foundEntries);
+            Assert.Equal(product.OctopusId, foundEntries[0].OctopusId);
+            
+        }
+        
+    }
+
+    [Fact]
+    public async Task GetLogEntries_NoChangesResultsInNoLogs()
+    {
+        Product product = await TriggerLogEvent_ProductNotChanged(); 
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new LoggerService(db);
+            var foundEntries = await service.GetLogEntries();
+            Assert.Empty(foundEntries);
         }
     }
 

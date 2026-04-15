@@ -17,6 +17,12 @@ public class OctopusService
         _logger = logger;
     }
 
+    public OctopusService(AppDbContext db)
+    {
+        _db = db;
+        _logger = new LoggerService(db);
+    }
+
     public async Task UpdateAvailableFromOctopusCsv(Stream fileStream)
     {
         using var reader = new StreamReader(fileStream);

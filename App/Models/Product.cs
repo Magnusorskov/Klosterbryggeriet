@@ -5,9 +5,11 @@ namespace BlazorApp.Models;
 public class Product
 {
     // Tidligere VareNr
+    // TODO: Skal være int
     [Key]
     public required string OctopusId { get; set; }
     
+    // TODO: Skal være int
     // PRODUCT_ID i title
     public required string WebId { get; set; }
     
@@ -31,7 +33,7 @@ public class Product
     
     public double PricePrUnit { get; set; } = 0.0;
     
-    public string Category { get; set; }
+    public required string Category { get; set; }
     
 
     private const double TOLERANCE = 1e-6; // 0.000001 
