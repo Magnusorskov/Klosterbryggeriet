@@ -52,7 +52,8 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var loggerService = new LoggerService(db);
+            var service = new OctopusService(db,  loggerService);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
@@ -95,7 +96,8 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var loggerService = new LoggerService(db);
+            var service = new OctopusService(db, loggerService);
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
