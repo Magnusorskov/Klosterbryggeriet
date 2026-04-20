@@ -9,7 +9,7 @@ public class LogEntry
     public DateTime DateChanged { get; set; } = DateTime.Now;
     public required string ColumnName { get; set; }
     public required string ValueType { get; set; }
-    public required string OctopusId { get; set; }
+    public required int OctopusId { get; set; }
     public required string ProductName { get; set; }
     public required string PreviousValue { get; set; }
     public required string NewValue { get; set; }

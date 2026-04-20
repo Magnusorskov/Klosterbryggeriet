@@ -1,6 +1,6 @@
 namespace BlazorApp.Models;
 
-public enum TableLayout { Standard, Gavekasser, Saft }
+public enum TableLayout { Standard, Gavekasser, Saft, Fadøl }
 
 public class ProductCategory
 {
