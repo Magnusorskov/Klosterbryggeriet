@@ -28,8 +28,8 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         // Arrange
         var product = new Product
         {
-            OctopusId = "14500",
-            WebId = "0", // default value since not relevant for test case
+            OctopusId = 14500,
+            WebId = 0, // default value since not relevant for test case
             WebTitle = "empty", // default value since not relevant for test case
             PdfTitle = "empty", // default value since not relevant for test case
             OctopusTitle = "empty", // default value since not relevant for test case
@@ -38,7 +38,9 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
             Str = 0.0, // default value since not relevant for test case
             Alcohol = 0.0, // default value since not relevant for test case
             PricePrUnit = 0.0, // default value since not relevant for test case
-            Category = "undefined" // default value since not relevant for test case
+            Category = "undefined", // default value since not relevant for test case
+            VariantId1 = 0, // default value since not relevant for test case
+            VariantId2 = 0 // default value since not relevant for test case
         };
 
         await using (var db = _fixture.CreateDbContext())
@@ -56,7 +58,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var saved = await db.Products.FindAsync("14500");
+            var saved = await db.Products.FindAsync(14500);
             Assert.NotNull(saved);
 
             var previousValue = product.Available;
@@ -71,8 +73,8 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         // Arrange
         var product = new Product
         {
-            OctopusId = "100",
-            WebId = "0", // default value since not relevant for test case
+            OctopusId = 100,
+            WebId = 0, // default value since not relevant for test case
             WebTitle = "empty", // default value since not relevant for test case
             PdfTitle = "empty", // default value since not relevant for test case
             OctopusTitle = "empty", // default value since not relevant for test case
@@ -81,7 +83,9 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
             Str = 0.0, // default value since not relevant for test case
             Alcohol = 0.0, // default value since not relevant for test case
             PricePrUnit = 0.0, // default value since not relevant for test case
-            Category = "undefined" // default value since not relevant for test case
+            Category = "undefined", // default value since not relevant for test case
+            VariantId1 = 0, // default value since not relevant for test case
+            VariantId2 = 0 // default value since not relevant for test case
         };
 
         await using (var db = _fixture.CreateDbContext())
@@ -99,7 +103,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var saved = await db.Products.FindAsync("100");
+            var saved = await db.Products.FindAsync(100);
             Assert.NotNull(saved);
 
             var previousValue = product.Available;

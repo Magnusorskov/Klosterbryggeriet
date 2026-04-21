@@ -16,6 +16,10 @@ builder.Services.AddScoped<HostedShopService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

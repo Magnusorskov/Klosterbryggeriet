@@ -1,0 +1,144 @@
+@using BlazorApp.Models
+
+@if (_selected.Count > 0)
+{
+    <div class="bulk-bar no-print">
+        <span>@_selected.Count valgt &mdash;</span>
+        <button class="bulk-btn bulk-green"  @onclick="BulkGreen">Grøn</button>
+        <button class="bulk-btn bulk-yellow" @onclick="BulkYellow">Gul</button>
+        <button class="bulk-btn bulk-red"    @onclick="BulkRed">Rød</button>
+        <button class="bulk-btn"             @onclick="BulkWhite">Hvid</button>
+        <button class="bulk-btn bulk-delete" @onclick="BulkDelete">Slet valgte</button>
+    </div>
+}
+
+<table class="price-table">
+    <thead>
+        <tr>
+            <th class="col-name"></th>
+            <th class="col-wide"></th>
+            <th class="col-price-gav">Pris pr. ks. +moms og pant</th>
+            <th class="col-narrow">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in Rows)
+        {
+            <tr class="@RowClass(row) @(_selected.Contains(row) ? "row-selected" : "") @(_draggingRow == row ? "row-dragging" : "") @(_dragOverRow == row && _draggingRow != row ? "row-drag-over" : "")"
+                style="@RowStyle(row)"
+                @ondragover:preventDefault
+                @ondragover="() => DragOver(row)"
+                @ondrop="DragEnd">
+                <td class="cell-name">
+                    <div class="row-select-ctrl no-print">
+                        <span class="drag-handle" draggable="true"
+                              @ondragstart="() => DragStart(row)"
+                              @ondragend="DragEnd">⠿</span>
+                        <input type="checkbox" class="row-check" checked="@_selected.Contains(row)" @onchange="@(e => ToggleSelect(row))" />
+                    </div>
+                    <input class="edit-cell" @bind="row.Product.PdfTitle" />
+                </td>
+                <td><input class="edit-cell" @bind="row.Notes" /></td>
+                <td><input class="edit-cell text-right" @bind="row.Product.PricePrUnit" /></td>
+                <td class="cell-status">
+                    <input class="edit-cell" @bind="row.Status" />
+                    <div class="row-color-ctrl no-print">
+                        <button class="color-trigger" @onclick="() => ToggleDropdown(row)">
+                            <span class="color-swatch" style="background:@ColorHex(row)"></span>
+                        </button>
+                        @if (_openDropdown == row)
+                        {
+                            <div class="color-menu">
+                                <button class="color-opt opt-green"  @onclick="() => SetGreen(row)">Grøn</button>
+                                <button class="color-opt opt-yellow" @onclick="() => SetYellow(row)">Gul</button>
+                                <button class="color-opt opt-red"    @onclick="() => SetRed(row)">Rød</button>
+                                <button class="color-opt opt-white"  @onclick="() => ClearColor(row)">Hvid</button>
+                            </div>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<button class="add-row-btn no-print" @onclick="AddRow" title="Tilføj række">+</button>
+
+@code {
+    [Parameter, EditorRequired] public List<ProductRow> Rows { get; set; } = [];
+
+    private readonly HashSet<ProductRow> _selected = new();
+    private ProductRow? _openDropdown;
+    private ProductRow? _draggingRow;
+    private ProductRow? _dragOverRow;
+
+    private void ToggleSelect(ProductRow row)   { if (!_selected.Remove(row)) _selected.Add(row); }
+    private void ToggleDropdown(ProductRow row) => _openDropdown = _openDropdown == row ? null : row;
+
+    private void SetGreen(ProductRow row)  { row.Color = "green";  _openDropdown = null; }
+    private void SetYellow(ProductRow row) { row.Color = "yellow"; _openDropdown = null; }
+    private void SetRed(ProductRow row)    { row.Color = "red";    _openDropdown = null; }
+    private void ClearColor(ProductRow row){ row.Color = null;     _openDropdown = null; }
+
+    private void BulkGreen()  => ApplyBulk("green");
+    private void BulkYellow() => ApplyBulk("yellow");
+    private void BulkRed()    => ApplyBulk("red");
+    private void BulkWhite()  => ApplyBulk(null);
+    private void ApplyBulk(string? color) { foreach (var r in _selected) r.Color = color; }
+
+    private void BulkDelete()
+    {
+        foreach (var row in _selected.ToList())
+            Rows.Remove(row);
+        _selected.Clear();
+    }
+
+    private void AddRow()
+    {
+        Rows.Add(new ProductRow
+        {
+            Product = new Product
+            {
+                OctopusId = 0, WebId = 0, WebTitle = "",
+                PdfTitle = "", OctopusTitle = "", Available = 0, Category = ""
+            }
+        });
+    }
+
+    private void DragStart(ProductRow row) { _draggingRow = row; _dragOverRow = null; }
+
+    private void DragOver(ProductRow target)
+    {
+        if (_draggingRow == null || _draggingRow == target || _dragOverRow == target) return;
+        _dragOverRow = target;
+        var from = Rows.IndexOf(_draggingRow);
+        var to   = Rows.IndexOf(target);
+        if (from < 0 || to < 0) return;
+        Rows.RemoveAt(from);
+        Rows.Insert(to, _draggingRow);
+    }
+
+    private void DragEnd() { _draggingRow = null; _dragOverRow = null; }
+
+    private static string RowClass(ProductRow row) => row.Color switch
+    {
+        "green"  => "row-green",
+        "yellow" => "row-yellow",
+        "red"    => "row-red",
+        _        => ""
+    };
+
+    private static string? RowStyle(ProductRow row) => row.Color switch
+    {
+        "green" or "yellow" or "red" or null => null,
+        _ => $"background-color: {row.Color}"
+    };
+
+    private static string ColorHex(ProductRow row) => row.Color switch
+    {
+        "green"  => "#4caf50",
+        "yellow" => "#ffeb3b",
+        "red"    => "#f44336",
+        null     => "#ddd",
+        _        => row.Color
+    };
+}
