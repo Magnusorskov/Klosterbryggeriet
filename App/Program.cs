@@ -10,6 +10,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddScoped<OctopusService>();
+builder.Services.AddScoped<HostedShopService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
