@@ -1,81 +1,35 @@
 @page "/"
-@using BlazorApp.Services
-@rendermode InteractiveServer
 
-@inject ICsvUploadService CsvUploadService
+<PageTitle>Klosterbryggeriet</PageTitle>
 
-<PageTitle>Importer CSV</PageTitle>
+<section class="overview">
+    <p class="overview-eyebrow">Oversigt</p>
+    <h1 class="overview-title">Velkommen til Klosterbryggeriet</h1>
+    <p class="overview-lede">Vælg et af værktøjerne nedenfor for at komme i gang.</p>
 
-<h1>Importer CSV</h1>
+    <hr class="overview-divider" />
 
-<InputFile id="fileInput" OnChange="HandleFileSelected" accept=".csv" style="display:none" />
-<label for="fileInput" style="cursor:pointer; padding:6px 12px; border:1px solid #ccc; border-radius:4px;">
-    Vælg CSV-fil
-</label>
+    <div class="overview-grid">
+        <article class="overview-card">
+            <span class="overview-card-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m-6 3.75 3 3m0 0 3-3m-3 3V1.5m6 9h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
+                </svg>
+            </span>
+            <h2 class="overview-card-title">Importer CSV</h2>
+            <p class="overview-card-desc">Upload en Octopus-eksport for at opdatere produkternes tilgængelighed og lagerstatus.</p>
+            <a class="overview-card-link" href="importer-csv">Gå til import <span aria-hidden="true">→</span></a>
+        </article>
 
-@if (selectedFile is not null)
-{
-    <p>Valgt fil: <strong>@selectedFile.Name</strong></p>
-}
-
-<button @onclick="UploadCsv" disabled="@(selectedFile is null || isUploading)">
-    @(isUploading ? "Uploader..." : "Upload")
-</button>
-
-@if (successMessage is not null)
-{
-    <p style="color: green;">@successMessage</p>
-}
-
-@if (errorMessage is not null)
-{
-    <p style="color: red;">@errorMessage</p>
-}
-
-@code {
-    private IBrowserFile? selectedFile;
-    private bool isUploading;
-    private string? successMessage;
-    private string? errorMessage;
-
-    private void HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
-        {
-            selectedFile = null;
-            errorMessage = "Kun CSV-filer er tilladt.";
-            successMessage = null;
-            return;
-        }
-
-        selectedFile = file;
-        errorMessage = null;
-        successMessage = null;
-    }
-
-    private async Task UploadCsv()
-    {
-        if (selectedFile is null) return;
-
-        isUploading = true;
-        errorMessage = null;
-        successMessage = null;
-
-        try
-        {
-            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
-            successMessage = $"{selectedFile.Name} blev uploadet.";
-            selectedFile = null;
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Fejl under upload: {ex.Message}";
-        }
-        finally
-        {
-            isUploading = false;
-        }
-    }
-}
+        <article class="overview-card">
+            <span class="overview-card-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+                </svg>
+            </span>
+            <h2 class="overview-card-title">Prisliste</h2>
+            <p class="overview-card-desc">Gennemse og eksportér den aktuelle prisliste med produkter, kategorier og priser som PDF.</p>
+            <a class="overview-card-link" href="prisliste">Se prisliste <span aria-hidden="true">→</span></a>
+        </article>
+    </div>
+</section>
