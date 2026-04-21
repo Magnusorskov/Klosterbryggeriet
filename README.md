@@ -26,16 +26,55 @@ Klosterbryggeriet/
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/products/docker-desktop)
 
-### Run the application
+### First-time setup
+Run these commands once after cloning the repo:
+
+```bash
+make setup   # configure git hooks (conventional commits)
+make init    # start containers, apply migrations, seed the database
+```
+
+`make init` will:
+1. Build and start the `app` and `db` services via Docker Compose
+2. Wait for MySQL to be reachable
+3. Apply all EF Core migrations
+4. Seed the database with product data from `App/Data/product_datafill.sql`
+
+Once it finishes, the app is available at `http://localhost:5008` and the database is exposed on `localhost:3308`.
+
+### Day-to-day development
+
+You have two options depending on what you need:
+
+**Option A — full Docker stack (`make run`)**
+Runs both the app and the database in Docker. Best when you want a clean, production-like environment. No hot reload.
 ```bash
 make run
 ```
-The app will be available at `http://localhost:5008`.
 
-### Git hooks
-After cloning, run this once to enable shared git hooks (e.g. conventional commit message validation):
+**Option B — hot reload (`make watch`)** *(recommended for development)*
+Starts only the database in Docker and runs the Blazor app locally with `dotnet watch`, so code changes reload automatically.
 ```bash
-make setup
+make watch
+```
+The app connects to the DB on `localhost:3308` using the connection string in `App/appsettings.json`.
+
+### After pulling new changes
+If a teammate added a migration, apply it before running the app:
+```bash
+make db-update
+```
+
+### Creating a migration
+After changing an entity or `DbContext`:
+```bash
+make migrate name=DescribeYourChange
+make db-update
+```
+
+### Running tests
+```bash
+make test
 ```
 
 ## Make commands

@@ -16,6 +16,9 @@ build:
 	dotnet build Klosterbryggeriet.slnx --configuration Release
 
 watch:
+	docker compose up -d db
+	@echo "Waiting for database..."
+	@until docker compose exec -T db mysqladmin ping -uroot -prootpassword --silent 2>/dev/null; do sleep 2; done
 	dotnet watch --project App/BlazorApp.csproj
 
 test:
