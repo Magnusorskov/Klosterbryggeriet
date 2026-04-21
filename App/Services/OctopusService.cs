@@ -52,14 +52,14 @@ public class OctopusService
         foreach (var dbProduct in dbProducts)
         {
             var pairItem = pairList.First(p => p.OctopusId == dbProduct.OctopusId);
-            await _logger.LogProductChange
-                (
-                    dbProduct,
-                    "Available",
-                    dbProduct.Available.ToString(),
-                    pairItem.Available.ToString(), 
-                    "int");
-            
+            var oldStatus = dbProduct.Status;
+            var newStatus = Product.StatusFor(pairItem.Available);
+
+            if (oldStatus != newStatus)
+            {
+                await _logger.LogProductChange(dbProduct, oldStatus, newStatus);
+            }
+
             dbProduct.Available = pairItem.Available;
         }
 
