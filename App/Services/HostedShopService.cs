@@ -18,12 +18,13 @@ namespace BlazorApp.Services
             try 
             {
 
-                //Env.Load();
+                Env.Load();
 
-                //string apiUser = Env.GetString("SHOP_API_USER");
-                //string apiPass = Env.GetString("SHOP_API_PASS");
-                string apiUser = "klosterapi7455@klosterapi.dk";
-                string apiPass = "Klosterapi2026";
+                string apiUser = Env.GetString("SHOP_API_USER");
+                string apiPass = Env.GetString("SHOP_API_PASS");
+                //TIl TEST - kan ikke få env til at blive læst korrekt i testmiljøet - så her har jeg skrevet det direkte ind. (HUSK) udkommentering af ovenstående
+                //string apiUser = "IndsætDetKorrekteBrugernavn";
+                //string apiPass = "IndsætDetkorrektPassword";
 
                 if (string.IsNullOrEmpty(apiUser))
                 {
