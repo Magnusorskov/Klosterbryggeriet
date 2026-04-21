@@ -13,145 +13,145 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
     {
         _fixture = fixture;
     }
-    
+
     public Task InitializeAsync() => Task.CompletedTask;
-    
+
     public async Task DisposeAsync()
     {
-        // Clean up data between tests so they stay isolated
         await using var db = _fixture.CreateDbContext();
         db.LogEntries.RemoveRange(db.LogEntries);
         db.Products.RemoveRange(db.Products);
         await db.SaveChangesAsync();
     }
 
-    private async Task<Product> TriggerLogEvent_ProductNotChanged()
+    private static Product BuildProduct(int octopusId, int available, string pdfTitle = "empty") => new()
     {
-        // Arrange
-        var product = new Product
-        {
-            OctopusId = 14500,
-            WebId = 0, // default value since not relevant for test case
-            WebTitle = "empty", // default value since not relevant for test case
-            PdfTitle = "empty", // default value since not relevant for test case
-            OctopusTitle = "empty", // default value since not relevant for test case
-            Available = -500,
-            KegCollar = 0, // default value since not relevant for test case
-            Str = 0.0, // default value since not relevant for test case
-            Alcohol = 0.0, // default value since not relevant for test case
-            PricePrUnit = 0.0, // default value since not relevant for test case
-            Category = "undefined", // default value since not relevant for test case
-            VariantId1 = 0, // default value since not relevant for test case
-            VariantId2 = 0 // default value since not relevant for test case
-        };
+        OctopusId = octopusId,
+        WebId = 0,
+        WebTitle = "empty",
+        PdfTitle = pdfTitle,
+        OctopusTitle = "empty",
+        Available = available,
+        KegCollar = 0,
+        Str = 0.0,
+        Alcohol = 0.0,
+        PricePrUnit = 0.0,
+        Category = "undefined",
+        VariantId1 = 0,
+        VariantId2 = 0
+    };
 
-        await using (var db = _fixture.CreateDbContext())
-        {
-            await db.Products.AddAsync(product);
-            await db.SaveChangesAsync();
-        }
-
-        var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
-        await using (var db = _fixture.CreateDbContext())
-        {
-            var service = new OctopusService(db);
-            await service.UpdateAvailableFromOctopusCsv(testFile);
-        }
-
-        return product;
-    }
-    private async Task<Product> TriggerLogEvent_ProductChanged()
+    private async Task SeedProduct(Product product)
     {
-        // Arrange
-        var product = new Product
-        {
-            OctopusId = 14500,
-            WebId = 0, // default value since not relevant for test case
-            WebTitle = "empty", // default value since not relevant for test case
-            PdfTitle = "empty", // default value since not relevant for test case
-            OctopusTitle = "empty", // default value since not relevant for test case
-            Available = -1,
-            KegCollar = 0, // default value since not relevant for test case
-            Str = 0.0, // default value since not relevant for test case
-            Alcohol = 0.0, // default value since not relevant for test case
-            PricePrUnit = 0.0, // default value since not relevant for test case
-            Category = "undefined", // default value since not relevant for test case
-            VariantId1 = 0, // default value since not relevant for test case
-            VariantId2 = 0 // default value since not relevant for test case
-        };
-
-        await using (var db = _fixture.CreateDbContext())
-        {
-            await db.Products.AddAsync(product);
-            await db.SaveChangesAsync();
-        }
-
-        var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
-        await using (var db = _fixture.CreateDbContext())
-        {
-            var service = new OctopusService(db);
-            await service.UpdateAvailableFromOctopusCsv(testFile);
-        }
-
-        return product;
+        await using var db = _fixture.CreateDbContext();
+        await db.Products.AddAsync(product);
+        await db.SaveChangesAsync();
     }
-    
-    [Fact]
-    public async Task LogProductChange_Default()
-    {
-        Product product = await TriggerLogEvent_ProductChanged();
 
-        await using (var db = _fixture.CreateDbContext())
-        {
-            var foundEntries = await db.LogEntries.ToListAsync();
-            Assert.Single(foundEntries);
-            
-            var entry = foundEntries[0];
-            Assert.Equal(product.OctopusId, entry.OctopusId);
-            Assert.Equal("int", entry.ValueType);
-            Assert.Equal("Available",entry.ColumnName);
-            Assert.Equal(product.PdfTitle, entry.ProductName);
-            Assert.Equal(product.Available.ToString(), entry.PreviousValue);
-            Assert.Equal("-500", entry.NewValue);
-            
-            
-        }
-    }
 
     [Fact]
-    public async Task GetLogEntries_Default()
+    public async Task LogProductChange_WritesEntry_WithCorrectFields()
     {
-        Product product = await TriggerLogEvent_ProductChanged(); 
+        var product = BuildProduct(14500, 100, pdfTitle: "Klosterbryg");
+        await SeedProduct(product);
+
         await using (var db = _fixture.CreateDbContext())
         {
             var service = new LoggerService(db);
-            var foundEntries = await service.GetLogEntries();
-            Assert.Single(foundEntries);
-            Assert.Equal(product.OctopusId, foundEntries[0].OctopusId);
-            
+            await service.LogProductChange(product, ProductStatus.Available, ProductStatus.SoldOut);
         }
-        
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var entries = await db.LogEntries.ToListAsync();
+            Assert.Single(entries);
+            var entry = entries[0];
+            Assert.Equal(14500, entry.OctopusId);
+            Assert.Equal("Klosterbryg", entry.ProductName);
+            Assert.Equal(ProductStatus.Available, entry.PreviousStatus);
+            Assert.Equal(ProductStatus.SoldOut, entry.NewStatus);
+        }
     }
 
     [Fact]
-    public async Task GetLogEntries_NoChangesResultsInNoLogs()
+    public async Task GetLogEntries_ReturnsAllLoggedEntries()
     {
-        Product product = await TriggerLogEvent_ProductNotChanged(); 
+        var product = BuildProduct(14500, 100);
+        await SeedProduct(product);
+
         await using (var db = _fixture.CreateDbContext())
         {
             var service = new LoggerService(db);
-            var foundEntries = await service.GetLogEntries();
-            Assert.Empty(foundEntries);
+            await service.LogProductChange(product, ProductStatus.Available, ProductStatus.SoldOut);
+
+            var entries = await service.GetLogEntries();
+            Assert.Single(entries);
+            Assert.Equal(14500, entries[0].OctopusId);
         }
     }
 
-    /**
-    * Helper method for mocking the frontend passing a file to the
-    * OctopusCsvToEntities method
-    */
-    private FileStream GetFileFromPath(string filePath)
+
+    [Fact]
+    public async Task OctopusCsv_AvailableToSoldOut_LogsOneTransition()
     {
-        return File.OpenRead(filePath);
+        // DB has Available=100 (status = Available). CSV sets Available=-500 (status = SoldOut).
+        var product = BuildProduct(14500, 100);
+        await SeedProduct(product);
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new OctopusService(db);
+            await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
+        }
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var entries = await db.LogEntries.ToListAsync();
+            Assert.Single(entries);
+            Assert.Equal(14500, entries[0].OctopusId);
+            Assert.Equal(ProductStatus.Available, entries[0].PreviousStatus);
+            Assert.Equal(ProductStatus.SoldOut, entries[0].NewStatus);
+        }
     }
-    
+
+    [Fact]
+    public async Task OctopusCsv_StaysSoldOut_LogsNothing()
+    {
+        var product = BuildProduct(14500, -1);
+        await SeedProduct(product);
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new OctopusService(db);
+            await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
+        }
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var entries = await db.LogEntries.ToListAsync();
+            Assert.Empty(entries);
+        }
+    }
+
+    [Fact]
+    public async Task OctopusCsv_NoMatchingProductInDb_LogsNothing()
+    {
+        // Product in DB has OctopusId 100, CSV only references 14500.
+        var product = BuildProduct(100, 50);
+        await SeedProduct(product);
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new OctopusService(db);
+            await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
+        }
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var entries = await db.LogEntries.ToListAsync();
+            Assert.Empty(entries);
+        }
+    }
+
+    private FileStream GetFileFromPath(string filePath) => File.OpenRead(filePath);
 }
