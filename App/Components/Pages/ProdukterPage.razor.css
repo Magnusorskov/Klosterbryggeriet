@@ -125,7 +125,27 @@
 
 .pill-group {
     display: flex;
+    align-items: center;
     gap: 0.375rem;
+}
+
+.pill-group-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #a89578;
+    padding-right: 0.15rem;
+    user-select: none;
+}
+
+.filter-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: rgba(109, 68, 35, 0.18);
+    margin: 0 0.15rem;
+    flex-shrink: 0;
 }
 
 .pill {
@@ -404,6 +424,45 @@
     flex-shrink: 0;
 }
 
+/* InUse / HalfKolli cells */
+.use-pill {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.use-on {
+    background: #F1F8F1;
+    color: #2E7D32;
+    border-color: #C8E6C9;
+}
+
+.use-off {
+    background: #f1ebe0;
+    color: #8a7356;
+    border-color: rgba(109, 68, 35, 0.14);
+}
+
+.half-pill {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    background: rgba(166, 95, 43, 0.1);
+    color: #a65f2b;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.chip-empty-cell {
+    color: #a89578;
+    font-size: 0.85rem;
+}
+
 /* Category chip */
 .cat-chip {
     display: inline-block;
@@ -588,6 +647,58 @@
     color: #c04033;
     font-size: 0.85rem;
     margin: 0 0 0.75rem;
+}
+
+/* ── Toggle rows (bool settings) ─────────────────────────────────────────── */
+.toggle-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem 0 1rem;
+    margin: 0 0 0.5rem;
+    border-top: 1px solid rgba(109, 68, 35, 0.1);
+}
+
+.toggle-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+
+.toggle-row:hover {
+    background: #faf5ec;
+}
+
+.toggle-row input[type="checkbox"] {
+    margin-top: 0.2rem;
+    width: 16px;
+    height: 16px;
+    accent-color: #a65f2b;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toggle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.toggle-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #221812;
+}
+
+.toggle-hint {
+    font-size: 0.8rem;
+    color: #8a7356;
+    line-height: 1.4;
 }
 
 .modal-actions {

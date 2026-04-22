@@ -50,11 +50,23 @@
                 }
             </select>
 
-            <div class="pill-group">
+            <div class="pill-group" role="group" aria-label="Lagerstatus">
+                <span class="pill-group-label">Lager</span>
                 @foreach (var s in _statusOptions)
                 {
                     <button class="pill @(_statusFilter == s ? "pill-active" : "")"
                             @onclick="() => _statusFilter = s">@s</button>
+                }
+            </div>
+
+            <span class="filter-divider" aria-hidden="true"></span>
+
+            <div class="pill-group" role="group" aria-label="I brug">
+                <span class="pill-group-label">Status</span>
+                @foreach (var s in _inUseOptions)
+                {
+                    <button class="pill @(_inUseFilter == s ? "pill-active" : "")"
+                            @onclick="() => _inUseFilter = s">@s</button>
                 }
             </div>
 
@@ -203,6 +215,17 @@
                                 </td>
                                 <td class="prod-cell">@(p.VariantId1 == 0 ? "—" : p.VariantId1.ToString())</td>
                                 <td class="prod-cell">@(p.VariantId2 == 0 ? "—" : p.VariantId2.ToString())</td>
+                                <td class="prod-cell">
+                                    <span class="use-pill @(p.InUse ? "use-on" : "use-off")">
+                                        @(p.InUse ? "I brug" : "Ikke i brug")
+                                    </span>
+                                </td>
+                                <td class="prod-cell">
+                                    @if (p.HalfKolli)
+                                    { <span class="half-pill">Halv kasse</span> }
+                                    else
+                                    { <span class="chip-empty-cell">—</span> }
+                                </td>
                                 <td class="prod-cell prod-cell-actions">
                                     <button class="edit-btn" @onclick="() => OpenEdit(p)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -309,6 +332,23 @@
             </div>
         </div>
 
+        <div class="toggle-group">
+            <label class="toggle-row">
+                <input type="checkbox" @bind="_editing.InUse" />
+                <span class="toggle-text">
+                    <span class="toggle-title">I brug</span>
+                    <span class="toggle-hint">Produktet vises på prislisten og opdateres på hjemmesiden.</span>
+                </span>
+            </label>
+            <label class="toggle-row">
+                <input type="checkbox" @bind="_editing.HalfKolli" />
+                <span class="toggle-text">
+                    <span class="toggle-title">Halv kasse tilgængelig</span>
+                    <span class="toggle-hint">Tilføjer «*» til Kasse/Kolli på PDF'en — kunden kan bestille en halv kasse.</span>
+                </span>
+            </label>
+        </div>
+
         @if (!string.IsNullOrEmpty(_editError))
         {
             <p class="field-error">@_editError</p>
@@ -332,6 +372,8 @@
     private string _catFilter = "Alle";
     private string _statusFilter = "Alle";
     private readonly string[] _statusOptions = ["Alle", "Tilgængelig", "Udsolgt"];
+    private string _inUseFilter = "Alle";
+    private readonly string[] _inUseOptions = ["Alle", "I brug", "Ikke i brug"];
     private HashSet<string> _missingFilters = [];
     private bool _missingOpen;
 
@@ -365,6 +407,8 @@
         ("PricePrUnit",  "Pris/enhed",    90),
         ("VariantId1",   "Variant 1",     80),
         ("VariantId2",   "Variant 2",     80),
+        ("InUse",        "I brug",        90),
+        ("HalfKolli",    "Halv kasse",    100),
     ];
 
     private static readonly (string Key, string Label, Func<Product, bool> Check)[] MissingOptions =
@@ -413,6 +457,11 @@
         else if (_statusFilter == "Udsolgt")
             q = q.Where(p => p.Available <= Product.SoldOutThreshold);
 
+        if (_inUseFilter == "I brug")
+            q = q.Where(p => p.InUse);
+        else if (_inUseFilter == "Ikke i brug")
+            q = q.Where(p => !p.InUse);
+
         if (_missingFilters.Count > 0)
         {
             var checks = MissingOptions.Where(o => _missingFilters.Contains(o.Key)).ToArray();
@@ -442,6 +491,8 @@
             "PricePrUnit"  => OrderByKey(p => p.PricePrUnit),
             "VariantId1"   => OrderByKey(p => p.VariantId1),
             "VariantId2"   => OrderByKey(p => p.VariantId2),
+            "InUse"        => OrderByKey(p => p.InUse),
+            "HalfKolli"    => OrderByKey(p => p.HalfKolli),
             _              => src,
         };
     }
@@ -479,6 +530,8 @@
             Category     = p.Category,
             VariantId1   = p.VariantId1,
             VariantId2   = p.VariantId2,
+            InUse        = p.InUse,
+            HalfKolli    = p.HalfKolli,
         };
         _editError = "";
     }

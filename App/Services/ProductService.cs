@@ -46,6 +46,8 @@ public class ProductService
         existing.Category     = update.Category;
         existing.VariantId1   = update.VariantId1;
         existing.VariantId2   = update.VariantId2;
+        existing.InUse        = update.InUse;
+        existing.HalfKolli    = update.HalfKolli;
 
         await _db.SaveChangesAsync();
     }
