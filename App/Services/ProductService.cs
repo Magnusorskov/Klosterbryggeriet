@@ -18,8 +18,13 @@ public class ProductService
         return _db.Products.ToListAsync();
     }
 
+    public Task<List<Product>> ListInUseProducts()
+    {
+        return _db.Products.Where(p => p.InUse).ToListAsync();
+    }
+
     public async Task<Dictionary<string, List<Product>>> MapProductsByCategory() {
-        var products = await ListProducts();
+        var products = await ListInUseProducts();
         return products.GroupBy(p => p.Category)
             .ToDictionary(g => g.Key, g => g.ToList());
     }

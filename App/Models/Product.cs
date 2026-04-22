@@ -41,9 +41,13 @@ public class Product
     public double PricePrUnit { get; set; } = 0.0;
     
     public required string Category { get; set; }
-    
+
     public int VariantId1 { get; set; }
     public int VariantId2 { get; set; }
+
+    // Controls whether the product is shown on the generated PDF and
+    // considered when updating the website. Defaults to true.
+    public bool InUse { get; set; } = true;
     
 
     // private const double TOLERANCE = 1e-6; // 0.000001 
