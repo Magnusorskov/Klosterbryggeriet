@@ -1,0 +1,23 @@
+{
+  "ExtendedData": {
+    "inputs": [
+      "https://api.hostedshop.io/service.wsdl"
+    ],
+    "collectionTypes": [
+      "System.Array",
+      "System.Collections.Generic.Dictionary`2"
+    ],
+    "namespaceMappings": [
+      "*, WebService"
+    ],
+    "references": [
+      "Microsoft.EntityFrameworkCore, {Microsoft.EntityFrameworkCore, 9.0.0}",
+      "Microsoft.EntityFrameworkCore.Abstractions, {Microsoft.EntityFrameworkCore.Abstractions, 9.0.0}",
+      "Microsoft.EntityFrameworkCore.Relational, {Microsoft.EntityFrameworkCore.Relational, 9.0.0}",
+      "MySqlConnector, {MySqlConnector, 2.4.0}",
+      "Pomelo.EntityFrameworkCore.MySql, {Pomelo.EntityFrameworkCore.MySql, 9.0.0}"
+    ],
+    "targetFramework": "net10.0",
+    "typeReuseMode": "All"
+  }
+}
