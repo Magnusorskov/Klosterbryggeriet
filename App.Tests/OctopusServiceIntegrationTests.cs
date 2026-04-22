@@ -68,49 +68,6 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
     }
 
     [Fact]
-    public async Task UpdateAvailableFromOctopusCsv_InUseFalseProductNotChanged()
-    {
-        // Arrange
-        var product = new Product
-        {
-            OctopusId = 14500,
-            WebId = 0,
-            WebTitle = "empty",
-            PdfTitle = "empty",
-            OctopusTitle = "empty",
-            Available = -1,
-            KegCollar = 0,
-            Str = 0.0,
-            Alcohol = 0.0,
-            PricePrUnit = 0.0,
-            Category = "undefined",
-            VariantId1 = 0,
-            VariantId2 = 0,
-            InUse = false,
-        };
-
-        await using (var db = _fixture.CreateDbContext())
-        {
-            await db.Products.AddAsync(product);
-            await db.SaveChangesAsync();
-        }
-
-        var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
-        await using (var db = _fixture.CreateDbContext())
-        {
-            var service = new OctopusService(db);
-            await service.UpdateAvailableFromOctopusCsv(testFile);
-        }
-
-        await using (var db = _fixture.CreateDbContext())
-        {
-            var saved = await db.Products.FindAsync(14500);
-            Assert.NotNull(saved);
-            Assert.Equal(-1, saved.Available);
-        }
-    }
-
-    [Fact]
     public async Task UpdateAvailableFromOctopusCsv_ExcludedProductNotChanged()
     {
         // Arrange

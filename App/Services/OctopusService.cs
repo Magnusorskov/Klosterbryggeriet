@@ -46,7 +46,7 @@ public class OctopusService
 
         var ids = pairList.Select(pair => pair.OctopusId).ToList();
         var dbProducts = await _db.Products
-            .Where(p => ids.Contains(p.OctopusId) && p.InUse)
+            .Where(p => ids.Contains(p.OctopusId))
             .ToListAsync();
 
         foreach (var dbProduct in dbProducts)
