@@ -297,6 +297,9 @@ h1:focus {
     flex: 0 0 auto;
     white-space: nowrap;
 }
+/* Keep the "*" slot reserved so numbers in the Kasse/Kolli column stay
+   aligned regardless of HalfKolli. */
+.cell-inline .suffix-hidden { visibility: hidden; }
 .halfkolli-toggle {
     position: absolute;
     right: -16px;
@@ -545,9 +548,6 @@ tr:hover .row-color-ctrl { opacity: 1; }
     outline: 1px solid #f0c040;
 }
 
-/* Print-only footer shown on every printed page via position: fixed. */
-.print-page-footer { display: none; }
-
 /* ── Print styles ─────────────────────────────────────────────────────── */
 
 @media print {
@@ -564,6 +564,11 @@ tr:hover .row-color-ctrl { opacity: 1; }
         padding: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
+        background: #ffffff !important;
+    }
+
+    html, body {
+        background: #ffffff !important;
     }
 
     .price-list-preview {
@@ -585,22 +590,18 @@ tr:hover .row-color-ctrl { opacity: 1; }
     .row-green  { background-color: #c8e6c9 !important; }
     .row-yellow { background-color: #fff9c4 !important; }
     .row-red    { background-color: #ffcdd2 !important; }
-
-    /* Footer repeated on every printed page via position: fixed */
-    .print-page-footer {
-        display: block;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: right;
-        font-size: 10px;
-        border-top: 1px solid #000;
-        padding-top: 4px;
-    }
 }
 
+/* A4 pages with a reserved bottom margin. The "Alle priser er + moms, + pant"
+   line is rendered by the browser in the bottom-right margin box on every
+   printed page, so content never overlaps it. */
 @page {
     size: A4;
-    margin: 1.5cm 1.5cm 2.2cm 1.5cm;
+    margin: 1.5cm 1.5cm 2cm 1.5cm;
+    @bottom-right {
+        content: "Alle priser er + moms, + pant";
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+        font-weight: bold;
+    }
 }

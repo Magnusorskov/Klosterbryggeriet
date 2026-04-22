@@ -6,31 +6,86 @@
 
 <PageTitle>Importer CSV</PageTitle>
 
-<h1>Importer CSV</h1>
+<section class="csv-page">
+    <header class="csv-header">
+        <p class="csv-eyebrow">Import</p>
+        <h1 class="csv-title">Importer CSV</h1>
+        <p class="csv-lede">Upload en eksportfil fra Octopus for at synkronisere produkternes tilgængelighed.</p>
+    </header>
 
-<InputFile id="fileInput" OnChange="HandleFileSelected" accept=".csv" style="display:none" />
-<label for="fileInput" style="cursor:pointer; padding:6px 12px; border:1px solid #ccc; border-radius:4px;">
-    Vælg CSV-fil
-</label>
+    <label class="dropzone">
+        <InputFile OnChange="HandleFileSelected" accept=".csv"
+                   style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:1;" />
+        <div class="dropzone-content">
+            <span class="dropzone-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+            </span>
+            <p class="dropzone-title">Træk og slip din CSV-fil her</p>
+            <p class="dropzone-sub">eller klik for at vælge en fil fra din computer</p>
+            <span class="dropzone-pill">Understøttede formater: .csv</span>
+        </div>
+    </label>
 
-@if (selectedFile is not null)
-{
-    <p>Valgt fil: <strong>@selectedFile.Name</strong></p>
-}
+    @if (selectedFile is not null)
+    {
+        <div class="selected-card">
+            <div class="selected-info">
+                <span class="file-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                        <polyline points="13 2 13 9 20 9" />
+                    </svg>
+                </span>
+                <div class="selected-text">
+                    <p class="selected-label">Valgt fil</p>
+                    <p class="selected-name">@selectedFile.Name</p>
+                </div>
+            </div>
+            <button class="btn-upload" @onclick="UploadCsv" disabled="@isUploading">
+                @if (isUploading)
+                {
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span>Uploader...</span>
+                }
+                else
+                {
+                    <span>Upload</span>
+                }
+            </button>
+        </div>
+    }
 
-<button @onclick="UploadCsv" disabled="@(selectedFile is null || isUploading)">
-    @(isUploading ? "Uploader..." : "Upload")
-</button>
+    @if (successMessage is not null)
+    {
+        <div class="status-card status-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+            </svg>
+            @successMessage
+        </div>
+    }
 
-@if (successMessage is not null)
-{
-    <p style="color: green;">@successMessage</p>
-}
+    @if (errorMessage is not null)
+    {
+        <div class="status-card status-error">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            @errorMessage
+        </div>
+    }
 
-@if (errorMessage is not null)
-{
-    <p style="color: red;">@errorMessage</p>
-}
+    <div class="info-card">
+        <strong>Eksportér fra Octopus:</strong>
+        <span>Gå til Produkter → Eksportér → Vælg CSV-format og download filen.</span>
+    </div>
+</section>
 
 @code {
     private IBrowserFile? selectedFile;

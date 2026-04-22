@@ -28,4 +28,27 @@ public class ProductService
         return products.GroupBy(p => p.Category)
             .ToDictionary(g => g.Key, g => g.ToList());
     }
+
+    public async Task UpdateAsync(Product update)
+    {
+        var existing = await _db.Products.FindAsync(update.OctopusId);
+        if (existing == null) return;
+
+        existing.WebId        = update.WebId;
+        existing.WebTitle     = update.WebTitle;
+        existing.PdfTitle     = update.PdfTitle;
+        existing.OctopusTitle = update.OctopusTitle;
+        existing.Available    = update.Available;
+        existing.KegCollar    = update.KegCollar;
+        existing.Str          = update.Str;
+        existing.Alcohol      = update.Alcohol;
+        existing.PricePrUnit  = update.PricePrUnit;
+        existing.Category     = update.Category;
+        existing.VariantId1   = update.VariantId1;
+        existing.VariantId2   = update.VariantId2;
+        existing.InUse        = update.InUse;
+        existing.HalfKolli    = update.HalfKolli;
+
+        await _db.SaveChangesAsync();
+    }
 }
