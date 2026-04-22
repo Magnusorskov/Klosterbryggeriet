@@ -4,6 +4,7 @@ using BlazorApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlazorApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260421091335_AddCategoriesAndColumns")]
+    partial class AddCategoriesAndColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,9 +40,6 @@ namespace BlazorApp.Migrations
                     b.Property<string>("PriceLabel")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -83,19 +83,32 @@ namespace BlazorApp.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Approved")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ColumnName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("DateChanged")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("NewStatus")
-                        .HasColumnType("int");
+                    b.Property<string>("NewValue")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<int>("OctopusId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PreviousStatus")
-                        .HasColumnType("int");
+                    b.Property<string>("PreviousValue")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ValueType")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -121,12 +134,6 @@ namespace BlazorApp.Migrations
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<bool>("HalfKolli")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("InUse")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int?>("KegCollar")
                         .HasColumnType("int");
