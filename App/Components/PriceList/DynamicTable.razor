@@ -43,8 +43,23 @@
                 </td>
                 @foreach (var col in Columns)
                 {
-                    <td><input class="edit-cell text-center" value="@GetFieldValue(row.Product, col.FieldName)"
-                               @onchange="@(e => SetFieldValue(row.Product, col.FieldName, e.Value?.ToString()))" /></td>
+                    <td class="@CellClass(col.FieldName)">
+                        <div class="cell-inline">
+                            <input class="edit-cell text-right" value="@GetFieldValue(row.Product, col.FieldName)"
+                                   @onchange="@(e => SetFieldValue(row.Product, col.FieldName, e.Value?.ToString()))" />
+                            @if (col.FieldName == "KegCollar")
+                            {
+                                <span class="suffix @(row.Product.HalfKolli ? "" : "suffix-hidden")">*</span>
+                                <label class="halfkolli-toggle no-print" title="Halv kolli (*)">
+                                    <input type="checkbox" @bind="row.Product.HalfKolli" />
+                                </label>
+                            }
+                            else if (col.FieldName == "Alcohol")
+                            {
+                                <span class="suffix">%</span>
+                            }
+                        </div>
+                    </td>
                 }
                 <td><input class="edit-cell text-right" @bind="row.Product.PricePrUnit" /></td>
                 <td class="cell-status">
@@ -86,6 +101,13 @@
         "KegCollar" => p.KegCollar?.ToString() ?? "",
         "Str"       => p.Str.ToString(),
         "Alcohol"   => p.Alcohol.ToString(),
+        _           => ""
+    };
+
+    private static string CellClass(string fieldName) => fieldName switch
+    {
+        "KegCollar" => "cell-kasse",
+        "Alcohol"   => "cell-alcohol",
         _           => ""
     };
 
