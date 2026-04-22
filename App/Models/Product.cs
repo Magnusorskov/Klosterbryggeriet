@@ -1,9 +1,18 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BlazorApp.Models;
 
 public class Product
 {
+    public const int SoldOutThreshold = 30;
+
+    [NotMapped]
+    public ProductStatus Status => StatusFor(Available);
+
+    public static ProductStatus StatusFor(int available)
+        => available <= SoldOutThreshold ? ProductStatus.SoldOut : ProductStatus.Available;
+
     // Tidligere VareNr
     [Key]
     public required int OctopusId { get; set; }
