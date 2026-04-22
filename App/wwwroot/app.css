@@ -297,6 +297,9 @@ h1:focus {
     flex: 0 0 auto;
     white-space: nowrap;
 }
+/* Keep the "*" slot reserved so numbers in the Kasse/Kolli column stay
+   aligned regardless of HalfKolli. */
+.cell-inline .suffix-hidden { visibility: hidden; }
 .halfkolli-toggle {
     position: absolute;
     right: -16px;

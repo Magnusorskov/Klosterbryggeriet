@@ -47,12 +47,16 @@
                         <div class="cell-inline">
                             <input class="edit-cell text-right" value="@GetFieldValue(row.Product, col.FieldName)"
                                    @onchange="@(e => SetFieldValue(row.Product, col.FieldName, e.Value?.ToString()))" />
-                            <span class="suffix">@Suffix(col.FieldName, row.Product)</span>
                             @if (col.FieldName == "KegCollar")
                             {
+                                <span class="suffix @(row.Product.HalfKolli ? "" : "suffix-hidden")">*</span>
                                 <label class="halfkolli-toggle no-print" title="Halv kolli (*)">
                                     <input type="checkbox" @bind="row.Product.HalfKolli" />
                                 </label>
+                            }
+                            else if (col.FieldName == "Alcohol")
+                            {
+                                <span class="suffix">%</span>
                             }
                         </div>
                     </td>
@@ -104,13 +108,6 @@
     {
         "KegCollar" => "cell-kasse",
         "Alcohol"   => "cell-alcohol",
-        _           => ""
-    };
-
-    private static string Suffix(string fieldName, Product p) => fieldName switch
-    {
-        "KegCollar" => p.HalfKolli ? "*" : "",
-        "Alcohol"   => "%",
         _           => ""
     };
 
