@@ -41,12 +41,20 @@ public class Product
     public double PricePrUnit { get; set; } = 0.0;
     
     public required string Category { get; set; }
-    
+
     public int VariantId1 { get; set; }
     public int VariantId2 { get; set; }
-    
 
-    // private const double TOLERANCE = 1e-6; // 0.000001 
+    // Controls whether the product is shown on the generated PDF and
+    // considered when updating the website. Defaults to true.
+    public bool InUse { get; set; } = true;
+
+    // Half-kolli availability: when true, the PDF appends "*" to Kasse/Kolli
+    // and the price list explains that * means a half-kasse can be ordered.
+    public bool HalfKolli { get; set; } = false;
+
+
+    // private const double TOLERANCE = 1e-6; // 0.000001
     // protected bool Equals(Product other)
     // {
     //     return OctopusId == other.OctopusId

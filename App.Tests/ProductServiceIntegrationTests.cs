@@ -90,6 +90,33 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Assert.Equal(2, result["Soda"].Count);
     }
 
+    [Fact]
+    public async Task MapProductsByCategory_ExcludesProductsWhereInUseIsFalse()
+    {
+        // Arrange
+        var shown = CreateProduct(20, "Beer");
+        var hidden = CreateProduct(21, "Beer");
+        hidden.InUse = false;
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.Products.AddRangeAsync(shown, hidden);
+            await db.SaveChangesAsync();
+        }
+
+        // Act
+        Dictionary<string, List<Product>> result;
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new ProductService(db);
+            result = await service.MapProductsByCategory();
+        }
+
+        // Assert
+        Assert.Single(result["Beer"]);
+        Assert.Equal(20, result["Beer"][0].OctopusId);
+    }
+
     private static Product CreateProduct(int octopusId, string category)
     {
         return new Product

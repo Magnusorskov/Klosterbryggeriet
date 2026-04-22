@@ -280,6 +280,36 @@ h1:focus {
 .text-center { text-align: center; }
 .text-right  { text-align: right; }
 
+/* Inline cell with numeric input + unit suffix (e.g. "24*" / "6,5%") */
+.cell-kasse, .cell-alcohol { position: relative; }
+.cell-inline {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 1px;
+    width: 100%;
+}
+.cell-inline .edit-cell {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.cell-inline .suffix {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+.halfkolli-toggle {
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 50;
+}
+tr:hover .halfkolli-toggle { opacity: 1; }
+.halfkolli-toggle input { margin: 0; cursor: pointer; }
+
 /* Row colors */
 .row-green  { background-color: #c8e6c9; }
 .row-yellow { background-color: #fff9c4; }
@@ -515,6 +545,9 @@ tr:hover .row-color-ctrl { opacity: 1; }
     outline: 1px solid #f0c040;
 }
 
+/* Print-only footer shown on every printed page via position: fixed. */
+.print-page-footer { display: none; }
+
 /* ── Print styles ─────────────────────────────────────────────────────── */
 
 @media print {
@@ -557,9 +590,22 @@ tr:hover .row-color-ctrl { opacity: 1; }
     .row-green  { background-color: #c8e6c9 !important; }
     .row-yellow { background-color: #fff9c4 !important; }
     .row-red    { background-color: #ffcdd2 !important; }
+
+    /* Footer repeated on every printed page via position: fixed */
+    .print-page-footer {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: right;
+        font-size: 10px;
+        border-top: 1px solid #000;
+        padding-top: 4px;
+    }
 }
 
 @page {
     size: A4;
-    margin: 1.5cm;
+    margin: 1.5cm 1.5cm 2.2cm 1.5cm;
 }
