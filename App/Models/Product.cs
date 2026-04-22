@@ -48,9 +48,13 @@ public class Product
     // Controls whether the product is shown on the generated PDF and
     // considered when updating the website. Defaults to true.
     public bool InUse { get; set; } = true;
-    
 
-    // private const double TOLERANCE = 1e-6; // 0.000001 
+    // Half-kolli availability: when true, the PDF appends "*" to Kasse/Kolli
+    // and the price list explains that * means a half-kasse can be ordered.
+    public bool HalfKolli { get; set; } = false;
+
+
+    // private const double TOLERANCE = 1e-6; // 0.000001
     // protected bool Equals(Product other)
     // {
     //     return OctopusId == other.OctopusId

@@ -40,9 +40,22 @@
                     </div>
                     <input class="edit-cell" @bind="row.Product.PdfTitle" />
                 </td>
-                <td><input class="edit-cell text-center" @bind="row.Product.KegCollar" /></td>
+                <td class="cell-kasse">
+                    <div class="cell-inline">
+                        <input class="edit-cell text-right" @bind="row.Product.KegCollar" />
+                        <span class="suffix">@(row.Product.HalfKolli ? "*" : "")</span>
+                        <label class="halfkolli-toggle no-print" title="Halv kolli (*)">
+                            <input type="checkbox" @bind="row.Product.HalfKolli" />
+                        </label>
+                    </div>
+                </td>
                 <td><input class="edit-cell text-center" @bind="row.Product.Str" /></td>
-                <td><input class="edit-cell text-center" @bind="row.Product.Alcohol" /></td>
+                <td class="cell-alcohol">
+                    <div class="cell-inline">
+                        <input class="edit-cell text-right" @bind="row.Product.Alcohol" />
+                        <span class="suffix">%</span>
+                    </div>
+                </td>
                 <td><input class="edit-cell text-right" @bind="row.Product.PricePrUnit" /></td>
                 <td class="cell-status">
                     <input class="edit-cell" @bind="row.Status" />
