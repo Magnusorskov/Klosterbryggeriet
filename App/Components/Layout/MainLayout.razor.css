@@ -8,6 +8,7 @@
 
 main {
     flex: 1;
+    min-width: 0;  /* prevent wide children (e.g. the Produkter table) from pushing main past its flex-row slot */
     background-color: #f4efe7;
 }
 
@@ -56,9 +57,10 @@ main {
 
     .sidebar {
         width: 280px;
-        min-height: 100vh;
+        height: 100vh;
         position: sticky;
         top: 0;
+        align-self: flex-start;
         display: flex;
         flex-direction: column;
     }
