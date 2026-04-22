@@ -1,0 +1,220 @@
+/* ── Page layout ─────────────────────────────────────────────────────────── */
+h2 {
+    margin-bottom: 1rem;
+}
+
+.kategori-toolbar {
+    margin-bottom: 1rem;
+}
+
+.kategori-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.kategori-table th,
+.kategori-table td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.kategori-table th {
+    background: #f4f4f4;
+    font-weight: 600;
+}
+
+.kategori-table tr:hover {
+    background: #fafafa;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+button {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fff;
+    margin-right: 0.25rem;
+}
+
+button:hover {
+    background: #f0f0f0;
+}
+
+.btn-primary {
+    background: #1b6ec2;
+    color: #fff;
+    border-color: #1861ac;
+}
+
+.btn-primary:hover {
+    background: #155a9e;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: #fff;
+    border-color: #c82333;
+}
+
+.btn-danger:hover {
+    background: #b02030;
+}
+
+/* ── Modal ───────────────────────────────────────────────────────────────── */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+}
+
+.modal-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.75rem 2rem;
+    width: min(540px, 92vw);
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.modal-box h3 {
+    margin: 0 0 1.25rem;
+    font-size: 1.2rem;
+}
+
+.modal-box label {
+    display: block;
+    font-weight: 600;
+    margin: 1rem 0 0.25rem;
+    font-size: 0.9rem;
+}
+
+.hint {
+    font-weight: 400;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.form-input {
+    display: block;
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #1b6ec2;
+    box-shadow: 0 0 0 2px rgba(27,110,194,0.2);
+}
+
+/* ── Column builder ──────────────────────────────────────────────────────── */
+.columns-builder {
+    margin-top: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.col-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.col-row select {
+    flex: 0 0 200px;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.col-label {
+    flex: 1;
+}
+
+.btn-remove {
+    flex: 0 0 auto;
+    padding: 0.3rem 0.6rem;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-remove:hover {
+    background: #b02030;
+}
+
+.btn-add-col {
+    align-self: flex-start;
+    padding: 0.3rem 0.75rem;
+    background: #f4f4f4;
+    border: 1px dashed #aaa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.btn-add-col:hover {
+    background: #e8e8e8;
+}
+
+/* ── Form error ──────────────────────────────────────────────────────────── */
+.form-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+}
+
+/* ── Drag-and-drop ───────────────────────────────────────────────────────── */
+.col-drag {
+    width: 2rem;
+    text-align: center;
+    padding: 0.25rem !important;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #aaa;
+    font-size: 1.1rem;
+    user-select: none;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.row-dragging {
+    opacity: 0.4;
+}
+
+.row-drag-over {
+    border-top: 2px solid #1b6ec2;
+}
+
+/* ── Modal actions ───────────────────────────────────────────────────────── */
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    justify-content: flex-end;
+}

@@ -1,0 +1,294 @@
+@page "/admin/kategorier"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@rendermode InteractiveServer
+
+@inject CategoryService CategoryService
+
+<PageTitle>Kategorier</PageTitle>
+
+<h2>Kategorier</h2>
+
+@if (_loading)
+{
+    <p>Henter kategorier...</p>
+}
+else
+{
+    <div class="kategori-toolbar">
+        <button class="btn-primary" @onclick="ShowCreate">+ Ny kategori</button>
+    </div>
+
+    @if (_categories.Count == 0)
+    {
+        <p>Ingen kategorier fundet.</p>
+    }
+    else
+    {
+        <table class="kategori-table">
+            <thead>
+                <tr>
+                    <th class="col-drag"></th>
+                    <th>Navn</th>
+                    <th>Prismærke</th>
+                    <th>Ekstra kolonner</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in _categories)
+                {
+                    <tr class="@(_dragging == cat ? "row-dragging" : "") @(_dragOver == cat && _dragging != cat ? "row-drag-over" : "")"
+                        @ondragover:preventDefault
+                        @ondragover="() => OnDragOver(cat)"
+                        @ondrop="ClearDragState">
+                        <td class="col-drag">
+                            <span class="drag-handle" draggable="true"
+                                  @ondragstart="() => OnDragStart(cat)"
+                                  @ondragend="OnDragEnd">⠿</span>
+                        </td>
+                        <td>@cat.Name</td>
+                        <td>@cat.PriceLabel</td>
+                        <td>@string.Join(", ", cat.Columns.OrderBy(c => c.SortOrder).Select(c => c.DisplayLabel))</td>
+                        <td>
+                            <button @onclick="() => ShowEdit(cat)">Rediger</button>
+                            <button class="btn-danger" @onclick="() => ConfirmDelete(cat)">Slet</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@if (_showForm)
+{
+    <div class="modal-backdrop" @onclick="CloseForm"></div>
+    <div class="modal-box" @onclick:stopPropagation>
+        <h3>@(_editId == null ? "Ny kategori" : "Rediger kategori")</h3>
+
+        <label>Navn</label>
+        <input class="form-input" @bind="_formName" placeholder="f.eks. BELGIEN - NYT BRYGGERI" />
+
+        <label>Prismærke (vises i priskolonnen)</label>
+        <input class="form-input" @bind="_formPriceLabel" placeholder="f.eks. pr. flaske" />
+
+        <label>Ekstra kolonner <span class="hint">(mellem Navn og Pris)</span></label>
+        <div class="columns-builder">
+            @for (int i = 0; i < _formColumns.Count; i++)
+            {
+                var idx = i;
+                var col = _formColumns[idx];
+                <div class="col-row">
+                    <select @bind="col.FieldName" @bind:after="() => SyncLabel(col)">
+                        <option value="">— vælg felt —</option>
+                        @foreach (var (field, label) in CategoryService.AvailableFields)
+                        {
+                            <option value="@field">@label</option>
+                        }
+                        <option value="__custom__">Fritekst...</option>
+                    </select>
+
+                    @if (col.FieldName == "__custom__")
+                    {
+                        <input class="form-input col-label" @bind="col.DisplayLabel" placeholder="Kolonnetitel" />
+                    }
+                    else
+                    {
+                        <input class="form-input col-label" @bind="col.DisplayLabel" placeholder="Kolonnetitel" />
+                    }
+
+                    <button class="btn-remove" @onclick="() => RemoveColumn(idx)" title="Fjern">−</button>
+                </div>
+            }
+            <button class="btn-add-col" @onclick="AddColumn">+ Tilføj kolonne</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_formError))
+        {
+            <p class="form-error">@_formError</p>
+        }
+
+        <div class="modal-actions">
+            <button class="btn-primary" @onclick="SaveForm">Gem</button>
+            <button @onclick="CloseForm">Annuller</button>
+        </div>
+    </div>
+}
+
+@if (_deleteTarget != null)
+{
+    <div class="modal-backdrop" @onclick="CancelDelete"></div>
+    <div class="modal-box" @onclick:stopPropagation>
+        <h3>Slet kategori?</h3>
+        <p>Er du sikker på at du vil slette <strong>@_deleteTarget.Name</strong>?</p>
+        <div class="modal-actions">
+            <button class="btn-danger" @onclick="DeleteConfirmed">Slet</button>
+            <button @onclick="CancelDelete">Annuller</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Category> _categories = [];
+    private bool _loading = true;
+
+    // Form state
+    private bool    _showForm      = false;
+    private int?    _editId        = null;
+    private string  _formName      = "";
+    private string  _formPriceLabel = "pr. enhed";
+    private string  _formError     = "";
+
+    private List<CategoryColumn> _formColumns = [];
+
+    // Delete state
+    private Category? _deleteTarget;
+
+    // Drag-and-drop state
+    private Category? _dragging;
+    private Category? _dragOver;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _categories = await CategoryService.GetAllAsync();
+        _loading = false;
+    }
+
+    // ── Create ───────────────────────────────────────────────────────────────
+    private void ShowCreate()
+    {
+        _editId         = null;
+        _formName       = "";
+        _formPriceLabel = "pr. enhed";
+        _formColumns    = [];
+        _formError      = "";
+        _showForm       = true;
+    }
+
+    // ── Edit ─────────────────────────────────────────────────────────────────
+    private void ShowEdit(Category cat)
+    {
+        _editId         = cat.Id;
+        _formName       = cat.Name;
+        _formPriceLabel = cat.PriceLabel;
+        _formColumns    = cat.Columns
+            .OrderBy(c => c.SortOrder)
+            .Select(c => new CategoryColumn
+            {
+                FieldName    = c.FieldName,
+                DisplayLabel = c.DisplayLabel,
+                SortOrder    = c.SortOrder
+            }).ToList();
+        _formError = "";
+        _showForm  = true;
+    }
+
+    // ── Column builder ───────────────────────────────────────────────────────
+    private void AddColumn()
+    {
+        _formColumns.Add(new CategoryColumn { FieldName = "", DisplayLabel = "", SortOrder = _formColumns.Count });
+    }
+
+    private void RemoveColumn(int idx) => _formColumns.RemoveAt(idx);
+
+    private void SyncLabel(CategoryColumn col)
+    {
+        // Auto-fill display label when a known field is picked
+        var match = CategoryService.AvailableFields.FirstOrDefault(f => f.FieldName == col.FieldName);
+        if (match != default)
+            col.DisplayLabel = match.DisplayLabel;
+        else if (col.FieldName == "__custom__")
+            col.DisplayLabel = "";
+    }
+
+    // ── Save ─────────────────────────────────────────────────────────────────
+    private async Task SaveForm()
+    {
+        _formError = "";
+
+        if (string.IsNullOrWhiteSpace(_formName))
+        {
+            _formError = "Navn må ikke være tomt.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_formPriceLabel))
+        {
+            _formError = "Prismærke må ikke være tomt.";
+            return;
+        }
+
+        // Re-index sort order
+        for (int i = 0; i < _formColumns.Count; i++)
+            _formColumns[i].SortOrder = i + 1;
+
+        var category = new Category
+        {
+            Name       = _formName.Trim(),
+            PriceLabel = _formPriceLabel.Trim(),
+            Columns    = _formColumns
+        };
+
+        if (_editId == null)
+        {
+            await CategoryService.CreateAsync(category);
+        }
+        else
+        {
+            category.Id = _editId.Value;
+            await CategoryService.UpdateAsync(category);
+        }
+
+        CloseForm();
+        await Reload();
+    }
+
+    private void CloseForm() { _showForm = false; _formError = ""; }
+
+    // ── Drag-and-drop ────────────────────────────────────────────────────────
+    private void OnDragStart(Category cat)
+    {
+        _dragging = cat;
+        _dragOver = null;
+    }
+
+    private void OnDragOver(Category target)
+    {
+        if (_dragging == null || _dragging == target || _dragOver == target) return;
+        _dragOver = target;
+        var from = _categories.IndexOf(_dragging);
+        var to   = _categories.IndexOf(target);
+        if (from < 0 || to < 0) return;
+        _categories.RemoveAt(from);
+        _categories.Insert(to, _dragging);
+    }
+
+    // ondrop on <tr>: just clears visual state (fires before ondragend)
+    private void ClearDragState() { _dragging = null; _dragOver = null; }
+
+    // ondragend on <span>: always fires once at the end of any drag — saves the order
+    private async Task OnDragEnd()
+    {
+        _dragging = null;
+        _dragOver = null;
+        await CategoryService.SaveOrderAsync(_categories.Select(c => c.Id).ToList());
+    }
+
+    // ── Delete ───────────────────────────────────────────────────────────────
+    private void ConfirmDelete(Category cat) => _deleteTarget = cat;
+    private void CancelDelete()              => _deleteTarget = null;
+
+    private async Task DeleteConfirmed()
+    {
+        if (_deleteTarget == null) return;
+        await CategoryService.DeleteAsync(_deleteTarget.Id);
+        _deleteTarget = null;
+        await Reload();
+    }
+}

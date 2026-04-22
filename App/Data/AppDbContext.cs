@@ -9,4 +9,6 @@ public class AppDbContext : DbContext
 
     public DbSet<Product> Products { get; set; }
     public DbSet<LogEntry> LogEntries { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<CategoryColumn> CategoryColumns { get; set; }
 }
