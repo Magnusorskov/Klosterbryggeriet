@@ -531,6 +531,11 @@ tr:hover .row-color-ctrl { opacity: 1; }
         padding: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
+        background: #ffffff !important;
+    }
+
+    html, body {
+        background: #ffffff !important;
     }
 
     .price-list-preview {

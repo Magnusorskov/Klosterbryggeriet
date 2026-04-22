@@ -1,0 +1,511 @@
+@page "/admin/produkter"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@rendermode InteractiveServer
+
+@inject ProductService ProductService
+
+<PageTitle>Produkter</PageTitle>
+
+<section class="produkter-page">
+    <div class="produkter-header">
+        <div class="produkter-header-text">
+            <p class="produkter-eyebrow">Katalog</p>
+            <h1 class="produkter-title">Produkter</h1>
+            <p class="produkter-lede">@_products.Count produkter i databasen</p>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="produkter-empty">Henter produkter...</p>
+    }
+    else
+    {
+        <div class="filter-bar">
+            <div class="search-box">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input class="search-input" @bind="_search" @bind:event="oninput"
+                       placeholder="Søg ID, titel, kategori…" />
+                @if (!string.IsNullOrEmpty(_search))
+                {
+                    <button class="search-clear" @onclick="() => _search = string.Empty"
+                            aria-label="Ryd søgning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                }
+            </div>
+
+            <select class="filter-select" @bind="_catFilter">
+                <option value="Alle">Alle kategorier</option>
+                @foreach (var cat in _allCats)
+                {
+                    <option value="@cat">@cat</option>
+                }
+            </select>
+
+            <div class="pill-group">
+                @foreach (var s in _statusOptions)
+                {
+                    <button class="pill @(_statusFilter == s ? "pill-active" : "")"
+                            @onclick="() => _statusFilter = s">@s</button>
+                }
+            </div>
+
+            <div class="missing-wrap">
+                <button class="missing-btn @(_missingFilters.Count > 0 ? "missing-btn-on" : "")"
+                        @onclick="ToggleMissingOpen">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    Manglende felter
+                    @if (_missingFilters.Count > 0)
+                    {
+                        <span class="missing-count">@_missingFilters.Count</span>
+                    }
+                </button>
+                @if (_missingOpen)
+                {
+                    <div class="missing-backdrop" @onclick="() => _missingOpen = false"></div>
+                    <div class="missing-menu" @onclick:stopPropagation>
+                        <div class="missing-menu-label">Vis kun produkter hvor</div>
+                        @foreach (var opt in MissingOptions)
+                        {
+                            var key = opt.Key;
+                            <label class="missing-opt">
+                                <input type="checkbox"
+                                       checked="@_missingFilters.Contains(key)"
+                                       @onchange="() => ToggleMissing(key)" />
+                                @opt.Label
+                            </label>
+                        }
+                        @if (_missingFilters.Count > 0)
+                        {
+                            <div class="missing-menu-footer">
+                                <button class="missing-clear" @onclick="ClearMissing">Ryd filtre</button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="results-line">
+            Viser @FilteredProducts().Count af @_products.Count produkter
+            @if (_missingFilters.Count > 0)
+            {
+                <span class="results-accent">· @_missingFilters.Count manglende-felt filter@(_missingFilters.Count > 1 ? "e" : "") aktive</span>
+            }
+        </div>
+
+        <div class="table-wrap">
+            <table class="prod-table">
+                <thead>
+                    <tr>
+                        @foreach (var col in Cols)
+                        {
+                            var key = col.Key;
+                            <th class="prod-th @(_sortCol == key ? "prod-th-active" : "")"
+                                style="min-width:@(col.Width)px"
+                                @onclick="() => ToggleSort(key)">
+                                <span class="prod-th-inner">
+                                    @col.Label
+                                    @if (_sortCol == key)
+                                    {
+                                        <svg class="sort-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                            @if (_sortAsc)
+                                            {
+                                                <line x1="12" y1="19" x2="12" y2="5" />
+                                                <polyline points="5 12 12 5 19 12" />
+                                            }
+                                            else
+                                            {
+                                                <line x1="12" y1="5" x2="12" y2="19" />
+                                                <polyline points="19 12 12 19 5 12" />
+                                            }
+                                        </svg>
+                                    }
+                                    else
+                                    {
+                                        <svg class="sort-arrow sort-arrow-idle" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <polyline points="19 12 12 19 5 12" />
+                                        </svg>
+                                    }
+                                </span>
+                            </th>
+                        }
+                        <th class="prod-th prod-th-actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var rows = FilteredProducts();
+                    }
+                    @if (rows.Count == 0)
+                    {
+                        <tr>
+                            <td class="prod-empty" colspan="@(Cols.Length + 1)">
+                                Ingen produkter matcher de valgte filtre
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var p in rows)
+                        {
+                            var soldOut = p.Available <= Product.SoldOutThreshold;
+                            <tr class="prod-row">
+                                <td class="prod-cell">@p.OctopusId</td>
+                                <td class="prod-cell">@p.WebId</td>
+                                <td class="prod-cell prod-cell-text">@p.OctopusTitle</td>
+                                <td class="prod-cell prod-cell-text">@p.WebTitle</td>
+                                <td class="prod-cell prod-cell-text @(string.IsNullOrWhiteSpace(p.PdfTitle) ? "prod-cell-missing" : "")">
+                                    @if (string.IsNullOrWhiteSpace(p.PdfTitle))
+                                    { <span class="mangler-text">Mangler</span> }
+                                    else { @p.PdfTitle }
+                                </td>
+                                <td class="prod-cell prod-cell-text">
+                                    <span class="cat-chip">@p.Category</span>
+                                </td>
+                                <td class="prod-cell">
+                                    <span class="avail-pill @(soldOut ? "avail-soldout" : "avail-ok")">
+                                        <span class="avail-dot"></span>@p.Available
+                                    </span>
+                                </td>
+                                <td class="prod-cell @(p.Str == 0 ? "prod-cell-missing" : "")">
+                                    @if (p.Str == 0)
+                                    { <span class="mangler-text">Mangler</span> }
+                                    else { @p.Str.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) }
+                                </td>
+                                <td class="prod-cell @(p.Alcohol == 0 ? "prod-cell-missing" : "")">
+                                    @if (p.Alcohol == 0)
+                                    { <span class="mangler-text">Mangler</span> }
+                                    else { @($"{p.Alcohol}%") }
+                                </td>
+                                <td class="prod-cell @((p.KegCollar ?? 0) == 0 ? "prod-cell-missing" : "")">
+                                    @if ((p.KegCollar ?? 0) == 0)
+                                    { <span class="mangler-text">Mangler</span> }
+                                    else { @p.KegCollar }
+                                </td>
+                                <td class="prod-cell @(p.PricePrUnit == 0 ? "prod-cell-missing" : "")">
+                                    @if (p.PricePrUnit == 0)
+                                    { <span class="mangler-text">Mangler</span> }
+                                    else { @($"{p.PricePrUnit.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)} kr") }
+                                </td>
+                                <td class="prod-cell">@(p.VariantId1 == 0 ? "—" : p.VariantId1.ToString())</td>
+                                <td class="prod-cell">@(p.VariantId2 == 0 ? "—" : p.VariantId2.ToString())</td>
+                                <td class="prod-cell prod-cell-actions">
+                                    <button class="edit-btn" @onclick="() => OpenEdit(p)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                        </svg>
+                                        Rediger
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@if (_editing != null)
+{
+    <div class="modal-backdrop" @onclick="CloseEdit"></div>
+    <div class="modal-box" @onclick:stopPropagation>
+        <div class="modal-head">
+            <div>
+                <div class="modal-subheading">Octopus ID #@_editing.OctopusId</div>
+                <h2 class="modal-title">Rediger produkt</h2>
+            </div>
+            <button class="modal-close" @onclick="CloseEdit" aria-label="Luk">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-grid">
+            <div class="field-full">
+                <label class="field-label">Octopus-titel</label>
+                <input class="field-input" @bind="_editing.OctopusTitle" />
+            </div>
+            <div>
+                <label class="field-label">Web-titel</label>
+                <input class="field-input" @bind="_editing.WebTitle" />
+            </div>
+            <div>
+                <label class="field-label @(string.IsNullOrWhiteSpace(_editing.PdfTitle) ? "field-label-missing" : "")">
+                    PDF-titel
+                    @if (string.IsNullOrWhiteSpace(_editing.PdfTitle))
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" @bind="_editing.PdfTitle" />
+            </div>
+            <div>
+                <label class="field-label">Web ID</label>
+                <input class="field-input" type="number" @bind="_editing.WebId" />
+            </div>
+            <div>
+                <label class="field-label">Disponibel</label>
+                <input class="field-input" type="number" @bind="_editing.Available" />
+            </div>
+            <div>
+                <label class="field-label @(_editing.Str == 0 ? "field-label-missing" : "")">
+                    Størrelse (L)
+                    @if (_editing.Str == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" step="0.01" @bind="_editing.Str" />
+            </div>
+            <div>
+                <label class="field-label @(_editing.Alcohol == 0 ? "field-label-missing" : "")">
+                    Alkohol%
+                    @if (_editing.Alcohol == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" step="0.1" @bind="_editing.Alcohol" />
+            </div>
+            <div>
+                <label class="field-label @((_editing.KegCollar ?? 0) == 0 ? "field-label-missing" : "")">
+                    Kasse/Kolli
+                    @if ((_editing.KegCollar ?? 0) == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" @bind="_editingKegCollar" />
+            </div>
+            <div>
+                <label class="field-label @(_editing.PricePrUnit == 0 ? "field-label-missing" : "")">
+                    Pris pr. enhed (kr)
+                    @if (_editing.PricePrUnit == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" step="0.01" @bind="_editing.PricePrUnit" />
+            </div>
+            <div>
+                <label class="field-label">Kategori</label>
+                <input class="field-input" @bind="_editing.Category" />
+            </div>
+            <div>
+                <label class="field-label">Variant ID 1</label>
+                <input class="field-input" type="number" @bind="_editing.VariantId1" />
+            </div>
+            <div>
+                <label class="field-label">Variant ID 2</label>
+                <input class="field-input" type="number" @bind="_editing.VariantId2" />
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_editError))
+        {
+            <p class="field-error">@_editError</p>
+        }
+
+        <div class="modal-actions">
+            <button class="btn-ghost" @onclick="CloseEdit" disabled="@_saving">Annuller</button>
+            <button class="btn-primary" @onclick="SaveEdit" disabled="@_saving">
+                @(_saving ? "Gemmer..." : "Gem ændringer")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Product> _products = [];
+    private bool _loading = true;
+
+    // Filters
+    private string _search = "";
+    private string _catFilter = "Alle";
+    private string _statusFilter = "Alle";
+    private readonly string[] _statusOptions = ["Alle", "Tilgængelig", "Udsolgt"];
+    private HashSet<string> _missingFilters = [];
+    private bool _missingOpen;
+
+    // Sort
+    private string _sortCol = "OctopusId";
+    private bool _sortAsc = true;
+
+    // Edit
+    private Product? _editing;
+    private string _editError = "";
+    private bool _saving;
+
+    private int _editingKegCollar
+    {
+        get => _editing?.KegCollar ?? 0;
+        set { if (_editing != null) _editing.KegCollar = value == 0 ? null : value; }
+    }
+
+    private static readonly (string Key, string Label, int Width)[] Cols =
+    [
+        ("OctopusId",    "Octopus ID",    80),
+        ("WebId",        "Web ID",        70),
+        ("OctopusTitle", "Octopus-titel", 220),
+        ("WebTitle",     "Web-titel",     200),
+        ("PdfTitle",     "PDF-titel",     160),
+        ("Category",     "Kategori",      180),
+        ("Available",    "Disponibel",    90),
+        ("Str",          "Str. (L)",      80),
+        ("Alcohol",      "Alkohol%",      80),
+        ("KegCollar",    "Kasse/Kolli",   90),
+        ("PricePrUnit",  "Pris/enhed",    90),
+        ("VariantId1",   "Variant 1",     80),
+        ("VariantId2",   "Variant 2",     80),
+    ];
+
+    private static readonly (string Key, string Label, Func<Product, bool> Check)[] MissingOptions =
+    [
+        ("PdfTitle",    "PDF-titel mangler",    p => string.IsNullOrWhiteSpace(p.PdfTitle)),
+        ("Alcohol",     "Alkohol% mangler",     p => p.Alcohol == 0),
+        ("Str",         "Størrelse mangler",    p => p.Str == 0),
+        ("KegCollar",   "Kasse/Kolli mangler",  p => (p.KegCollar ?? 0) == 0),
+        ("PricePrUnit", "Pris mangler",         p => p.PricePrUnit == 0),
+    ];
+
+    private IEnumerable<string> _allCats => _products
+        .Select(p => p.Category)
+        .Where(c => !string.IsNullOrWhiteSpace(c))
+        .Distinct()
+        .OrderBy(c => c);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _products = await ProductService.ListProducts();
+        _loading = false;
+    }
+
+    private List<Product> FilteredProducts()
+    {
+        IEnumerable<Product> q = _products;
+
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            var s = _search.Trim();
+            q = q.Where(p =>
+                p.OctopusId.ToString().Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                p.WebId.ToString().Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                (p.WebTitle ?? "").Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                (p.OctopusTitle ?? "").Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                (p.PdfTitle ?? "").Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                (p.Category ?? "").Contains(s, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (_catFilter != "Alle")
+            q = q.Where(p => p.Category == _catFilter);
+
+        if (_statusFilter == "Tilgængelig")
+            q = q.Where(p => p.Available > Product.SoldOutThreshold);
+        else if (_statusFilter == "Udsolgt")
+            q = q.Where(p => p.Available <= Product.SoldOutThreshold);
+
+        if (_missingFilters.Count > 0)
+        {
+            var checks = MissingOptions.Where(o => _missingFilters.Contains(o.Key)).ToArray();
+            q = q.Where(p => checks.All(c => c.Check(p)));
+        }
+
+        return SortProducts(q).ToList();
+    }
+
+    private IEnumerable<Product> SortProducts(IEnumerable<Product> src)
+    {
+        IEnumerable<Product> OrderByKey<T>(Func<Product, T> key) =>
+            _sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
+
+        return _sortCol switch
+        {
+            "OctopusId"    => OrderByKey(p => p.OctopusId),
+            "WebId"        => OrderByKey(p => p.WebId),
+            "OctopusTitle" => OrderByKey(p => p.OctopusTitle ?? ""),
+            "WebTitle"     => OrderByKey(p => p.WebTitle ?? ""),
+            "PdfTitle"     => OrderByKey(p => p.PdfTitle ?? ""),
+            "Category"     => OrderByKey(p => p.Category ?? ""),
+            "Available"    => OrderByKey(p => p.Available),
+            "Str"          => OrderByKey(p => p.Str),
+            "Alcohol"      => OrderByKey(p => p.Alcohol),
+            "KegCollar"    => OrderByKey(p => p.KegCollar ?? 0),
+            "PricePrUnit"  => OrderByKey(p => p.PricePrUnit),
+            "VariantId1"   => OrderByKey(p => p.VariantId1),
+            "VariantId2"   => OrderByKey(p => p.VariantId2),
+            _              => src,
+        };
+    }
+
+    private void ToggleSort(string col)
+    {
+        if (_sortCol == col) _sortAsc = !_sortAsc;
+        else { _sortCol = col; _sortAsc = true; }
+    }
+
+    private void ToggleMissingOpen() => _missingOpen = !_missingOpen;
+
+    private void ToggleMissing(string key)
+    {
+        if (!_missingFilters.Add(key))
+            _missingFilters.Remove(key);
+    }
+
+    private void ClearMissing() => _missingFilters.Clear();
+
+    private void OpenEdit(Product p)
+    {
+        _editing = new Product
+        {
+            OctopusId    = p.OctopusId,
+            WebId        = p.WebId,
+            WebTitle     = p.WebTitle,
+            PdfTitle     = p.PdfTitle,
+            OctopusTitle = p.OctopusTitle,
+            Available    = p.Available,
+            KegCollar    = p.KegCollar,
+            Str          = p.Str,
+            Alcohol      = p.Alcohol,
+            PricePrUnit  = p.PricePrUnit,
+            Category     = p.Category,
+            VariantId1   = p.VariantId1,
+            VariantId2   = p.VariantId2,
+        };
+        _editError = "";
+    }
+
+    private void CloseEdit()
+    {
+        _editing = null;
+        _editError = "";
+    }
+
+    private async Task SaveEdit()
+    {
+        if (_editing == null) return;
+        _saving = true;
+        try
+        {
+            await ProductService.UpdateAsync(_editing);
+            _products = await ProductService.ListProducts();
+            _editing = null;
+        }
+        catch (Exception ex)
+        {
+            _editError = $"Kunne ikke gemme: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
