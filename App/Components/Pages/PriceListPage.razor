@@ -35,19 +35,9 @@
         {
             <div class="category-section">
                 <div class="category-header">@category.Name</div>
-
-                @switch (category.Layout)
-                {
-                    case TableLayout.Gavekasser:
-                        <GavekasserTable Rows="category.Products" />
-                        break;
-                    case TableLayout.Saft:
-                        <SaftTable Rows="category.Products" />
-                        break;
-                    default:
-                        <StandardTable Rows="category.Products" />
-                        break;
-                }
+                <DynamicTable Rows="category.Products"
+                              Columns="category.Columns"
+                              PriceLabel="@category.PriceLabel" />
             </div>
         }
 

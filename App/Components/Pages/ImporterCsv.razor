@@ -1,0 +1,81 @@
+@page "/importer-csv"
+@using BlazorApp.Services
+@rendermode InteractiveServer
+
+@inject ICsvUploadService CsvUploadService
+
+<PageTitle>Importer CSV</PageTitle>
+
+<h1>Importer CSV</h1>
+
+<InputFile id="fileInput" OnChange="HandleFileSelected" accept=".csv" style="display:none" />
+<label for="fileInput" style="cursor:pointer; padding:6px 12px; border:1px solid #ccc; border-radius:4px;">
+    Vælg CSV-fil
+</label>
+
+@if (selectedFile is not null)
+{
+    <p>Valgt fil: <strong>@selectedFile.Name</strong></p>
+}
+
+<button @onclick="UploadCsv" disabled="@(selectedFile is null || isUploading)">
+    @(isUploading ? "Uploader..." : "Upload")
+</button>
+
+@if (successMessage is not null)
+{
+    <p style="color: green;">@successMessage</p>
+}
+
+@if (errorMessage is not null)
+{
+    <p style="color: red;">@errorMessage</p>
+}
+
+@code {
+    private IBrowserFile? selectedFile;
+    private bool isUploading;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            selectedFile = null;
+            errorMessage = "Kun CSV-filer er tilladt.";
+            successMessage = null;
+            return;
+        }
+
+        selectedFile = file;
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    private async Task UploadCsv()
+    {
+        if (selectedFile is null) return;
+
+        isUploading = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
+            successMessage = $"{selectedFile.Name} blev uploadet.";
+            selectedFile = null;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fejl under upload: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+}

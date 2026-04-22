@@ -1,10 +1,9 @@
 namespace BlazorApp.Models;
 
-public enum TableLayout { Standard, Gavekasser, Saft, Fadøl }
-
 public class ProductCategory
 {
     public string Name { get; set; } = "";
-    public TableLayout Layout { get; set; } = TableLayout.Standard;
+    public string PriceLabel { get; set; } = "pr. enhed";
+    public List<CategoryColumn> Columns { get; set; } = [];
     public List<ProductRow> Products { get; set; } = [];
 }
