@@ -7,80 +7,108 @@
 
 <PageTitle>Kategorier</PageTitle>
 
-<h2>Kategorier</h2>
-
-@if (_loading)
-{
-    <p>Henter kategorier...</p>
-}
-else
-{
-    <div class="kategori-toolbar">
-        <button class="btn-primary" @onclick="ShowCreate">+ Ny kategori</button>
+<section class="kategori-page">
+    <div class="kategori-header">
+        <div class="kategori-header-text">
+            <p class="kategori-eyebrow">Opsætning</p>
+            <h1 class="kategori-title">Kategorier</h1>
+            <p class="kategori-lede">Administrér produktkategorier, prismærker og ekstra kolonner.</p>
+        </div>
+        <button class="btn-primary btn-new" @onclick="ShowCreate">
+            <span class="btn-plus" aria-hidden="true">+</span> Ny kategori
+        </button>
     </div>
 
-    @if (_categories.Count == 0)
+    @if (_loading)
     {
-        <p>Ingen kategorier fundet.</p>
+        <p class="kategori-empty">Henter kategorier...</p>
+    }
+    else if (_categories.Count == 0)
+    {
+        <p class="kategori-empty">Ingen kategorier fundet.</p>
     }
     else
     {
-        <table class="kategori-table">
-            <thead>
-                <tr>
-                    <th class="col-drag"></th>
-                    <th>Navn</th>
-                    <th>Prismærke</th>
-                    <th>Ekstra kolonner</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var cat in _categories)
-                {
-                    <tr class="@(_dragging == cat ? "row-dragging" : "") @(_dragOver == cat && _dragging != cat ? "row-drag-over" : "")"
-                        @ondragover:preventDefault
-                        @ondragover="() => OnDragOver(cat)"
-                        @ondrop="ClearDragState">
-                        <td class="col-drag">
-                            <span class="drag-handle" draggable="true"
-                                  @ondragstart="() => OnDragStart(cat)"
-                                  @ondragend="OnDragEnd">⠿</span>
-                        </td>
-                        <td>@cat.Name</td>
-                        <td>@cat.PriceLabel</td>
-                        <td>@string.Join(", ", cat.Columns.OrderBy(c => c.SortOrder).Select(c => c.DisplayLabel))</td>
-                        <td>
-                            <button @onclick="() => ShowEdit(cat)">Rediger</button>
-                            <button class="btn-danger" @onclick="() => ConfirmDelete(cat)">Slet</button>
-                        </td>
+        <div class="kategori-card">
+            <table class="kategori-table">
+                <thead>
+                    <tr>
+                        <th class="col-drag"></th>
+                        <th class="col-name">Navn</th>
+                        <th class="col-price">Prismærke</th>
+                        <th class="col-extra">Ekstra kolonner</th>
+                        <th class="col-actions"></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var cat in _categories)
+                    {
+                        <tr class="@(_dragging == cat ? "row-dragging" : "") @(_dragOver == cat && _dragging != cat ? "row-drag-over" : "")"
+                            @ondragover:preventDefault
+                            @ondragover="() => OnDragOver(cat)"
+                            @ondrop="ClearDragState">
+                            <td class="col-drag">
+                                <span class="drag-handle" draggable="true"
+                                      @ondragstart="() => OnDragStart(cat)"
+                                      @ondragend="OnDragEnd"
+                                      title="Træk for at sortere">⠿</span>
+                            </td>
+                            <td class="col-name cell-name">@cat.Name</td>
+                            <td class="col-price">
+                                <span class="chip chip-price">@cat.PriceLabel</span>
+                            </td>
+                            <td class="col-extra">
+                                @if (cat.Columns.Count == 0)
+                                {
+                                    <span class="chip-empty">—</span>
+                                }
+                                else
+                                {
+                                    <div class="chip-group">
+                                        @foreach (var col in cat.Columns.OrderBy(c => c.SortOrder))
+                                        {
+                                            <span class="chip chip-extra @ChipClassFor(col.FieldName)">@col.DisplayLabel</span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td class="col-actions">
+                                <button class="btn-ghost" @onclick="() => ShowEdit(cat)">Rediger</button>
+                                <button class="btn-delete" @onclick="() => ConfirmDelete(cat)">Slet</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
-}
+</section>
 
 @if (_showForm)
 {
     <div class="modal-backdrop" @onclick="CloseForm"></div>
     <div class="modal-box" @onclick:stopPropagation>
-        <h3>@(_editId == null ? "Ny kategori" : "Rediger kategori")</h3>
+        <h3 class="modal-title">@(_editId == null ? "Ny kategori" : "Rediger kategori")</h3>
 
-        <label>Navn</label>
-        <input class="form-input" @bind="_formName" placeholder="f.eks. BELGIEN - NYT BRYGGERI" />
+        <label class="form-label">Navn</label>
+        <input class="form-input" @bind="_formName" placeholder="f.eks. BELGIEN – NYT BRYGGERI" />
 
-        <label>Prismærke (vises i priskolonnen)</label>
-        <input class="form-input" @bind="_formPriceLabel" placeholder="f.eks. pr. flaske" />
+        <label class="form-label">Prismærke <span class="hint">(vises i priskolonnen)</span></label>
+        <select class="form-input form-select" @bind="_formPriceLabel">
+            <option value="pr. enhed">pr. enhed</option>
+            <option value="pr. stk.">pr. stk.</option>
+            <option value="pr. flaske">pr. flaske</option>
+            <option value="pr. kasse">pr. kasse</option>
+        </select>
 
-        <label>Ekstra kolonner <span class="hint">(mellem Navn og Pris)</span></label>
+        <label class="form-label">Ekstra kolonner <span class="hint">(mellem Navn og Pris)</span></label>
         <div class="columns-builder">
             @for (int i = 0; i < _formColumns.Count; i++)
             {
                 var idx = i;
                 var col = _formColumns[idx];
                 <div class="col-row">
-                    <select @bind="col.FieldName" @bind:after="() => SyncLabel(col)">
+                    <select class="form-input col-select" @bind="col.FieldName" @bind:after="() => SyncLabel(col)">
                         <option value="">— vælg felt —</option>
                         @foreach (var (field, label) in CategoryService.AvailableFields)
                         {
@@ -89,19 +117,14 @@ else
                         <option value="__custom__">Fritekst...</option>
                     </select>
 
-                    @if (col.FieldName == "__custom__")
-                    {
-                        <input class="form-input col-label" @bind="col.DisplayLabel" placeholder="Kolonnetitel" />
-                    }
-                    else
-                    {
-                        <input class="form-input col-label" @bind="col.DisplayLabel" placeholder="Kolonnetitel" />
-                    }
+                    <input class="form-input col-label-input" @bind="col.DisplayLabel" placeholder="Kolonnetitel" />
 
                     <button class="btn-remove" @onclick="() => RemoveColumn(idx)" title="Fjern">−</button>
                 </div>
             }
-            <button class="btn-add-col" @onclick="AddColumn">+ Tilføj kolonne</button>
+            <button class="btn-add-col" @onclick="AddColumn">
+                <span aria-hidden="true">+</span> Tilføj kolonne
+            </button>
         </div>
 
         @if (!string.IsNullOrEmpty(_formError))
@@ -110,8 +133,8 @@ else
         }
 
         <div class="modal-actions">
+            <button class="btn-ghost" @onclick="CloseForm">Annuller</button>
             <button class="btn-primary" @onclick="SaveForm">Gem</button>
-            <button @onclick="CloseForm">Annuller</button>
         </div>
     </div>
 }
@@ -120,11 +143,11 @@ else
 {
     <div class="modal-backdrop" @onclick="CancelDelete"></div>
     <div class="modal-box" @onclick:stopPropagation>
-        <h3>Slet kategori?</h3>
-        <p>Er du sikker på at du vil slette <strong>@_deleteTarget.Name</strong>?</p>
+        <h3 class="modal-title">Slet kategori?</h3>
+        <p class="modal-body">Er du sikker på at du vil slette <strong>@_deleteTarget.Name</strong>?</p>
         <div class="modal-actions">
-            <button class="btn-danger" @onclick="DeleteConfirmed">Slet</button>
-            <button @onclick="CancelDelete">Annuller</button>
+            <button class="btn-ghost" @onclick="CancelDelete">Annuller</button>
+            <button class="btn-delete btn-delete-solid" @onclick="DeleteConfirmed">Slet</button>
         </div>
     </div>
 }
@@ -200,7 +223,6 @@ else
 
     private void SyncLabel(CategoryColumn col)
     {
-        // Auto-fill display label when a known field is picked
         var match = CategoryService.AvailableFields.FirstOrDefault(f => f.FieldName == col.FieldName);
         if (match != default)
             col.DisplayLabel = match.DisplayLabel;
@@ -224,7 +246,6 @@ else
             return;
         }
 
-        // Re-index sort order
         for (int i = 0; i < _formColumns.Count; i++)
             _formColumns[i].SortOrder = i + 1;
 
@@ -269,16 +290,22 @@ else
         _categories.Insert(to, _dragging);
     }
 
-    // ondrop on <tr>: just clears visual state (fires before ondragend)
     private void ClearDragState() { _dragging = null; _dragOver = null; }
 
-    // ondragend on <span>: always fires once at the end of any drag — saves the order
     private async Task OnDragEnd()
     {
         _dragging = null;
         _dragOver = null;
         await CategoryService.SaveOrderAsync(_categories.Select(c => c.Id).ToList());
     }
+
+    private static string ChipClassFor(string fieldName) => fieldName switch
+    {
+        "KegCollar" => "chip-sage",
+        "Str"       => "chip-blue",
+        "Alcohol"   => "chip-plum",
+        _           => "chip-amber",
+    };
 
     // ── Delete ───────────────────────────────────────────────────────────────
     private void ConfirmDelete(Category cat) => _deleteTarget = cat;
