@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
         mySqlOptions => mySqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
@@ -23,6 +23,7 @@ builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<DraftBeerService>();
 
 var app = builder.Build();
 
