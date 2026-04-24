@@ -456,13 +456,26 @@
     color: #8a7356;
 }
 
-.diff-flip {
-    background: rgba(230, 81, 0, 0.05);
-    color: #3a2a1c;
+.diff-flip-up {
+    background: rgba(46, 125, 50, 0.06);
+    color: #1a4c1d;
 }
 
-.diff-flip .diff-marker {
-    color: #E65100;
+.diff-flip-up .diff-marker,
+.diff-flip-up .diff-status {
+    color: #2E7D32;
+    font-weight: 500;
+}
+
+.diff-flip-down {
+    background: rgba(198, 40, 40, 0.06);
+    color: #3a1818;
+}
+
+.diff-flip-down .diff-marker,
+.diff-flip-down .diff-status {
+    color: #C62828;
+    font-weight: 500;
 }
 
 .diff-id {
@@ -480,11 +493,6 @@
 .diff-detail {
     color: #6b5c45;
     white-space: nowrap;
-}
-
-.diff-status {
-    color: #E65100;
-    font-weight: 500;
 }
 
 .receipt-warnings {

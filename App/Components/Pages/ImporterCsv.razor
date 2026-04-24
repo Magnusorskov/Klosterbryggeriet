@@ -79,24 +79,16 @@
         <span>Gå til Produkter → Eksportér → Vælg CSV-format og download filen.</span>
     </div>
 
-    <section class="attention-block">
-        <header class="attention-header">
-            <h2 class="attention-title">Nye produkter til gennemgang</h2>
-            <p class="attention-sub">
-                Produkter markeret som <em>Ikke i brug</em> vises ikke på prislisten eller opdateres på webshoppen, før du sætter dem <em>I brug</em>.
-            </p>
-        </header>
+    @if (_needsAttention.Count > 0)
+    {
+        <section class="attention-block">
+            <header class="attention-header">
+                <h2 class="attention-title">Nye produkter til gennemgang</h2>
+                <p class="attention-sub">
+                    Disse produkter blev lige oprettet fra CSV-importen og mangler felter. Udfyld dem for at gøre dem klar til brug.
+                </p>
+            </header>
 
-        @if (_attentionLoading)
-        {
-            <p class="attention-empty">Henter produkter...</p>
-        }
-        else if (_needsAttention.Count == 0)
-        {
-            <p class="attention-empty">Ingen produkter mangler gennemgang. Alle aktive produkter er sat <strong>I brug</strong>.</p>
-        }
-        else
-        {
             <div class="attention-table-wrap">
                 <table class="attention-table">
                     <thead>
@@ -129,8 +121,8 @@
                     </tbody>
                 </table>
             </div>
-        }
-    </section>
+        </section>
+    }
 
     @if (_lastResult is not null)
     {
@@ -170,7 +162,7 @@
                     }
                     @foreach (var u in _lastResult.Updated)
                     {
-                        <li class="diff-row @(u.StatusFlipped ? "diff-flip" : "diff-update")">
+                        <li class="diff-row @DiffRowClass(u)">
                             <span class="diff-marker">~</span>
                             <span class="diff-id">#@u.OctopusId</span>
                             <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
@@ -211,24 +203,31 @@
 
     private CsvImportResult? _lastResult;
     private List<Product> _needsAttention = [];
-    private bool _attentionLoading = true;
+    private HashSet<int> _recentlyCreatedIds = [];
 
     private Product? _editing;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await ReloadNeedsAttention();
-    }
-
     private async Task ReloadNeedsAttention()
     {
-        _attentionLoading = true;
+        if (_recentlyCreatedIds.Count == 0)
+        {
+            _needsAttention = [];
+            return;
+        }
         var all = await ProductService.ListProducts();
-        _needsAttention = all.Where(p => !p.InUse)
+        _needsAttention = all
+            .Where(p => _recentlyCreatedIds.Contains(p.OctopusId) && IsMissingFields(p))
             .OrderBy(p => p.OctopusId)
             .ToList();
-        _attentionLoading = false;
     }
+
+    private static bool IsMissingFields(Product p) =>
+        string.IsNullOrWhiteSpace(p.PdfTitle)
+        || string.IsNullOrWhiteSpace(p.Category)
+        || (p.KegCollar ?? 0) == 0
+        || p.Str == 0
+        || p.Alcohol == 0
+        || p.PricePrUnit == 0;
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -255,6 +254,7 @@
         {
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
             _lastResult = await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
+            _recentlyCreatedIds = _lastResult.Created.Select(c => c.OctopusId).ToHashSet();
             selectedFile = null;
             await ReloadNeedsAttention();
         }
@@ -303,7 +303,6 @@
 
     private static IEnumerable<string> MissingTags(Product p)
     {
-        if (!p.InUse) yield return "Ikke i brug";
         if (string.IsNullOrWhiteSpace(p.Category)) yield return "Kategori";
         if (string.IsNullOrWhiteSpace(p.PdfTitle)) yield return "PDF-titel";
         if ((p.KegCollar ?? 0) == 0) yield return "Kasse/Kolli";
@@ -311,6 +310,11 @@
         if (p.Alcohol == 0) yield return "Alkohol";
         if (p.PricePrUnit == 0) yield return "Pris";
     }
+
+    private static string DiffRowClass(ProductChange u) =>
+        u.StatusFlipped
+            ? (u.NewStatus == ProductStatus.Available ? "diff-flip-up" : "diff-flip-down")
+            : "diff-update";
 
     private static string StatusLabel(ProductStatus status) => status switch
     {
