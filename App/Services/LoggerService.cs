@@ -22,8 +22,23 @@ public class LoggerService
         {
             OctopusId = changedProduct.OctopusId,
             ProductName = changedProduct.PdfTitle,
+            Kind = LogEntryKind.StatusChanged,
             PreviousStatus = previousStatus,
             NewStatus = newStatus,
+        };
+        await _context.LogEntries.AddAsync(entry);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task LogProductCreated(Product created)
+    {
+        var entry = new LogEntry
+        {
+            OctopusId = created.OctopusId,
+            ProductName = created.OctopusTitle,
+            Kind = LogEntryKind.ProductCreated,
+            PreviousStatus = null,
+            NewStatus = created.Status,
         };
         await _context.LogEntries.AddAsync(entry);
         await _context.SaveChangesAsync();

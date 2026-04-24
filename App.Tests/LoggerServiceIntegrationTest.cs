@@ -100,7 +100,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var service = new OctopusService(db, new LoggerService(db));
             await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
         }
 
@@ -122,7 +122,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var service = new OctopusService(db, new LoggerService(db));
             await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
         }
 
@@ -142,7 +142,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var service = new OctopusService(db, new LoggerService(db));
             await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
         }
 

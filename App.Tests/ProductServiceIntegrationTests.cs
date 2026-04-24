@@ -90,6 +90,129 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Assert.Equal(2, result["Soda"].Count);
     }
 
+    // Verify UpdateAsync actually persists every manual field + the InUse flip.
+    // US 6.2 depends on this path: freshly created CSV products (InUse=false, blank
+    // manual fields) must end up fully reviewed after the admin saves in the modal.
+    [Fact]
+    public async Task UpdateAsync_PersistsManualFieldsAndInUseFlip()
+    {
+        var seed = new Product
+        {
+            OctopusId = 99001,
+            WebId = 0,
+            WebTitle = "",
+            PdfTitle = "",
+            OctopusTitle = "Ny øl",
+            Available = 42,
+            KegCollar = null,
+            Str = 0.0,
+            Alcohol = 0.0,
+            PricePrUnit = 0.0,
+            Category = "",
+            VariantId1 = 0,
+            VariantId2 = 0,
+            InUse = false,
+            HalfKolli = false,
+        };
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.Products.AddAsync(seed);
+            await db.SaveChangesAsync();
+        }
+
+        var update = new Product
+        {
+            OctopusId = 99001,
+            WebId = 0,
+            WebTitle = "",
+            PdfTitle = "Special øl 33cl",
+            OctopusTitle = "Ny øl",
+            Available = 42,
+            KegCollar = 24,
+            Str = 0.33,
+            Alcohol = 6.5,
+            PricePrUnit = 18.75,
+            Category = "Specialøl",
+            VariantId1 = 0,
+            VariantId2 = 0,
+            InUse = true,
+            HalfKolli = false,
+        };
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new ProductService(db);
+            await service.UpdateAsync(update);
+        }
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var saved = await db.Products.FindAsync(99001);
+            Assert.NotNull(saved);
+            Assert.True(saved.InUse);
+            Assert.Equal("Special øl 33cl", saved.PdfTitle);
+            Assert.Equal("Specialøl", saved.Category);
+            Assert.Equal(24, saved.KegCollar);
+            Assert.Equal(0.33, saved.Str);
+            Assert.Equal(6.5, saved.Alcohol);
+            Assert.Equal(18.75, saved.PricePrUnit);
+        }
+    }
+
+    // Toggling InUse alone must persist — PDF visibility hinges on this bit.
+    [Fact]
+    public async Task UpdateAsync_InUseFlipOnly_Persists()
+    {
+        var seed = CreateProduct(77, "Beer");
+        seed.InUse = false;
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.Products.AddAsync(seed);
+            await db.SaveChangesAsync();
+        }
+
+        Product fetched;
+        await using (var db = _fixture.CreateDbContext())
+        {
+            fetched = (await db.Products.FindAsync(77))!;
+        }
+
+        fetched.InUse = true;
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new ProductService(db);
+            await service.UpdateAsync(fetched);
+        }
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var saved = await db.Products.FindAsync(77);
+            Assert.NotNull(saved);
+            Assert.True(saved.InUse);
+        }
+    }
+
+    // Calling UpdateAsync for a non-existent OctopusId is a silent no-op — no row created.
+    [Fact]
+    public async Task UpdateAsync_UnknownOctopusId_NoOp()
+    {
+        var phantom = CreateProduct(404, "Ghost");
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var service = new ProductService(db);
+            await service.UpdateAsync(phantom);
+        }
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var saved = await db.Products.FindAsync(404);
+            Assert.Null(saved);
+        }
+    }
+
     [Fact]
     public async Task MapProductsByCategory_ExcludesProductsWhereInUseIsFalse()
     {
