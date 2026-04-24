@@ -17,9 +17,15 @@ public class ProductStatusTests
     }
 
     [Fact]
-    public void StatusFor_AtThreshold_ReturnsSoldOut()
+    public void StatusFor_AtThreshold_ReturnsAvailable()
     {
-        Assert.Equal(ProductStatus.SoldOut, Product.StatusFor(30));
+        Assert.Equal(ProductStatus.Available, Product.StatusFor(30));
+    }
+
+    [Fact]
+    public void StatusFor_JustBelowThreshold_ReturnsSoldOut()
+    {
+        Assert.Equal(ProductStatus.SoldOut, Product.StatusFor(29));
     }
 
     [Fact]

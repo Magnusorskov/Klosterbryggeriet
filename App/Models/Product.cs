@@ -11,7 +11,7 @@ public class Product
     public ProductStatus Status => StatusFor(Available);
 
     public static ProductStatus StatusFor(int available)
-        => available <= SoldOutThreshold ? ProductStatus.SoldOut : ProductStatus.Available;
+        => available < SoldOutThreshold ? ProductStatus.SoldOut : ProductStatus.Available;
 
     // Tidligere VareNr
     [Key]
