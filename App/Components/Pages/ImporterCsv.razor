@@ -6,6 +6,7 @@
 
 @inject ICsvUploadService CsvUploadService
 @inject ProductService ProductService
+@inject CategoryService CategoryService
 
 <PageTitle>Importer CSV</PageTitle>
 
@@ -110,8 +111,16 @@
 
                         <div class="row-fields row-fields-manual">
                             <label class="row-field">
-                                <span class="row-field-label">Kategori@(inUse ? "*" : "")</span>
+                                <span class="row-field-label">
+                                    Kategori@(inUse ? "*" : "")
+                                    @if (IsNewCategory(p.Category))
+                                    {
+                                        <span class="new-category-chip">ny</span>
+                                    }
+                                </span>
                                 <input class="row-input @ErrClass(row, "Category")"
+                                       list="importer-categories"
+                                       placeholder="Vælg eller skriv ny"
                                        @bind="p.Category" @bind:event="oninput" />
                             </label>
                             <label class="row-field">
@@ -261,6 +270,13 @@
     }
 </section>
 
+<datalist id="importer-categories">
+    @foreach (var c in _categories)
+    {
+        <option value="@c.Name" />
+    }
+</datalist>
+
 @code {
     private IBrowserFile? selectedFile;
     private bool isUploading;
@@ -271,6 +287,16 @@
     private HashSet<int> _recentlyCreatedIds = [];
     private bool _finishing;
     private FinishSummary? _finishSummary;
+    private List<Category> _categories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await CategoryService.GetAllAsync();
+    }
+
+    private bool IsNewCategory(string? name) =>
+        !string.IsNullOrWhiteSpace(name)
+        && !_categories.Any(c => string.Equals(c.Name, name!.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private class EditRow
     {
@@ -372,11 +398,32 @@
         }
 
         var savable = _needsAttention.Where(r => r.Errors.Count == 0).ToList();
+
+        // Any savable row that references a Category name we don't yet have an entity for
+        // → create a bare-bones Category so the product will appear on the price list.
+        // Dedup by name (case-insensitive) to avoid inserting duplicates within one click.
+        var existingNames = _categories.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var newCategoryNames = savable
+            .Select(r => (r.Product.Category ?? "").Trim())
+            .Where(n => n.Length > 0 && !existingNames.Contains(n))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        foreach (var name in newCategoryNames)
+        {
+            await CategoryService.CreateAsync(new Category { Name = name, PriceLabel = "" });
+        }
+        if (newCategoryNames.Count > 0)
+        {
+            _categories = await CategoryService.GetAllAsync();
+        }
+
         var savedCount = 0;
         foreach (var row in savable)
         {
             try
             {
+                // Normalize so the stored Category string exactly matches the entity name.
+                row.Product.Category = (row.Product.Category ?? "").Trim();
                 await ProductService.UpdateAsync(row.Product);
                 savedCount++;
                 // TODO: once the webshop integration is ready, call HostedShopService here

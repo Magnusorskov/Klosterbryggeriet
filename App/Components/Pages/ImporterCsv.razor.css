@@ -397,11 +397,25 @@
 }
 
 .row-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.66rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #6b5c45;
+}
+
+.new-category-chip {
+    background: rgba(46, 125, 50, 0.14);
+    color: #2E7D32;
+    padding: 0.05rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
 }
 
 .row-input {
