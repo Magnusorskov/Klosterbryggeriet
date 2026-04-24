@@ -85,41 +85,108 @@
             <header class="attention-header">
                 <h2 class="attention-title">Nye produkter til gennemgang</h2>
                 <p class="attention-sub">
-                    Disse produkter blev lige oprettet fra CSV-importen og mangler felter. Udfyld dem for at gøre dem klar til brug.
+                    Disse produkter blev lige oprettet fra CSV-importen. Udfyld felterne og klik <strong>Færdiggør</strong>. Manuelle felter er påkrævede når <em>I brug</em> er slået til.
                 </p>
             </header>
 
-            <div class="attention-table-wrap">
-                <table class="attention-table">
-                    <thead>
-                        <tr>
-                            <th>Octopus ID</th>
-                            <th>Titel</th>
-                            <th>Disponibel</th>
-                            <th>Mangler</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in _needsAttention)
+            @if (_finishSummary is not null)
+            {
+                <div class="finish-summary @(_finishSummary.HasErrors ? "finish-summary-warn" : "finish-summary-ok")">
+                    @_finishSummary.Message
+                </div>
+            }
+
+            <div class="attention-rows">
+                @foreach (var row in _needsAttention)
+                {
+                    var p = row.Product;
+                    var inUse = p.InUse;
+                    <div class="attention-row @(row.Errors.Count > 0 ? "attention-row-error" : "")">
+                        <div class="attention-row-head">
+                            <span class="row-id">#@p.OctopusId</span>
+                            <span class="row-title">@(string.IsNullOrWhiteSpace(p.OctopusTitle) ? "—" : p.OctopusTitle)</span>
+                            <span class="row-stock">Disponibel: <strong>@p.Available</strong></span>
+                        </div>
+
+                        <div class="row-fields row-fields-manual">
+                            <label class="row-field">
+                                <span class="row-field-label">Kategori@(inUse ? "*" : "")</span>
+                                <input class="row-input @ErrClass(row, "Category")"
+                                       @bind="p.Category" @bind:event="oninput" />
+                            </label>
+                            <label class="row-field">
+                                <span class="row-field-label">PDF-titel@(inUse ? "*" : "")</span>
+                                <input class="row-input @ErrClass(row, "PdfTitle")"
+                                       @bind="p.PdfTitle" @bind:event="oninput" />
+                            </label>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Kasse/Kolli@(inUse ? "*" : "")</span>
+                                <input class="row-input @ErrClass(row, "KegCollar")" type="number"
+                                       @bind="row.KegCollarInput" />
+                            </label>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Str (L)@(inUse ? "*" : "")</span>
+                                <input class="row-input @ErrClass(row, "Str")" type="number" step="0.01"
+                                       @bind="p.Str" />
+                            </label>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Alkohol %@(inUse ? "*" : "")</span>
+                                <input class="row-input @ErrClass(row, "Alcohol")" type="number" step="0.1"
+                                       @bind="p.Alcohol" />
+                            </label>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Pris/enhed@(inUse ? "*" : "")</span>
+                                <input class="row-input @ErrClass(row, "PricePrUnit")" type="number" step="0.01"
+                                       @bind="p.PricePrUnit" />
+                            </label>
+                        </div>
+
+                        <div class="row-fields row-fields-shop">
+                            <div class="row-fields-shop-label">
+                                Webshop <span class="row-fields-shop-hint">(valgfrit — udfyldes hvis produktet er på webshoppen)</span>
+                            </div>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Web ID</span>
+                                <input class="row-input" type="number" @bind="p.WebId" />
+                            </label>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Variant 1</span>
+                                <input class="row-input" type="number" @bind="p.VariantId1" />
+                            </label>
+                            <label class="row-field row-field-narrow">
+                                <span class="row-field-label">Variant 2</span>
+                                <input class="row-input" type="number" @bind="p.VariantId2" />
+                            </label>
+                        </div>
+
+                        <div class="row-toggles">
+                            <label class="row-toggle">
+                                <input type="checkbox" @bind="p.InUse" />
+                                <span><strong>I brug</strong> — vises på prislisten og opdateres på webshoppen</span>
+                            </label>
+                            <label class="row-toggle">
+                                <input type="checkbox" @bind="p.HalfKolli" />
+                                <span>Halv kasse tilgængelig</span>
+                            </label>
+                        </div>
+
+                        @if (row.Errors.Count > 0)
                         {
-                            <tr>
-                                <td>@p.OctopusId</td>
-                                <td>@(string.IsNullOrWhiteSpace(p.OctopusTitle) ? "—" : p.OctopusTitle)</td>
-                                <td>@p.Available</td>
-                                <td>
-                                    @foreach (var tag in MissingTags(p))
-                                    {
-                                        <span class="mangler-chip mangler-chip-inline">@tag</span>
-                                    }
-                                </td>
-                                <td>
-                                    <button class="edit-btn" @onclick="() => OpenEdit(p)">Udfyld</button>
-                                </td>
-                            </tr>
+                            <ul class="row-errors">
+                                @foreach (var err in row.Errors)
+                                {
+                                    <li>@err</li>
+                                }
+                            </ul>
                         }
-                    </tbody>
-                </table>
+                    </div>
+                }
+            </div>
+
+            <div class="attention-footer">
+                <button class="btn-finish" @onclick="FinishAll" disabled="@_finishing">
+                    @(_finishing ? "Gemmer…" : "Færdiggør")
+                </button>
             </div>
         </section>
     }
@@ -194,18 +261,31 @@
     }
 </section>
 
-<ProductEditModal Editing="_editing" OnSaved="OnEditSaved" OnCancelled="CloseEdit" />
-
 @code {
     private IBrowserFile? selectedFile;
     private bool isUploading;
     private string? errorMessage;
 
     private CsvImportResult? _lastResult;
-    private List<Product> _needsAttention = [];
+    private List<EditRow> _needsAttention = [];
     private HashSet<int> _recentlyCreatedIds = [];
+    private bool _finishing;
+    private FinishSummary? _finishSummary;
 
-    private Product? _editing;
+    private class EditRow
+    {
+        public required Product Product { get; set; }
+        public List<string> Errors { get; set; } = [];
+        public HashSet<string> FieldErrors { get; set; } = [];
+
+        public int KegCollarInput
+        {
+            get => Product.KegCollar ?? 0;
+            set => Product.KegCollar = value == 0 ? null : value;
+        }
+    }
+
+    private record FinishSummary(string Message, bool HasErrors);
 
     private async Task ReloadNeedsAttention()
     {
@@ -216,18 +296,30 @@
         }
         var all = await ProductService.ListProducts();
         _needsAttention = all
-            .Where(p => _recentlyCreatedIds.Contains(p.OctopusId) && IsMissingFields(p))
+            .Where(p => _recentlyCreatedIds.Contains(p.OctopusId))
             .OrderBy(p => p.OctopusId)
+            .Select(p => new EditRow { Product = CloneProduct(p) })
             .ToList();
     }
 
-    private static bool IsMissingFields(Product p) =>
-        string.IsNullOrWhiteSpace(p.PdfTitle)
-        || string.IsNullOrWhiteSpace(p.Category)
-        || (p.KegCollar ?? 0) == 0
-        || p.Str == 0
-        || p.Alcohol == 0
-        || p.PricePrUnit == 0;
+    private static Product CloneProduct(Product p) => new()
+    {
+        OctopusId    = p.OctopusId,
+        WebId        = p.WebId,
+        WebTitle     = p.WebTitle,
+        PdfTitle     = p.PdfTitle,
+        OctopusTitle = p.OctopusTitle,
+        Available    = p.Available,
+        KegCollar    = p.KegCollar,
+        Str          = p.Str,
+        Alcohol      = p.Alcohol,
+        PricePrUnit  = p.PricePrUnit,
+        Category     = p.Category,
+        VariantId1   = p.VariantId1,
+        VariantId2   = p.VariantId2,
+        InUse        = p.InUse,
+        HalfKolli    = p.HalfKolli,
+    };
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -249,6 +341,7 @@
 
         isUploading = true;
         errorMessage = null;
+        _finishSummary = null;
 
         try
         {
@@ -268,48 +361,61 @@
         }
     }
 
-    private void OpenEdit(Product p)
+    private async Task FinishAll()
     {
-        _editing = new Product
+        _finishing = true;
+        _finishSummary = null;
+
+        foreach (var row in _needsAttention)
         {
-            OctopusId    = p.OctopusId,
-            WebId        = p.WebId,
-            WebTitle     = p.WebTitle,
-            PdfTitle     = p.PdfTitle,
-            OctopusTitle = p.OctopusTitle,
-            Available    = p.Available,
-            KegCollar    = p.KegCollar,
-            Str          = p.Str,
-            Alcohol      = p.Alcohol,
-            PricePrUnit  = p.PricePrUnit,
-            Category     = p.Category,
-            VariantId1   = p.VariantId1,
-            VariantId2   = p.VariantId2,
-            InUse        = p.InUse,
-            HalfKolli    = p.HalfKolli,
-        };
+            ValidateRow(row);
+        }
+
+        var savable = _needsAttention.Where(r => r.Errors.Count == 0).ToList();
+        var savedCount = 0;
+        foreach (var row in savable)
+        {
+            try
+            {
+                await ProductService.UpdateAsync(row.Product);
+                savedCount++;
+                // TODO: once the webshop integration is ready, call HostedShopService here
+                // for rows where row.Product.WebId > 0.
+            }
+            catch (Exception ex)
+            {
+                row.Errors.Add($"Kunne ikke gemme: {ex.Message}");
+            }
+        }
+
+        _needsAttention = _needsAttention.Where(r => r.Errors.Count > 0).ToList();
+
+        var hasErrors = _needsAttention.Count > 0;
+        _finishSummary = hasErrors
+            ? new FinishSummary($"{savedCount} gemt. {_needsAttention.Count} venter på udfyldelse.", true)
+            : new FinishSummary($"{savedCount} produkt{(savedCount == 1 ? "" : "er")} gemt.", false);
+
+        _finishing = false;
     }
 
-    private void CloseEdit()
+    private static void ValidateRow(EditRow row)
     {
-        _editing = null;
+        row.Errors.Clear();
+        row.FieldErrors.Clear();
+
+        if (!row.Product.InUse) return;
+
+        var p = row.Product;
+        if (string.IsNullOrWhiteSpace(p.Category)) { row.FieldErrors.Add("Category"); row.Errors.Add("Kategori er påkrævet når produktet er i brug."); }
+        if (string.IsNullOrWhiteSpace(p.PdfTitle)) { row.FieldErrors.Add("PdfTitle"); row.Errors.Add("PDF-titel er påkrævet når produktet er i brug."); }
+        if ((p.KegCollar ?? 0) == 0) { row.FieldErrors.Add("KegCollar"); row.Errors.Add("Kasse/Kolli er påkrævet når produktet er i brug."); }
+        if (p.Str == 0) { row.FieldErrors.Add("Str"); row.Errors.Add("Størrelse er påkrævet når produktet er i brug."); }
+        if (p.Alcohol == 0) { row.FieldErrors.Add("Alcohol"); row.Errors.Add("Alkohol% er påkrævet når produktet er i brug."); }
+        if (p.PricePrUnit == 0) { row.FieldErrors.Add("PricePrUnit"); row.Errors.Add("Pris pr. enhed er påkrævet når produktet er i brug."); }
     }
 
-    private async Task OnEditSaved()
-    {
-        _editing = null;
-        await ReloadNeedsAttention();
-    }
-
-    private static IEnumerable<string> MissingTags(Product p)
-    {
-        if (string.IsNullOrWhiteSpace(p.Category)) yield return "Kategori";
-        if (string.IsNullOrWhiteSpace(p.PdfTitle)) yield return "PDF-titel";
-        if ((p.KegCollar ?? 0) == 0) yield return "Kasse/Kolli";
-        if (p.Str == 0) yield return "Størrelse";
-        if (p.Alcohol == 0) yield return "Alkohol";
-        if (p.PricePrUnit == 0) yield return "Pris";
-    }
+    private static string ErrClass(EditRow row, string field) =>
+        row.FieldErrors.Contains(field) ? "row-input-error" : "";
 
     private static string DiffRowClass(ProductChange u) =>
         u.StatusFlipped
