@@ -113,15 +113,27 @@
                             <label class="row-field">
                                 <span class="row-field-label">
                                     Kategori@(inUse ? "*" : "")
-                                    @if (IsNewCategory(p.Category))
+                                    @if (row.CustomCategory && !string.IsNullOrWhiteSpace(p.Category))
                                     {
                                         <span class="new-category-chip">ny</span>
                                     }
                                 </span>
-                                <input class="row-input @ErrClass(row, "Category")"
-                                       list="importer-categories"
-                                       placeholder="Vælg eller skriv ny"
-                                       @bind="p.Category" @bind:event="oninput" />
+                                <select class="row-input @ErrClass(row, "Category")"
+                                        @bind:get="CategorySelectValue(row)"
+                                        @bind:set="@((string v) => OnCategorySelect(row, v))">
+                                    <option value="">— Vælg kategori —</option>
+                                    @foreach (var cat in _categories)
+                                    {
+                                        <option value="@cat.Name">@cat.Name</option>
+                                    }
+                                    <option value="__new__">+ Opret ny kategori…</option>
+                                </select>
+                                @if (row.CustomCategory)
+                                {
+                                    <input class="row-input row-input-new-cat @ErrClass(row, "Category")"
+                                           placeholder="Skriv navn på ny kategori"
+                                           @bind="p.Category" @bind:event="oninput" />
+                                }
                             </label>
                             <label class="row-field">
                                 <span class="row-field-label">PDF-titel@(inUse ? "*" : "")</span>
@@ -270,13 +282,6 @@
     }
 </section>
 
-<datalist id="importer-categories">
-    @foreach (var c in _categories)
-    {
-        <option value="@c.Name" />
-    }
-</datalist>
-
 @code {
     private IBrowserFile? selectedFile;
     private bool isUploading;
@@ -294,15 +299,36 @@
         _categories = await CategoryService.GetAllAsync();
     }
 
-    private bool IsNewCategory(string? name) =>
-        !string.IsNullOrWhiteSpace(name)
-        && !_categories.Any(c => string.Equals(c.Name, name!.Trim(), StringComparison.OrdinalIgnoreCase));
+    private string CategorySelectValue(EditRow row)
+    {
+        if (row.CustomCategory) return "__new__";
+        if (string.IsNullOrWhiteSpace(row.Product.Category)) return "";
+        // If the stored category exists in the list, the select shows it; otherwise switch to custom mode.
+        return _categories.Any(c => c.Name == row.Product.Category)
+            ? row.Product.Category
+            : "__new__";
+    }
+
+    private void OnCategorySelect(EditRow row, string value)
+    {
+        if (value == "__new__")
+        {
+            row.CustomCategory = true;
+            // keep any existing value so the free-text input pre-fills
+        }
+        else
+        {
+            row.CustomCategory = false;
+            row.Product.Category = value;
+        }
+    }
 
     private class EditRow
     {
         public required Product Product { get; set; }
         public List<string> Errors { get; set; } = [];
         public HashSet<string> FieldErrors { get; set; } = [];
+        public bool CustomCategory { get; set; }
 
         public int KegCollarInput
         {
@@ -321,10 +347,19 @@
             return;
         }
         var all = await ProductService.ListProducts();
+        var knownNames = _categories.Select(c => c.Name).ToHashSet();
         _needsAttention = all
             .Where(p => _recentlyCreatedIds.Contains(p.OctopusId))
             .OrderBy(p => p.OctopusId)
-            .Select(p => new EditRow { Product = CloneProduct(p) })
+            .Select(p =>
+            {
+                var clone = CloneProduct(p);
+                return new EditRow
+                {
+                    Product = clone,
+                    CustomCategory = !string.IsNullOrWhiteSpace(clone.Category) && !knownNames.Contains(clone.Category),
+                };
+            })
             .ToList();
     }
 
