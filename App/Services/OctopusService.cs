@@ -20,10 +20,10 @@ public class OctopusService
 
     public record OctopusCsvRow(int OctopusId, string OctopusTitle, int Available);
 
-    public (List<OctopusCsvRow> Rows, int Skipped, List<string> Warnings) ParseCsv(Stream fileStream)
+    public async Task<(List<OctopusCsvRow> Rows, int Skipped, List<string> Warnings)> ParseCsv(Stream fileStream)
     {
         using var reader = new StreamReader(fileStream);
-        var content = reader.ReadToEnd();
+        var content = await reader.ReadToEndAsync();
         var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         var byId = new Dictionary<int, OctopusCsvRow>();
@@ -156,7 +156,7 @@ public class OctopusService
 
     public async Task UpdateAvailableFromOctopusCsv(Stream fileStream)
     {
-        var (rows, _, _) = ParseCsv(fileStream);
+        var (rows, _, _) = await ParseCsv(fileStream);
         var (existing, _) = await PartitionByExistence(rows);
         await ApplyUpdatesToExisting(existing);
     }

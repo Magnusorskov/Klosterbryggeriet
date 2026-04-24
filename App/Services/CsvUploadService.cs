@@ -13,7 +13,7 @@ public class CsvUploadService : ICsvUploadService
 
     public async Task<CsvImportResult> UploadCsvAsync(Stream stream, string fileName)
     {
-        var (rows, skipped, warnings) = _octopus.ParseCsv(stream);
+        var (rows, skipped, warnings) = await _octopus.ParseCsv(stream);
         var (existing, fresh) = await _octopus.PartitionByExistence(rows);
         var updated = await _octopus.ApplyUpdatesToExisting(existing);
         var created = await _octopus.CreateMissingProducts(fresh);

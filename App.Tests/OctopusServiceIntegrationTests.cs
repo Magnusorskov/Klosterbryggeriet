@@ -223,7 +223,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
     // ParseCsv: duplicate OctopusId keeps the last row and emits a warning.
     [Fact]
-    public void ParseCsv_DuplicateOctopusId_KeepsLastAndWarns()
+    public async Task ParseCsv_DuplicateOctopusId_KeepsLastAndWarns()
     {
         var csv = BuildCsv(
             (42, "Første", 10),
@@ -231,10 +231,10 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         List<OctopusService.OctopusCsvRow> rows;
         List<string> warnings;
-        using (var db = _fixture.CreateDbContext())
+        await using (var db = _fixture.CreateDbContext())
         {
             var service = new OctopusService(db, new LoggerService(db));
-            (rows, _, warnings) = service.ParseCsv(csv);
+            (rows, _, warnings) = await service.ParseCsv(csv);
         }
 
         Assert.Single(rows);
