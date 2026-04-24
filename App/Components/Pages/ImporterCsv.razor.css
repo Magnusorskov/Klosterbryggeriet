@@ -249,6 +249,268 @@
     margin-right: 0.35rem;
 }
 
+/* ── Attention block (nye produkter) ─────────────────────────────────────── */
+.attention-block {
+    margin-top: 2.25rem;
+    padding: 1.5rem 1.5rem 1.25rem;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid rgba(109, 68, 35, 0.14);
+    box-shadow: 0 1px 3px rgba(34, 24, 18, 0.05);
+}
+
+.attention-header {
+    margin-bottom: 1rem;
+}
+
+.attention-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #221812;
+    margin: 0 0 0.4rem;
+}
+
+.attention-sub {
+    color: #6b5c45;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.attention-sub em {
+    font-style: normal;
+    color: #a65f2b;
+    font-weight: 500;
+}
+
+.attention-empty {
+    color: #6b5c45;
+    font-size: 0.92rem;
+    margin: 0.5rem 0 0;
+}
+
+.attention-table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(109, 68, 35, 0.1);
+    border-radius: 8px;
+}
+
+.attention-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    font-size: 0.88rem;
+}
+
+.attention-table thead tr {
+    background: #faf5ec;
+    border-bottom: 1px solid rgba(109, 68, 35, 0.14);
+}
+
+.attention-table th {
+    padding: 0.55rem 0.85rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a7356;
+    white-space: nowrap;
+}
+
+.attention-table tbody tr {
+    border-bottom: 1px solid rgba(109, 68, 35, 0.08);
+}
+
+.attention-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.attention-table td {
+    padding: 0.55rem 0.85rem;
+    color: #221812;
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+.mangler-chip-inline {
+    display: inline-block;
+    margin: 0.1rem 0.25rem 0.1rem 0;
+    font-size: 0.68rem;
+    background: #FFF3E0;
+    color: #E65100;
+    padding: 0.1rem 0.45rem;
+    border-radius: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 7px;
+    border: 1px solid rgba(166, 95, 43, 0.35);
+    background: #faf5ec;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #a65f2b;
+    font-family: inherit;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.edit-btn:hover {
+    background: #ffffff;
+    border-color: #a65f2b;
+}
+
+/* ── Receipt block (seneste import) ──────────────────────────────────────── */
+.receipt-block {
+    margin-top: 1.5rem;
+    padding: 1.5rem 1.5rem 1.25rem;
+    background: #faf5ec;
+    border-radius: 12px;
+    border: 1px solid rgba(109, 68, 35, 0.1);
+}
+
+.receipt-header {
+    margin-bottom: 1rem;
+}
+
+.receipt-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #221812;
+    margin: 0 0 0.3rem;
+}
+
+.receipt-meta {
+    color: #8a7356;
+    font-size: 0.82rem;
+    margin: 0;
+}
+
+.receipt-counts {
+    color: #6b5c45;
+    font-size: 0.88rem;
+    margin: 0.4rem 0 0;
+    font-weight: 500;
+}
+
+.receipt-empty {
+    color: #8a7356;
+    font-style: italic;
+    margin: 0.5rem 0 0;
+}
+
+.diff-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid rgba(109, 68, 35, 0.1);
+    overflow: hidden;
+}
+
+.diff-row {
+    display: grid;
+    grid-template-columns: 20px 72px 1fr auto;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid rgba(109, 68, 35, 0.06);
+}
+
+.diff-row:last-child {
+    border-bottom: none;
+}
+
+.diff-marker {
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.diff-add {
+    background: rgba(46, 125, 50, 0.04);
+    color: #1a4c1d;
+}
+
+.diff-add .diff-marker {
+    color: #2E7D32;
+}
+
+.diff-update {
+    color: #3a2a1c;
+}
+
+.diff-update .diff-marker {
+    color: #8a7356;
+}
+
+.diff-flip {
+    background: rgba(230, 81, 0, 0.05);
+    color: #3a2a1c;
+}
+
+.diff-flip .diff-marker {
+    color: #E65100;
+}
+
+.diff-id {
+    color: #8a7356;
+    font-weight: 600;
+}
+
+.diff-title {
+    font-family: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.diff-detail {
+    color: #6b5c45;
+    white-space: nowrap;
+}
+
+.diff-status {
+    color: #E65100;
+    font-weight: 500;
+}
+
+.receipt-warnings {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: #fff8ec;
+    border: 1px solid #f0d6a0;
+    border-radius: 8px;
+}
+
+.receipt-warnings-title {
+    margin: 0 0 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8a5a0f;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.receipt-warnings ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: #6b4a1e;
+    font-size: 0.85rem;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
     .csv-title {
@@ -267,5 +529,14 @@
 
     .btn-upload {
         justify-content: center;
+    }
+
+    .diff-row {
+        grid-template-columns: 20px 1fr;
+        gap: 0.25rem;
+    }
+
+    .diff-id, .diff-title, .diff-detail {
+        grid-column: 2 / -1;
     }
 }

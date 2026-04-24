@@ -1,0 +1,169 @@
+@using BlazorApp.Models
+@using BlazorApp.Services
+
+@inject ProductService ProductService
+
+@if (Editing != null)
+{
+    <div class="modal-backdrop" @onclick="Cancel"></div>
+    <div class="modal-box" @onclick:stopPropagation>
+        <div class="modal-head">
+            <div>
+                <div class="modal-subheading">Octopus ID #@Editing.OctopusId</div>
+                <h2 class="modal-title">Rediger produkt</h2>
+            </div>
+            <button class="modal-close" @onclick="Cancel" aria-label="Luk">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <p class="modal-section-label">Manuelle felter</p>
+        <div class="modal-grid">
+            <div class="field-full">
+                <label class="field-label">Kategori</label>
+                <input class="field-input" @bind="Editing.Category" />
+            </div>
+            <div class="field-full">
+                <label class="field-label @(string.IsNullOrWhiteSpace(Editing.PdfTitle) ? "field-label-missing" : "")">
+                    PDF-titel
+                    @if (string.IsNullOrWhiteSpace(Editing.PdfTitle))
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" @bind="Editing.PdfTitle" />
+            </div>
+            <div>
+                <label class="field-label @((Editing.KegCollar ?? 0) == 0 ? "field-label-missing" : "")">
+                    Kasse/Kolli
+                    @if ((Editing.KegCollar ?? 0) == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" @bind="_editingKegCollar" />
+            </div>
+            <div>
+                <label class="field-label @(Editing.Str == 0 ? "field-label-missing" : "")">
+                    Størrelse (L)
+                    @if (Editing.Str == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" step="0.01" @bind="Editing.Str" />
+            </div>
+            <div>
+                <label class="field-label @(Editing.Alcohol == 0 ? "field-label-missing" : "")">
+                    Alkohol%
+                    @if (Editing.Alcohol == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" step="0.1" @bind="Editing.Alcohol" />
+            </div>
+            <div>
+                <label class="field-label @(Editing.PricePrUnit == 0 ? "field-label-missing" : "")">
+                    Pris pr. enhed (kr)
+                    @if (Editing.PricePrUnit == 0)
+                    { <span class="mangler-chip">Mangler</span> }
+                </label>
+                <input class="field-input" type="number" step="0.01" @bind="Editing.PricePrUnit" />
+            </div>
+        </div>
+
+        <p class="modal-section-label">Øvrige felter</p>
+        <div class="modal-grid">
+            <div class="field-full">
+                <label class="field-label">Octopus-titel</label>
+                <input class="field-input" @bind="Editing.OctopusTitle" />
+            </div>
+            <div>
+                <label class="field-label">Web-titel</label>
+                <input class="field-input" @bind="Editing.WebTitle" />
+            </div>
+            <div>
+                <label class="field-label">Web ID</label>
+                <input class="field-input" type="number" @bind="Editing.WebId" />
+            </div>
+            <div>
+                <label class="field-label">Disponibel</label>
+                <input class="field-input" type="number" @bind="Editing.Available" />
+            </div>
+            <div>
+                <label class="field-label">Variant ID 1</label>
+                <input class="field-input" type="number" @bind="Editing.VariantId1" />
+            </div>
+            <div>
+                <label class="field-label">Variant ID 2</label>
+                <input class="field-input" type="number" @bind="Editing.VariantId2" />
+            </div>
+        </div>
+
+        <div class="toggle-group">
+            <label class="toggle-row">
+                <input type="checkbox" @bind="Editing.InUse" />
+                <span class="toggle-text">
+                    <span class="toggle-title">I brug</span>
+                    <span class="toggle-hint">Produktet vises på prislisten og opdateres på hjemmesiden.</span>
+                </span>
+            </label>
+            <label class="toggle-row">
+                <input type="checkbox" @bind="Editing.HalfKolli" />
+                <span class="toggle-text">
+                    <span class="toggle-title">Halv kasse tilgængelig</span>
+                    <span class="toggle-hint">Tilføjer «*» til Kasse/Kolli på PDF'en — kunden kan bestille en halv kasse.</span>
+                </span>
+            </label>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_editError))
+        {
+            <p class="field-error">@_editError</p>
+        }
+
+        <div class="modal-actions">
+            <button class="btn-ghost" @onclick="Cancel" disabled="@_saving">Annuller</button>
+            <button class="btn-primary" @onclick="Save" disabled="@_saving">
+                @(_saving ? "Gemmer..." : "Gem ændringer")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Product? Editing { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnCancelled { get; set; }
+
+    private string _editError = "";
+    private bool _saving;
+
+    private int _editingKegCollar
+    {
+        get => Editing?.KegCollar ?? 0;
+        set { if (Editing != null) Editing.KegCollar = value == 0 ? null : value; }
+    }
+
+    private async Task Save()
+    {
+        if (Editing == null) return;
+        _saving = true;
+        _editError = "";
+        try
+        {
+            await ProductService.UpdateAsync(Editing);
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _editError = $"Kunne ikke gemme: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task Cancel()
+    {
+        _editError = "";
+        await OnCancelled.InvokeAsync();
+    }
+}

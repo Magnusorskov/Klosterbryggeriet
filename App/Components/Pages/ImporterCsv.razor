@@ -1,8 +1,11 @@
 @page "/importer-csv"
+@using BlazorApp.Models
+@using BlazorApp.Models.Dtos
 @using BlazorApp.Services
 @rendermode InteractiveServer
 
 @inject ICsvUploadService CsvUploadService
+@inject ProductService ProductService
 
 <PageTitle>Importer CSV</PageTitle>
 
@@ -59,16 +62,6 @@
         </div>
     }
 
-    @if (successMessage is not null)
-    {
-        <div class="status-card status-success">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="20 6 9 17 4 12" />
-            </svg>
-            @successMessage
-        </div>
-    }
-
     @if (errorMessage is not null)
     {
         <div class="status-card status-error">
@@ -85,13 +78,157 @@
         <strong>Eksportér fra Octopus:</strong>
         <span>Gå til Produkter → Eksportér → Vælg CSV-format og download filen.</span>
     </div>
+
+    <section class="attention-block">
+        <header class="attention-header">
+            <h2 class="attention-title">Nye produkter til gennemgang</h2>
+            <p class="attention-sub">
+                Produkter markeret som <em>Ikke i brug</em> vises ikke på prislisten eller opdateres på webshoppen, før du sætter dem <em>I brug</em>.
+            </p>
+        </header>
+
+        @if (_attentionLoading)
+        {
+            <p class="attention-empty">Henter produkter...</p>
+        }
+        else if (_needsAttention.Count == 0)
+        {
+            <p class="attention-empty">Ingen produkter mangler gennemgang. Alle aktive produkter er sat <strong>I brug</strong>.</p>
+        }
+        else
+        {
+            <div class="attention-table-wrap">
+                <table class="attention-table">
+                    <thead>
+                        <tr>
+                            <th>Octopus ID</th>
+                            <th>Titel</th>
+                            <th>Disponibel</th>
+                            <th>Mangler</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in _needsAttention)
+                        {
+                            <tr>
+                                <td>@p.OctopusId</td>
+                                <td>@(string.IsNullOrWhiteSpace(p.OctopusTitle) ? "—" : p.OctopusTitle)</td>
+                                <td>@p.Available</td>
+                                <td>
+                                    @foreach (var tag in MissingTags(p))
+                                    {
+                                        <span class="mangler-chip mangler-chip-inline">@tag</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button class="edit-btn" @onclick="() => OpenEdit(p)">Udfyld</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    @if (_lastResult is not null)
+    {
+        <section class="receipt-block">
+            <header class="receipt-header">
+                <h2 class="receipt-title">Seneste import</h2>
+                <p class="receipt-meta">
+                    @_lastResult.FileName · @_lastResult.ImportedAt.ToString("dd.MM.yyyy HH:mm")
+                    · @_lastResult.RowsParsed rækker læst
+                    @if (_lastResult.RowsSkipped > 0)
+                    {
+                        <span> · @_lastResult.RowsSkipped sprunget over</span>
+                    }
+                </p>
+                <p class="receipt-counts">
+                    @_lastResult.Updated.Count opdateret
+                    · @_lastResult.Created.Count ny@(_lastResult.Created.Count == 1 ? "t" : "e")
+                    · @_lastResult.StatusFlipCount status-skift
+                </p>
+            </header>
+
+            @if (_lastResult.Updated.Count == 0 && _lastResult.Created.Count == 0)
+            {
+                <p class="receipt-empty">Ingen ændringer i denne import.</p>
+            }
+            else
+            {
+                <ul class="diff-list">
+                    @foreach (var c in _lastResult.Created)
+                    {
+                        <li class="diff-row diff-add">
+                            <span class="diff-marker">+</span>
+                            <span class="diff-id">#@c.OctopusId</span>
+                            <span class="diff-title">@(string.IsNullOrWhiteSpace(c.OctopusTitle) ? "—" : c.OctopusTitle)</span>
+                            <span class="diff-detail">Disponibel=@c.Available · oprettet som «Ikke i brug»</span>
+                        </li>
+                    }
+                    @foreach (var u in _lastResult.Updated)
+                    {
+                        <li class="diff-row @(u.StatusFlipped ? "diff-flip" : "diff-update")">
+                            <span class="diff-marker">~</span>
+                            <span class="diff-id">#@u.OctopusId</span>
+                            <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
+                            <span class="diff-detail">
+                                @u.PreviousAvailable → @u.NewAvailable
+                                @if (u.StatusFlipped)
+                                {
+                                    <span class="diff-status"> (@StatusLabel(u.PreviousStatus) → @StatusLabel(u.NewStatus))</span>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (_lastResult.Warnings.Count > 0)
+            {
+                <div class="receipt-warnings">
+                    <p class="receipt-warnings-title">Advarsler</p>
+                    <ul>
+                        @foreach (var w in _lastResult.Warnings)
+                        {
+                            <li>@w</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </section>
+    }
 </section>
+
+<ProductEditModal Editing="_editing" OnSaved="OnEditSaved" OnCancelled="CloseEdit" />
 
 @code {
     private IBrowserFile? selectedFile;
     private bool isUploading;
-    private string? successMessage;
     private string? errorMessage;
+
+    private CsvImportResult? _lastResult;
+    private List<Product> _needsAttention = [];
+    private bool _attentionLoading = true;
+
+    private Product? _editing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadNeedsAttention();
+    }
+
+    private async Task ReloadNeedsAttention()
+    {
+        _attentionLoading = true;
+        var all = await ProductService.ListProducts();
+        _needsAttention = all.Where(p => !p.InUse)
+            .OrderBy(p => p.OctopusId)
+            .ToList();
+        _attentionLoading = false;
+    }
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -100,13 +237,11 @@
         {
             selectedFile = null;
             errorMessage = "Kun CSV-filer er tilladt.";
-            successMessage = null;
             return;
         }
 
         selectedFile = file;
         errorMessage = null;
-        successMessage = null;
     }
 
     private async Task UploadCsv()
@@ -115,14 +250,13 @@
 
         isUploading = true;
         errorMessage = null;
-        successMessage = null;
 
         try
         {
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
-            successMessage = $"{selectedFile.Name} blev uploadet.";
+            _lastResult = await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
             selectedFile = null;
+            await ReloadNeedsAttention();
         }
         catch (Exception ex)
         {
@@ -133,4 +267,55 @@
             isUploading = false;
         }
     }
+
+    private void OpenEdit(Product p)
+    {
+        _editing = new Product
+        {
+            OctopusId    = p.OctopusId,
+            WebId        = p.WebId,
+            WebTitle     = p.WebTitle,
+            PdfTitle     = p.PdfTitle,
+            OctopusTitle = p.OctopusTitle,
+            Available    = p.Available,
+            KegCollar    = p.KegCollar,
+            Str          = p.Str,
+            Alcohol      = p.Alcohol,
+            PricePrUnit  = p.PricePrUnit,
+            Category     = p.Category,
+            VariantId1   = p.VariantId1,
+            VariantId2   = p.VariantId2,
+            InUse        = p.InUse,
+            HalfKolli    = p.HalfKolli,
+        };
+    }
+
+    private void CloseEdit()
+    {
+        _editing = null;
+    }
+
+    private async Task OnEditSaved()
+    {
+        _editing = null;
+        await ReloadNeedsAttention();
+    }
+
+    private static IEnumerable<string> MissingTags(Product p)
+    {
+        if (!p.InUse) yield return "Ikke i brug";
+        if (string.IsNullOrWhiteSpace(p.Category)) yield return "Kategori";
+        if (string.IsNullOrWhiteSpace(p.PdfTitle)) yield return "PDF-titel";
+        if ((p.KegCollar ?? 0) == 0) yield return "Kasse/Kolli";
+        if (p.Str == 0) yield return "Størrelse";
+        if (p.Alcohol == 0) yield return "Alkohol";
+        if (p.PricePrUnit == 0) yield return "Pris";
+    }
+
+    private static string StatusLabel(ProductStatus status) => status switch
+    {
+        ProductStatus.Available => "Tilgængelig",
+        ProductStatus.SoldOut => "Udsolgt",
+        _ => status.ToString(),
+    };
 }

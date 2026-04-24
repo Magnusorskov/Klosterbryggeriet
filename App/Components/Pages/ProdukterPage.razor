@@ -244,124 +244,7 @@
     }
 </section>
 
-@if (_editing != null)
-{
-    <div class="modal-backdrop" @onclick="CloseEdit"></div>
-    <div class="modal-box" @onclick:stopPropagation>
-        <div class="modal-head">
-            <div>
-                <div class="modal-subheading">Octopus ID #@_editing.OctopusId</div>
-                <h2 class="modal-title">Rediger produkt</h2>
-            </div>
-            <button class="modal-close" @onclick="CloseEdit" aria-label="Luk">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
-        </div>
-
-        <div class="modal-grid">
-            <div class="field-full">
-                <label class="field-label">Octopus-titel</label>
-                <input class="field-input" @bind="_editing.OctopusTitle" />
-            </div>
-            <div>
-                <label class="field-label">Web-titel</label>
-                <input class="field-input" @bind="_editing.WebTitle" />
-            </div>
-            <div>
-                <label class="field-label @(string.IsNullOrWhiteSpace(_editing.PdfTitle) ? "field-label-missing" : "")">
-                    PDF-titel
-                    @if (string.IsNullOrWhiteSpace(_editing.PdfTitle))
-                    { <span class="mangler-chip">Mangler</span> }
-                </label>
-                <input class="field-input" @bind="_editing.PdfTitle" />
-            </div>
-            <div>
-                <label class="field-label">Web ID</label>
-                <input class="field-input" type="number" @bind="_editing.WebId" />
-            </div>
-            <div>
-                <label class="field-label">Disponibel</label>
-                <input class="field-input" type="number" @bind="_editing.Available" />
-            </div>
-            <div>
-                <label class="field-label @(_editing.Str == 0 ? "field-label-missing" : "")">
-                    Størrelse (L)
-                    @if (_editing.Str == 0)
-                    { <span class="mangler-chip">Mangler</span> }
-                </label>
-                <input class="field-input" type="number" step="0.01" @bind="_editing.Str" />
-            </div>
-            <div>
-                <label class="field-label @(_editing.Alcohol == 0 ? "field-label-missing" : "")">
-                    Alkohol%
-                    @if (_editing.Alcohol == 0)
-                    { <span class="mangler-chip">Mangler</span> }
-                </label>
-                <input class="field-input" type="number" step="0.1" @bind="_editing.Alcohol" />
-            </div>
-            <div>
-                <label class="field-label @((_editing.KegCollar ?? 0) == 0 ? "field-label-missing" : "")">
-                    Kasse/Kolli
-                    @if ((_editing.KegCollar ?? 0) == 0)
-                    { <span class="mangler-chip">Mangler</span> }
-                </label>
-                <input class="field-input" type="number" @bind="_editingKegCollar" />
-            </div>
-            <div>
-                <label class="field-label @(_editing.PricePrUnit == 0 ? "field-label-missing" : "")">
-                    Pris pr. enhed (kr)
-                    @if (_editing.PricePrUnit == 0)
-                    { <span class="mangler-chip">Mangler</span> }
-                </label>
-                <input class="field-input" type="number" step="0.01" @bind="_editing.PricePrUnit" />
-            </div>
-            <div>
-                <label class="field-label">Kategori</label>
-                <input class="field-input" @bind="_editing.Category" />
-            </div>
-            <div>
-                <label class="field-label">Variant ID 1</label>
-                <input class="field-input" type="number" @bind="_editing.VariantId1" />
-            </div>
-            <div>
-                <label class="field-label">Variant ID 2</label>
-                <input class="field-input" type="number" @bind="_editing.VariantId2" />
-            </div>
-        </div>
-
-        <div class="toggle-group">
-            <label class="toggle-row">
-                <input type="checkbox" @bind="_editing.InUse" />
-                <span class="toggle-text">
-                    <span class="toggle-title">I brug</span>
-                    <span class="toggle-hint">Produktet vises på prislisten og opdateres på hjemmesiden.</span>
-                </span>
-            </label>
-            <label class="toggle-row">
-                <input type="checkbox" @bind="_editing.HalfKolli" />
-                <span class="toggle-text">
-                    <span class="toggle-title">Halv kasse tilgængelig</span>
-                    <span class="toggle-hint">Tilføjer «*» til Kasse/Kolli på PDF'en — kunden kan bestille en halv kasse.</span>
-                </span>
-            </label>
-        </div>
-
-        @if (!string.IsNullOrEmpty(_editError))
-        {
-            <p class="field-error">@_editError</p>
-        }
-
-        <div class="modal-actions">
-            <button class="btn-ghost" @onclick="CloseEdit" disabled="@_saving">Annuller</button>
-            <button class="btn-primary" @onclick="SaveEdit" disabled="@_saving">
-                @(_saving ? "Gemmer..." : "Gem ændringer")
-            </button>
-        </div>
-    </div>
-}
+<ProductEditModal Editing="_editing" OnSaved="OnEditSaved" OnCancelled="CloseEdit" />
 
 @code {
     private List<Product> _products = [];
@@ -383,14 +266,6 @@
 
     // Edit
     private Product? _editing;
-    private string _editError = "";
-    private bool _saving;
-
-    private int _editingKegCollar
-    {
-        get => _editing?.KegCollar ?? 0;
-        set { if (_editing != null) _editing.KegCollar = value == 0 ? null : value; }
-    }
 
     private static readonly (string Key, string Label, int Width)[] Cols =
     [
@@ -533,32 +408,16 @@
             InUse        = p.InUse,
             HalfKolli    = p.HalfKolli,
         };
-        _editError = "";
     }
 
     private void CloseEdit()
     {
         _editing = null;
-        _editError = "";
     }
 
-    private async Task SaveEdit()
+    private async Task OnEditSaved()
     {
-        if (_editing == null) return;
-        _saving = true;
-        try
-        {
-            await ProductService.UpdateAsync(_editing);
-            _products = await ProductService.ListProducts();
-            _editing = null;
-        }
-        catch (Exception ex)
-        {
-            _editError = $"Kunne ikke gemme: {ex.Message}";
-        }
-        finally
-        {
-            _saving = false;
-        }
+        _products = await ProductService.ListProducts();
+        _editing = null;
     }
 }
