@@ -40,7 +40,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         List<Category> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             result = await service.GetAllAsync();
         }
 
@@ -58,7 +58,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         List<Category> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             result = await service.GetAllAsync();
         }
 
@@ -87,7 +87,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         List<Category> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             result = await service.GetAllAsync();
         }
 
@@ -117,7 +117,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         Category? result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             result = await service.GetByIdAsync(id);
         }
 
@@ -135,7 +135,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         Category? result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             result = await service.GetByIdAsync(9999);
         }
 
@@ -152,7 +152,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         // Act
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             await service.CreateAsync(category);
         }
 
@@ -182,7 +182,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         // Act
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             await service.CreateAsync(newCategory);
         }
 
@@ -221,7 +221,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         // Act
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             await service.UpdateAsync(update);
         }
 
@@ -253,7 +253,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
 
         // Act & Assert
         await using var db = _fixture.CreateDbContext();
-        var service = new CategoryService(db);
+        var service = new CategoryService(_fixture);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateAsync(missing));
     }
 
@@ -274,7 +274,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         // Act
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             await service.SaveOrderAsync([soda.Id, beer.Id, wine.Id]);
         }
 
@@ -304,7 +304,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         // Act
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             await service.SaveOrderAsync([wine.Id, 9999, beer.Id]);
         }
 
@@ -336,7 +336,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
         // Act
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new CategoryService(db);
+            var service = new CategoryService(_fixture);
             await service.DeleteAsync(id);
         }
 
@@ -352,7 +352,7 @@ public class CategoryServiceIntegrationTest : IClassFixture<DatabaseFixture>, IA
     {
         // Act & Assert
         await using var db = _fixture.CreateDbContext();
-        var service = new CategoryService(db);
+        var service = new CategoryService(_fixture);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteAsync(9999));
     }
 

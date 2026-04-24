@@ -39,7 +39,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Dictionary<string, List<Product>> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             result = await service.MapProductsByCategory();
         }
 
@@ -56,7 +56,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Dictionary<string, List<Product>> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             result = await service.MapProductsByCategory();
         }
 
@@ -81,7 +81,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Dictionary<string, List<Product>> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             result = await service.MapProductsByCategory();
         }
 
@@ -142,7 +142,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             await service.UpdateAsync(update);
         }
 
@@ -182,7 +182,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         fetched.InUse = true;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             await service.UpdateAsync(fetched);
         }
 
@@ -202,7 +202,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             await service.UpdateAsync(phantom);
         }
 
@@ -231,7 +231,7 @@ public class ProductServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Dictionary<string, List<Product>> result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new ProductService(db);
+            var service = new ProductService(_fixture);
             result = await service.MapProductsByCategory();
         }
 

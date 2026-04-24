@@ -8,13 +8,13 @@ namespace BlazorApp.Services;
 
 public class OctopusService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly LoggerService _logger;
     private static readonly CultureInfo DaCulture = new("da-DK");
 
-    public OctopusService(AppDbContext db, LoggerService logger)
+    public OctopusService(IDbContextFactory<AppDbContext> contextFactory, LoggerService logger)
     {
-        _db = db;
+        _contextFactory = contextFactory;
         _logger = logger;
     }
 
@@ -62,8 +62,9 @@ public class OctopusService
     public async Task<(List<OctopusCsvRow> Existing, List<OctopusCsvRow> New)>
         PartitionByExistence(IReadOnlyList<OctopusCsvRow> rows)
     {
+        await using var db = _contextFactory.CreateDbContext();
         var ids = rows.Select(r => r.OctopusId).ToList();
-        var existingIds = (await _db.Products
+        var existingIds = (await db.Products
             .Where(p => ids.Contains(p.OctopusId))
             .Select(p => p.OctopusId)
             .ToListAsync()).ToHashSet();
@@ -77,12 +78,14 @@ public class OctopusService
     {
         if (rows.Count == 0) return [];
 
+        await using var db = _contextFactory.CreateDbContext();
         var ids = rows.Select(r => r.OctopusId).ToList();
-        var dbProducts = await _db.Products
+        var dbProducts = await db.Products
             .Where(p => ids.Contains(p.OctopusId))
             .ToListAsync();
 
         var changes = new List<ProductChange>();
+        var statusFlips = new List<(Product Product, ProductStatus Previous, ProductStatus New)>();
 
         foreach (var dbProduct in dbProducts)
         {
@@ -93,7 +96,7 @@ public class OctopusService
 
             if (previousStatus != newStatus)
             {
-                await _logger.LogProductChange(dbProduct, previousStatus, newStatus);
+                statusFlips.Add((dbProduct, previousStatus, newStatus));
             }
 
             dbProduct.Available = row.Available;
@@ -109,7 +112,13 @@ public class OctopusService
             });
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
+
+        foreach (var (product, previous, next) in statusFlips)
+        {
+            await _logger.LogProductChange(product, previous, next);
+        }
+
         return changes;
     }
 
@@ -117,6 +126,7 @@ public class OctopusService
     {
         if (rows.Count == 0) return [];
 
+        await using var db = _contextFactory.CreateDbContext();
         var created = new List<ProductCreated>();
         var newProducts = new List<Product>();
 
@@ -143,8 +153,8 @@ public class OctopusService
             });
         }
 
-        await _db.Products.AddRangeAsync(newProducts);
-        await _db.SaveChangesAsync();
+        await db.Products.AddRangeAsync(newProducts);
+        await db.SaveChangesAsync();
 
         foreach (var product in newProducts)
         {

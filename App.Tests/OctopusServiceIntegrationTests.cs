@@ -39,7 +39,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db, new LoggerService(db));
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
@@ -66,7 +66,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db, new LoggerService(db));
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             await service.UpdateAvailableFromOctopusCsv(testFile);
         }
 
@@ -85,7 +85,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(db, new LoggerService(db)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
             await uploader.UploadCsvAsync(testFile, "octopus.csv");
         }
 
@@ -110,7 +110,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(db, new LoggerService(db)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
             await uploader.UploadCsvAsync(testFile, "octopus.csv");
         }
 
@@ -143,7 +143,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         BlazorApp.Models.Dtos.CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(db, new LoggerService(db)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
             result = await uploader.UploadCsvAsync(csv, "test.csv");
         }
 
@@ -172,7 +172,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         BlazorApp.Models.Dtos.CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(db, new LoggerService(db)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
             result = await uploader.UploadCsvAsync(testFile, "octopus.csv");
         }
 
@@ -198,7 +198,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db, new LoggerService(db));
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             await service.CreateMissingProducts([row]);
         }
 
@@ -233,7 +233,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         List<string> warnings;
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db, new LoggerService(db));
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             (rows, _, warnings) = await service.ParseCsv(csv);
         }
 
