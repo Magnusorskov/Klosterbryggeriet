@@ -2,6 +2,7 @@
 @using BlazorApp.Services
 
 @inject ProductService ProductService
+@inject CategoryService CategoryService
 
 @if (Editing != null)
 {
@@ -24,7 +25,25 @@
         <div class="modal-grid">
             <div class="field-full">
                 <label class="field-label">Kategori</label>
-                <input class="field-input" @bind="Editing.Category" />
+                <select class="field-input field-select"
+                        @bind:get="CategorySelectValue"
+                        @bind:set="OnCategorySelect">
+                    <option value="">— Ingen kategori —</option>
+                    @foreach (var cat in _categories)
+                    {
+                        <option value="@cat.Name">@cat.Name</option>
+                    }
+                    @if (_customCategory && !_categories.Any(c => c.Name == Editing.Category))
+                    {
+                        <option value="__current__">@Editing.Category</option>
+                    }
+                    <option value="__new__">+ Skriv ny kategori…</option>
+                </select>
+                @if (_customCategory)
+                {
+                    <input class="field-input field-input-spaced" placeholder="Skriv ny kategori"
+                           @bind="Editing.Category" @bind:event="oninput" />
+                }
             </div>
             <div class="field-full">
                 <label class="field-label @(string.IsNullOrWhiteSpace(Editing.PdfTitle) ? "field-label-missing" : "")">
@@ -134,6 +153,54 @@
 
     private string _editError = "";
     private bool _saving;
+    private List<Category> _categories = [];
+    private bool _customCategory;
+    private Product? _lastEditing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await CategoryService.GetAllAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Editing != _lastEditing)
+        {
+            _lastEditing = Editing;
+            _customCategory = Editing != null
+                              && !string.IsNullOrWhiteSpace(Editing.Category)
+                              && !_categories.Any(c => c.Name == Editing.Category);
+        }
+    }
+
+    private string CategorySelectValue
+    {
+        get
+        {
+            if (_customCategory) return "__current__";
+            if (Editing == null || string.IsNullOrWhiteSpace(Editing.Category)) return "";
+            return _categories.Any(c => c.Name == Editing.Category) ? Editing.Category : "__current__";
+        }
+    }
+
+    private void OnCategorySelect(string? value)
+    {
+        if (Editing == null) return;
+        if (value == "__new__")
+        {
+            _customCategory = true;
+            Editing.Category = "";
+        }
+        else if (value == "__current__")
+        {
+            _customCategory = true;
+        }
+        else
+        {
+            _customCategory = false;
+            Editing.Category = value ?? "";
+        }
+    }
 
     private int _editingKegCollar
     {

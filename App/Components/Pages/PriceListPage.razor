@@ -9,6 +9,14 @@
 
 <PageTitle>Prisliste</PageTitle>
 
+<header class="no-print prisliste-header">
+    <p class="prisliste-eyebrow">Eksport</p>
+    <h1 class="prisliste-title">Prisliste</h1>
+    <p class="prisliste-lede">
+        Generer en prisliste over alle produkter i brug, sorteret efter kategori. Klik <strong>Generer prisliste</strong> for at hente det aktuelle udvalg, og eksportér derefter til PDF.
+    </p>
+</header>
+
 <div class="no-print toolbar">
     <button class="btn-generate" @onclick="LoadProducts" disabled="@isLoading">
         @if (isLoading)

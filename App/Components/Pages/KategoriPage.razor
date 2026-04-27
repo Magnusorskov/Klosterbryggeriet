@@ -13,6 +13,14 @@
             <p class="kategori-eyebrow">Opsætning · Prisliste</p>
             <h1 class="kategori-title">Kategorier</h1>
             <p class="kategori-lede">Disse kategorier bruges på <strong>Prislisten</strong>. Administrér navne, prismærker og ekstra kolonner for hver sektion, der vises i den genererede prisliste.</p>
+            <p class="kategori-hint">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="15" y2="12" />
+                    <line x1="3" y1="18" x2="9" y2="18" />
+                </svg>
+                <span>Træk <strong>⠿</strong>-håndtaget for at sortere — rækkefølgen herunder bestemmer rækkefølgen i den eksporterede PDF.</span>
+            </p>
         </div>
         <button class="btn-primary btn-new" @onclick="ShowCreate">
             <span class="btn-plus" aria-hidden="true">+</span> Ny kategori
@@ -94,12 +102,24 @@
         <input class="form-input" @bind="_formName" placeholder="f.eks. BELGIEN – NYT BRYGGERI" />
 
         <label class="form-label">Prismærke <span class="hint">(vises i priskolonnen)</span></label>
-        <select class="form-input form-select" @bind="_formPriceLabel">
-            <option value="pr. enhed">pr. enhed</option>
-            <option value="pr. stk.">pr. stk.</option>
-            <option value="pr. flaske">pr. flaske</option>
-            <option value="pr. kasse">pr. kasse</option>
+        <select class="form-input form-select"
+                @bind:get="_priceLabelSelect"
+                @bind:set="OnPriceLabelSelect">
+            @foreach (var label in PriceLabelOptions)
+            {
+                <option value="@label">@label</option>
+            }
+            @if (_customPriceLabel && !PriceLabelOptions.Contains(_formPriceLabel))
+            {
+                <option value="__current__">@_formPriceLabel</option>
+            }
+            <option value="__new__">+ Tilføj nyt prismærke…</option>
         </select>
+        @if (_customPriceLabel)
+        {
+            <input class="form-input form-input-spaced" placeholder="Skriv nyt prismærke (f.eks. pr. fustage)"
+                   @bind="_formPriceLabel" @bind:event="oninput" />
+        }
 
         <label class="form-label">Ekstra kolonner <span class="hint">(mellem Navn og Pris)</span></label>
         <div class="columns-builder">
@@ -112,7 +132,8 @@
                         <option value="">— vælg felt —</option>
                         @foreach (var (field, label) in CategoryService.AvailableFields)
                         {
-                            <option value="@field">@label</option>
+                            var taken = IsFieldTakenByOtherRow(field, idx);
+                            <option value="@field" disabled="@taken">@label@(taken ? " (allerede valgt)" : "")</option>
                         }
                         <option value="__custom__">Fritekst...</option>
                     </select>
@@ -162,6 +183,33 @@
     private string  _formName      = "";
     private string  _formPriceLabel = "pr. enhed";
     private string  _formError     = "";
+    private bool    _customPriceLabel = false;
+
+    private static readonly string[] PriceLabelOptions = ["pr. enhed", "pr. stk.", "pr. flaske", "pr. kasse"];
+
+    private string _priceLabelSelect =>
+        _customPriceLabel
+            ? (PriceLabelOptions.Contains(_formPriceLabel) ? _formPriceLabel : "__current__")
+            : _formPriceLabel;
+
+    private void OnPriceLabelSelect(string? value)
+    {
+        if (value == "__new__")
+        {
+            _customPriceLabel = true;
+            if (PriceLabelOptions.Contains(_formPriceLabel))
+                _formPriceLabel = "";
+        }
+        else if (value == "__current__")
+        {
+            _customPriceLabel = true;
+        }
+        else
+        {
+            _customPriceLabel = false;
+            _formPriceLabel = value ?? "";
+        }
+    }
 
     private List<CategoryColumn> _formColumns = [];
 
@@ -190,6 +238,7 @@
         _editId         = null;
         _formName       = "";
         _formPriceLabel = "pr. enhed";
+        _customPriceLabel = false;
         _formColumns    = [];
         _formError      = "";
         _showForm       = true;
@@ -201,6 +250,7 @@
         _editId         = cat.Id;
         _formName       = cat.Name;
         _formPriceLabel = cat.PriceLabel;
+        _customPriceLabel = !PriceLabelOptions.Contains(cat.PriceLabel);
         _formColumns    = cat.Columns
             .OrderBy(c => c.SortOrder)
             .Select(c => new CategoryColumn
@@ -228,6 +278,16 @@
             col.DisplayLabel = match.DisplayLabel;
         else if (col.FieldName == "__custom__")
             col.DisplayLabel = "";
+    }
+
+    private bool IsFieldTakenByOtherRow(string field, int currentIdx)
+    {
+        for (int i = 0; i < _formColumns.Count; i++)
+        {
+            if (i == currentIdx) continue;
+            if (_formColumns[i].FieldName == field) return true;
+        }
+        return false;
     }
 
     // ── Save ─────────────────────────────────────────────────────────────────

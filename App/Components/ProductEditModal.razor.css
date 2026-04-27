@@ -135,6 +135,19 @@
     box-shadow: 0 0 0 3px rgba(166, 95, 43, 0.14);
 }
 
+.field-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b5c45' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    padding-right: 2rem;
+}
+
+.field-input-spaced {
+    margin-top: 0.4rem;
+}
+
 .field-error {
     color: #c04033;
     font-size: 0.85rem;

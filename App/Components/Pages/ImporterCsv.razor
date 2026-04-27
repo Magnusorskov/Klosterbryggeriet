@@ -75,6 +75,16 @@
         </div>
     }
 
+    @if (successMessage is not null)
+    {
+        <div class="status-card status-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+            </svg>
+            @successMessage
+        </div>
+    }
+
     <div class="info-card">
         <strong>Eksportér fra Octopus:</strong>
         <span>Gå til Produkter → Eksportér → Vælg CSV-format og download filen.</span>
@@ -90,12 +100,6 @@
                 </p>
             </header>
 
-            @if (_finishSummary is not null)
-            {
-                <div class="finish-summary @(_finishSummary.HasErrors ? "finish-summary-warn" : "finish-summary-ok")">
-                    @_finishSummary.Message
-                </div>
-            }
 
             <div class="attention-rows">
                 @foreach (var row in _needsAttention)
@@ -212,6 +216,83 @@
         </section>
     }
 
+    @if (_finishReceipt is not null)
+    {
+        <div class="finish-receipt-backdrop" @onclick="DismissFinishReceipt"></div>
+        <div class="finish-receipt-modal" @onclick:stopPropagation>
+            <div class="finish-receipt-head">
+                <span class="finish-receipt-icon @(_finishReceipt.HasErrors ? "finish-receipt-icon-warn" : "finish-receipt-icon-ok")" aria-hidden="true">
+                    @if (_finishReceipt.HasErrors)
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    }
+                </span>
+                <div>
+                    <h3 class="finish-receipt-title">@_finishReceipt.Title</h3>
+                    <p class="finish-receipt-sub">@_finishReceipt.Subtitle</p>
+                </div>
+                <button class="finish-receipt-close" @onclick="DismissFinishReceipt" aria-label="Luk">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            @if (_finishReceipt.SavedProducts.Count > 0)
+            {
+                <div class="finish-receipt-section">
+                    <p class="finish-receipt-section-label">Gemt (@_finishReceipt.SavedProducts.Count)</p>
+                    <ul class="finish-receipt-list">
+                        @foreach (var item in _finishReceipt.SavedProducts)
+                        {
+                            <li class="finish-receipt-item">
+                                <span class="finish-receipt-id">#@item.OctopusId</span>
+                                <span class="finish-receipt-name">@item.DisplayName</span>
+                                <span class="finish-receipt-cat">@item.Category</span>
+                                <span class="finish-receipt-status @(item.InUse ? "status-on" : "status-off")">
+                                    @(item.InUse ? "I brug" : "Ikke i brug")
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (_finishReceipt.NewCategories.Count > 0)
+            {
+                <div class="finish-receipt-section">
+                    <p class="finish-receipt-section-label">Nye kategorier oprettet (@_finishReceipt.NewCategories.Count)</p>
+                    <div class="finish-receipt-cats">
+                        @foreach (var n in _finishReceipt.NewCategories)
+                        {
+                            <span class="finish-receipt-cat-chip">@n</span>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (_finishReceipt.PendingCount > 0)
+            {
+                <p class="finish-receipt-pending">@_finishReceipt.PendingCount produkt@(_finishReceipt.PendingCount == 1 ? "" : "er") venter stadig på udfyldelse — se listen ovenfor.</p>
+            }
+
+            <div class="finish-receipt-actions">
+                <button class="btn-finish-receipt-ok" @onclick="DismissFinishReceipt">OK</button>
+            </div>
+        </div>
+    }
+
     @if (_lastResult is not null)
     {
         <section class="receipt-block">
@@ -286,12 +367,13 @@
     private IBrowserFile? selectedFile;
     private bool isUploading;
     private string? errorMessage;
+    private string? successMessage;
 
     private CsvImportResult? _lastResult;
     private List<EditRow> _needsAttention = [];
     private HashSet<int> _recentlyCreatedIds = [];
     private bool _finishing;
-    private FinishSummary? _finishSummary;
+    private FinishReceipt? _finishReceipt;
     private List<Category> _categories = [];
 
     protected override async Task OnInitializedAsync()
@@ -337,7 +419,15 @@
         }
     }
 
-    private record FinishSummary(string Message, bool HasErrors);
+    private record FinishReceiptItem(int OctopusId, string DisplayName, string Category, bool InUse);
+
+    private record FinishReceipt(
+        string Title,
+        string Subtitle,
+        bool HasErrors,
+        List<FinishReceiptItem> SavedProducts,
+        List<string> NewCategories,
+        int PendingCount);
 
     private async Task ReloadNeedsAttention()
     {
@@ -389,28 +479,36 @@
         {
             selectedFile = null;
             errorMessage = "Kun CSV-filer er tilladt.";
+            successMessage = null;
             return;
         }
 
         selectedFile = file;
         errorMessage = null;
+        successMessage = null;
     }
 
     private async Task UploadCsv()
     {
         if (selectedFile is null) return;
 
+        var uploadedName = selectedFile.Name;
         isUploading = true;
         errorMessage = null;
-        _finishSummary = null;
+        successMessage = null;
+        _finishReceipt = null;
 
         try
         {
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            _lastResult = await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
+            _lastResult = await CsvUploadService.UploadCsvAsync(stream, uploadedName);
             _recentlyCreatedIds = _lastResult.Created.Select(c => c.OctopusId).ToHashSet();
             selectedFile = null;
             await ReloadNeedsAttention();
+
+            var created = _lastResult.Created.Count;
+            var updated = _lastResult.Updated.Count;
+            successMessage = $"{uploadedName} blev importeret — {updated} opdateret, {created} ny{(created == 1 ? "t" : "e")}.";
         }
         catch (Exception ex)
         {
@@ -425,7 +523,7 @@
     private async Task FinishAll()
     {
         _finishing = true;
-        _finishSummary = null;
+        _finishReceipt = null;
 
         foreach (var row in _needsAttention)
         {
@@ -452,7 +550,7 @@
             _categories = await CategoryService.GetAllAsync();
         }
 
-        var savedCount = 0;
+        var savedItems = new List<FinishReceiptItem>();
         foreach (var row in savable)
         {
             try
@@ -460,9 +558,11 @@
                 // Normalize so the stored Category string exactly matches the entity name.
                 row.Product.Category = (row.Product.Category ?? "").Trim();
                 await ProductService.UpdateAsync(row.Product);
-                savedCount++;
-                // TODO: once the webshop integration is ready, call HostedShopService here
-                // for rows where row.Product.WebId > 0.
+                savedItems.Add(new FinishReceiptItem(
+                    row.Product.OctopusId,
+                    string.IsNullOrWhiteSpace(row.Product.PdfTitle) ? (row.Product.OctopusTitle ?? "—") : row.Product.PdfTitle,
+                    string.IsNullOrWhiteSpace(row.Product.Category) ? "—" : row.Product.Category,
+                    row.Product.InUse));
             }
             catch (Exception ex)
             {
@@ -473,12 +573,23 @@
         _needsAttention = _needsAttention.Where(r => r.Errors.Count > 0).ToList();
 
         var hasErrors = _needsAttention.Count > 0;
-        _finishSummary = hasErrors
-            ? new FinishSummary($"{savedCount} gemt. {_needsAttention.Count} venter på udfyldelse.", true)
-            : new FinishSummary($"{savedCount} produkt{(savedCount == 1 ? "" : "er")} gemt.", false);
+        var savedCount = savedItems.Count;
+        _finishReceipt = new FinishReceipt(
+            Title: hasErrors
+                ? "Færdiggjort med advarsler"
+                : (savedCount == 0 ? "Intet at gemme" : "Produkter gemt"),
+            Subtitle: $"{savedCount} produkt{(savedCount == 1 ? "" : "er")} gemt"
+                      + (newCategoryNames.Count > 0 ? $" · {newCategoryNames.Count} nye kategori{(newCategoryNames.Count == 1 ? "" : "er")} oprettet" : "")
+                      + (hasErrors ? $" · {_needsAttention.Count} venter på udfyldelse" : ""),
+            HasErrors: hasErrors,
+            SavedProducts: savedItems,
+            NewCategories: newCategoryNames,
+            PendingCount: _needsAttention.Count);
 
         _finishing = false;
     }
+
+    private void DismissFinishReceipt() => _finishReceipt = null;
 
     private static void ValidateRow(EditRow row)
     {

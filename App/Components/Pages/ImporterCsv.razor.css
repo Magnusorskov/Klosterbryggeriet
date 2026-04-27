@@ -294,23 +294,30 @@
 .attention-rows {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .attention-row {
     background: #ffffff;
     border: 1px solid rgba(109, 68, 35, 0.12);
     border-radius: 10px;
-    padding: 0.9rem 1rem 0.95rem;
+    padding: 1rem 1.1rem 1.05rem;
     display: flex;
     flex-direction: column;
     gap: 0.7rem;
+    box-shadow: 0 1px 2px rgba(34, 24, 18, 0.04);
 }
 
-.attention-row-error {
-    border-color: rgba(198, 40, 40, 0.4);
-    background: rgba(198, 40, 40, 0.03);
+.attention-row:nth-child(even) {
+    background: #faf5ec;
 }
+
+.attention-row-error,
+.attention-row-error:nth-child(even) {
+    border-color: rgba(198, 40, 40, 0.4);
+    background: rgba(198, 40, 40, 0.05);
+}
+
 
 .attention-row-head {
     display: flex;
@@ -427,6 +434,7 @@
 .row-input {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
     padding: 0.42rem 0.6rem;
     border-radius: 6px;
     border: 1px solid rgba(109, 68, 35, 0.18);
@@ -436,7 +444,17 @@
     color: #221812;
     outline: none;
     box-sizing: border-box;
+    text-overflow: ellipsis;
     transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+select.row-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5c45' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.55rem center;
+    padding-right: 1.7rem;
 }
 
 .row-input:focus {
@@ -532,24 +550,231 @@
     cursor: not-allowed;
 }
 
-.finish-summary {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
+/* ── Finish receipt modal ────────────────────────────────────────────────── */
+.finish-receipt-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 16, 7, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+}
+
+.finish-receipt-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1.5rem 1.5rem 1.25rem;
+    width: min(620px, 94vw);
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(28, 16, 7, 0.28);
+    border: 1px solid rgba(109, 68, 35, 0.14);
+}
+
+.finish-receipt-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.85rem;
+    align-items: start;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(109, 68, 35, 0.1);
+    margin-bottom: 1rem;
+}
+
+.finish-receipt-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.finish-receipt-icon-ok {
+    background: #eaf4e8;
+    color: #2d6a2a;
+}
+
+.finish-receipt-icon-warn {
+    background: #fff3e0;
+    color: #8a5a0f;
+}
+
+.finish-receipt-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #221812;
+    margin: 0 0 0.25rem;
+}
+
+.finish-receipt-sub {
+    color: #6b5c45;
     font-size: 0.9rem;
-    font-weight: 500;
+    margin: 0;
+}
+
+.finish-receipt-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem;
+    color: #8a7356;
+    border-radius: 6px;
+    align-self: start;
+}
+
+.finish-receipt-close:hover {
+    background: rgba(109, 68, 35, 0.08);
+    color: #3a2a1c;
+}
+
+.finish-receipt-section {
+    margin-bottom: 1rem;
+}
+
+.finish-receipt-section:last-of-type {
     margin-bottom: 0.5rem;
 }
 
-.finish-summary-ok {
-    background: #eaf4e8;
-    color: #2d6a2a;
-    border: 1px solid #c5dfc0;
+.finish-receipt-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #a65f2b;
+    margin: 0 0 0.5rem;
 }
 
-.finish-summary-warn {
+.finish-receipt-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(109, 68, 35, 0.12);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.finish-receipt-item {
+    display: grid;
+    grid-template-columns: 70px 1fr auto auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(109, 68, 35, 0.08);
+    background: #ffffff;
+}
+
+.finish-receipt-item:nth-child(even) {
+    background: #faf5ec;
+}
+
+.finish-receipt-item:last-child {
+    border-bottom: none;
+}
+
+.finish-receipt-id {
+    font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    color: #8a7356;
+    font-weight: 600;
+}
+
+.finish-receipt-name {
+    color: #221812;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.finish-receipt-cat {
+    color: #6b5c45;
+    font-size: 0.78rem;
+    background: #f4ead9;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.finish-receipt-status {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.status-on {
+    background: rgba(46, 125, 50, 0.12);
+    color: #2d6a2a;
+}
+
+.status-off {
+    background: rgba(109, 68, 35, 0.08);
+    color: #8a7356;
+}
+
+.finish-receipt-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.finish-receipt-cat-chip {
+    background: rgba(46, 125, 50, 0.12);
+    color: #1a4c1d;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.finish-receipt-pending {
+    margin: 0.75rem 0 0;
+    padding: 0.65rem 0.85rem;
     background: #fff8ec;
-    color: #8a5a0f;
     border: 1px solid #f0d6a0;
+    border-radius: 8px;
+    color: #8a5a0f;
+    font-size: 0.85rem;
+}
+
+.finish-receipt-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(109, 68, 35, 0.1);
+}
+
+.btn-finish-receipt-ok {
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(180deg, #b86a33 0%, #a65f2b 100%);
+    color: #fff7e2;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(34, 24, 18, 0.12);
+    transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-finish-receipt-ok:hover {
+    background: linear-gradient(180deg, #a65f2b 0%, #8a4f24 100%);
+    box-shadow: 0 2px 6px rgba(34, 24, 18, 0.18);
 }
 
 /* ── Receipt block (seneste import) ──────────────────────────────────────── */
