@@ -17,8 +17,8 @@ namespace BlazorApp.Migrations
                 nullable: false,
                 defaultValue: 0);
 
-            // Set initial sort order matching the seeded insertion order (ids 1-31)
-            for (int id = 1; id <= 31; id++)
+            // Set initial sort order matching the seeded insertion order (ids 1-35)
+            for (int id = 1; id <= 35; id++)
             {
                 migrationBuilder.Sql($"UPDATE Categories SET SortOrder = {id} WHERE Id = {id};");
             }
