@@ -65,7 +65,13 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
             </svg>
-            @successMessage
+            <div>
+                <div>@successMessage</div>
+                @if (failedVariantIds is { Count: > 0 })
+                {
+                    <div class="status-subtle">Fejlende variant-IDs: @string.Join(", ", failedVariantIds)</div>
+                }
+            </div>
         </div>
     }
 
@@ -92,6 +98,7 @@
     private bool isUploading;
     private string? successMessage;
     private string? errorMessage;
+    private IReadOnlyList<int>? failedVariantIds;
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -116,12 +123,15 @@
         isUploading = true;
         errorMessage = null;
         successMessage = null;
+        failedVariantIds = null;
 
         try
         {
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
-            successMessage = $"{selectedFile.Name} blev uploadet.";
+            var result = await CsvUploadService.UploadCsvAsync(stream, selectedFile.Name);
+            successMessage = $"{selectedFile.Name}: opdaterede {result.DbProductsUpdated} produkter. " +
+                             $"Sendt til webshop: {result.PushSucceeded}/{result.PushAttempted} ({result.PushFailed} fejl).";
+            failedVariantIds = result.FailedVariantIds;
             selectedFile = null;
         }
         catch (Exception ex)

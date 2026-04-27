@@ -23,7 +23,10 @@ public class OctopusService
         _logger = new LoggerService(db);
     }
 
-    public async Task UpdateAvailableFromOctopusCsv(Stream fileStream)
+    public Task UpdateAvailableFromOctopusCsv(Stream fileStream)
+        => UpdateAvailableFromOctopusCsvAsync(fileStream);
+
+    public async Task<IReadOnlyList<int>> UpdateAvailableFromOctopusCsvAsync(Stream fileStream)
     {
         using var reader = new StreamReader(fileStream);
         var content = await reader.ReadToEndAsync();
@@ -64,6 +67,7 @@ public class OctopusService
         }
 
         await _db.SaveChangesAsync();
+        return dbProducts.Select(p => p.OctopusId).ToList();
     }
 
     private static decimal ParseDecimal(string value)

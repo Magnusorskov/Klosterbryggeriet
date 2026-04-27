@@ -14,7 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             errorNumbersToAdd: null)));
 
 builder.Services.AddScoped<OctopusService>();
-builder.Services.AddScoped<HostedShopService>();
+builder.Services.AddScoped<IHostedShopService, HostedShopService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
