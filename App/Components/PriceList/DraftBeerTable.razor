@@ -47,7 +47,7 @@
                 <td><input class="edit-cell text-right" value="@row.Beer.AnkerPrice.ToString("0.##")" readonly /></td>
                 <td><input class="edit-cell text-right" @bind="row.Beer.PricePrUnit" /></td>
                 <td class="cell-status">
-                    <input class="edit-cell" @bind="row.Status" />
+                    <input class="edit-cell" value="@row.Beer.Status" readonly />
                     <div class="row-color-ctrl no-print">
                         <button class="color-trigger" @onclick="() => ToggleDropdown(row)">
                             <span class="color-swatch" style="background:@ColorHex(row)"></span>

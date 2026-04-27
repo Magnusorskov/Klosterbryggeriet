@@ -42,4 +42,7 @@ public class DraftBeer
     // Anker price = keg size in liters * price pr. liter (UI only)
     [NotMapped]
     public double AnkerPrice => Str * PricePrUnit;
+
+    [NotMapped]
+    public string Status => Available <= 0 ? "Udsolgt" : "";
 }

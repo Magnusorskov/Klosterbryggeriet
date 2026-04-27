@@ -82,7 +82,8 @@ public class DraftBeerServiceIntegrationTests : IClassFixture<DatabaseFixture>, 
         // Arrange
         await using (var db = _fixture.CreateDbContext())
         {
-            await db.DraftBeers.AddAsync(CreateBeer(octopusId: 10, pdfTitle: "Urweisse", kobling: "A", land: "Tyskland", str: 30, alcohol: 5.8, pricePrUnit: 24));
+            var beer = CreateBeer(octopusId: 10, pdfTitle: "Urweisse", kobling: "A", land: "Tyskland", str: 30, alcohol: 5.8, pricePrUnit: 24);
+            await db.DraftBeers.AddAsync(beer);
             await db.SaveChangesAsync();
         }
 

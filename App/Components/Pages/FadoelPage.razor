@@ -49,11 +49,7 @@
     {
         isLoading = true;
         var beers = await DraftBeerService.GetAllAsync();
-        rows = beers.Select(b => new DraftBeerRow
-        {
-            Beer = b,
-            Status = b.Available <= 0 ? "Udsolgt" : ""
-        }).ToList();
+        rows = beers.Select(b => new DraftBeerRow { Beer = b }).ToList();
         isLoading = false;
     }
 
