@@ -6,11 +6,11 @@ namespace BlazorApp.Services;
 
 public class LoggerService
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public LoggerService(AppDbContext context)
+    public LoggerService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task LogProductChange(
@@ -18,19 +18,37 @@ public class LoggerService
         ProductStatus previousStatus,
         ProductStatus newStatus)
     {
+        await using var context = _contextFactory.CreateDbContext();
         var entry = new LogEntry
         {
             OctopusId = changedProduct.OctopusId,
             ProductName = changedProduct.PdfTitle,
+            Kind = LogEntryKind.StatusChanged,
             PreviousStatus = previousStatus,
             NewStatus = newStatus,
         };
-        await _context.LogEntries.AddAsync(entry);
-        await _context.SaveChangesAsync();
+        await context.LogEntries.AddAsync(entry);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task LogProductCreated(Product created)
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        var entry = new LogEntry
+        {
+            OctopusId = created.OctopusId,
+            ProductName = created.OctopusTitle,
+            Kind = LogEntryKind.ProductCreated,
+            PreviousStatus = null,
+            NewStatus = created.Status,
+        };
+        await context.LogEntries.AddAsync(entry);
+        await context.SaveChangesAsync();
     }
 
     public async Task<List<LogEntry>> GetLogEntries()
     {
-        return await _context.LogEntries.ToListAsync();
+        await using var context = _contextFactory.CreateDbContext();
+        return await context.LogEntries.ToListAsync();
     }
 }
