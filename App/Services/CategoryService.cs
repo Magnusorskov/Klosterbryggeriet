@@ -4,21 +4,35 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlazorApp.Services;
 
-public class CategoryService(AppDbContext db)
+public class CategoryService
 {
-    public async Task<List<Category>> GetAllAsync() =>
-        await db.Categories
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    public CategoryService(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
+
+    public async Task<List<Category>> GetAllAsync()
+    {
+        await using var db = _contextFactory.CreateDbContext();
+        return await db.Categories
             .Include(c => c.Columns.OrderBy(col => col.SortOrder))
             .OrderBy(c => c.SortOrder)
             .ToListAsync();
+    }
 
-    public async Task<Category?> GetByIdAsync(int id) =>
-        await db.Categories
+    public async Task<Category?> GetByIdAsync(int id)
+    {
+        await using var db = _contextFactory.CreateDbContext();
+        return await db.Categories
             .Include(c => c.Columns.OrderBy(col => col.SortOrder))
             .FirstOrDefaultAsync(c => c.Id == id);
+    }
 
     public async Task<Category> CreateAsync(Category category)
     {
+        await using var db = _contextFactory.CreateDbContext();
         // New categories go to the bottom
         var maxOrder = await db.Categories.AnyAsync()
             ? await db.Categories.MaxAsync(c => c.SortOrder)
@@ -32,6 +46,7 @@ public class CategoryService(AppDbContext db)
 
     public async Task UpdateAsync(Category category)
     {
+        await using var db = _contextFactory.CreateDbContext();
         var existing = await db.Categories
             .Include(c => c.Columns)
             .FirstOrDefaultAsync(c => c.Id == category.Id)
@@ -50,6 +65,7 @@ public class CategoryService(AppDbContext db)
     // Persists a new order given an ordered list of category ids
     public async Task SaveOrderAsync(List<int> orderedIds)
     {
+        await using var db = _contextFactory.CreateDbContext();
         var categories = await db.Categories.ToListAsync();
         for (int i = 0; i < orderedIds.Count; i++)
         {
@@ -61,6 +77,7 @@ public class CategoryService(AppDbContext db)
 
     public async Task DeleteAsync(int id)
     {
+        await using var db = _contextFactory.CreateDbContext();
         var category = await db.Categories.FindAsync(id)
             ?? throw new InvalidOperationException($"Category {id} not found");
 

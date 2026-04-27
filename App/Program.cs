@@ -13,6 +13,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
             maxRetryDelay: TimeSpan.FromSeconds(5),
             errorNumbersToAdd: null)));
 
+builder.Services.AddScoped<LoggerService>();
 builder.Services.AddScoped<OctopusService>();
 builder.Services.AddScoped<HostedShopService>();
 

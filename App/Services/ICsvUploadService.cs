@@ -1,6 +1,8 @@
+using BlazorApp.Models.Dtos;
+
 namespace BlazorApp.Services;
 
 public interface ICsvUploadService
 {
-    Task UploadCsvAsync(Stream stream, string fileName);
+    Task<CsvImportResult> UploadCsvAsync(Stream stream, string fileName);
 }

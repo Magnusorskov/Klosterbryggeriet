@@ -1,11 +1,31 @@
+using BlazorApp.Models.Dtos;
+
 namespace BlazorApp.Services;
 
 public class CsvUploadService : ICsvUploadService
 {
-    public async Task UploadCsvAsync(Stream stream, string fileName)
+    private readonly OctopusService _octopus;
+
+    public CsvUploadService(OctopusService octopus)
     {
-        // TODO: Replace with real HTTP call to backend
-        // e.g. POST multipart/form-data to /api/import/csv
-        await Task.Delay(500); // simulate network latency
+        _octopus = octopus;
+    }
+
+    public async Task<CsvImportResult> UploadCsvAsync(Stream stream, string fileName)
+    {
+        var (rows, skipped, warnings) = await _octopus.ParseCsv(stream);
+        var (existing, fresh) = await _octopus.PartitionByExistence(rows);
+        var updated = await _octopus.ApplyUpdatesToExisting(existing);
+        var created = await _octopus.CreateMissingProducts(fresh);
+
+        return new CsvImportResult
+        {
+            FileName = fileName,
+            RowsParsed = rows.Count,
+            RowsSkipped = skipped,
+            Updated = updated,
+            Created = created,
+            Warnings = warnings,
+        };
     }
 }

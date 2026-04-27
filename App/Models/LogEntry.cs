@@ -9,6 +9,7 @@ public class LogEntry
     public DateTime DateChanged { get; set; } = DateTime.Now;
     public required int OctopusId { get; set; }
     public required string ProductName { get; set; }
-    public required ProductStatus PreviousStatus { get; set; }
-    public required ProductStatus NewStatus { get; set; }
+    public required LogEntryKind Kind { get; set; }
+    public ProductStatus? PreviousStatus { get; set; }
+    public ProductStatus? NewStatus { get; set; }
 }
