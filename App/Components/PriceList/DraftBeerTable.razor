@@ -15,12 +15,12 @@
 <table class="price-table">
     <thead>
         <tr>
-            <th class="col-name"></th>
-            @foreach (var col in Columns)
-            {
-                <th class="col-narrow">@col.DisplayLabel</th>
-            }
-            <th class="col-narrow">Pris @PriceLabel</th>
+            <th class="col-name">Navn</th>
+            <th class="col-narrow">Kobling</th>
+            <th class="col-narrow">Land</th>
+            <th class="col-narrow">Str (L)</th>
+            <th class="col-narrow">Anker pris</th>
+            <th class="col-narrow">Liter pris</th>
             <th class="col-narrow">Status</th>
         </tr>
     </thead>
@@ -39,31 +39,15 @@
                               @ondragend="DragEnd">⠿</span>
                         <input type="checkbox" class="row-check" checked="@_selected.Contains(row)" @onchange="@(e => ToggleSelect(row))" />
                     </div>
-                    <input class="edit-cell" @bind="row.Product.PdfTitle" />
+                    <input class="edit-cell" @bind="row.Beer.PdfTitle" />
                 </td>
-                @foreach (var col in Columns)
-                {
-                    <td class="@CellClass(col.FieldName)">
-                        <div class="cell-inline">
-                            <input class="edit-cell text-right" value="@GetFieldValue(row.Product, col.FieldName)"
-                                   @onchange="@((ChangeEventArgs e) => SetFieldValue(row.Product, col.FieldName, e.Value?.ToString()))" />
-                            @if (col.FieldName == "KegCollar")
-                            {
-                                <span class="suffix @(row.Product.HalfKolli ? "" : "suffix-hidden")">*</span>
-                                <label class="halfkolli-toggle no-print" title="Halv kolli (*)">
-                                    <input type="checkbox" @bind="row.Product.HalfKolli" />
-                                </label>
-                            }
-                            else if (col.FieldName == "Alcohol")
-                            {
-                                <span class="suffix">%</span>
-                            }
-                        </div>
-                    </td>
-                }
-                <td><input class="edit-cell text-right" @bind="row.Product.PricePrUnit" /></td>
+                <td><input class="edit-cell text-center" @bind="row.Beer.Kobling" /></td>
+                <td><input class="edit-cell text-center" @bind="row.Beer.Land" /></td>
+                <td><input class="edit-cell text-center" @bind="row.Beer.Str" /></td>
+                <td><input class="edit-cell text-right" value="@row.Beer.AnkerPrice.ToString("0.##")" readonly /></td>
+                <td><input class="edit-cell text-right" @bind="row.Beer.PricePrUnit" /></td>
                 <td class="cell-status">
-                    <input class="edit-cell" @bind="row.Status" />
+                    <input class="edit-cell" value="@row.Beer.Status" readonly />
                     <div class="row-color-ctrl no-print">
                         <button class="color-trigger" @onclick="() => ToggleDropdown(row)">
                             <span class="color-swatch" style="background:@ColorHex(row)"></span>
@@ -86,55 +70,21 @@
 <button class="add-row-btn no-print" @onclick="AddRow" title="Tilføj række">+</button>
 
 @code {
-    [Parameter, EditorRequired] public List<ProductRow>      Rows       { get; set; } = [];
-    [Parameter, EditorRequired] public List<CategoryColumn>  Columns    { get; set; } = [];
-    [Parameter]                 public string                PriceLabel { get; set; } = "";
+    [Parameter, EditorRequired] public List<DraftBeerRow> Rows { get; set; } = [];
 
-    private readonly HashSet<ProductRow> _selected = new();
-    private ProductRow? _openDropdown;
-    private ProductRow? _draggingRow;
-    private ProductRow? _dragOverRow;
-
-    // ── Field access ────────────────────────────────────────────────────────
-    private static string GetFieldValue(Product p, string fieldName) => fieldName switch
-    {
-        "KegCollar" => p.KegCollar?.ToString() ?? "",
-        "Str"       => p.Str.ToString(),
-        "Alcohol"   => p.Alcohol.ToString(),
-        _           => ""
-    };
-
-    private static string CellClass(string fieldName) => fieldName switch
-    {
-        "KegCollar" => "cell-kasse",
-        "Alcohol"   => "cell-alcohol",
-        _           => ""
-    };
-
-    private static void SetFieldValue(Product p, string fieldName, string? raw)
-    {
-        switch (fieldName)
-        {
-            case "KegCollar":
-                if (int.TryParse(raw, out var i)) p.KegCollar = i;
-                break;
-            case "Str":
-                if (double.TryParse(raw, out var s)) p.Str = s;
-                break;
-            case "Alcohol":
-                if (double.TryParse(raw, out var a)) p.Alcohol = a;
-                break;
-        }
-    }
+    private readonly HashSet<DraftBeerRow> _selected = new();
+    private DraftBeerRow? _openDropdown;
+    private DraftBeerRow? _draggingRow;
+    private DraftBeerRow? _dragOverRow;
 
     // ── Row interactions ────────────────────────────────────────────────────
-    private void ToggleSelect(ProductRow row)   { if (!_selected.Remove(row)) _selected.Add(row); }
-    private void ToggleDropdown(ProductRow row) => _openDropdown = _openDropdown == row ? null : row;
+    private void ToggleSelect(DraftBeerRow row)   { if (!_selected.Remove(row)) _selected.Add(row); }
+    private void ToggleDropdown(DraftBeerRow row) => _openDropdown = _openDropdown == row ? null : row;
 
-    private void SetGreen(ProductRow row)   { row.Color = "green";  _openDropdown = null; }
-    private void SetYellow(ProductRow row)  { row.Color = "yellow"; _openDropdown = null; }
-    private void SetRed(ProductRow row)     { row.Color = "red";    _openDropdown = null; }
-    private void ClearColor(ProductRow row) { row.Color = null;     _openDropdown = null; }
+    private void SetGreen(DraftBeerRow row)   { row.Color = "green";  _openDropdown = null; }
+    private void SetYellow(DraftBeerRow row)  { row.Color = "yellow"; _openDropdown = null; }
+    private void SetRed(DraftBeerRow row)     { row.Color = "red";    _openDropdown = null; }
+    private void ClearColor(DraftBeerRow row) { row.Color = null;     _openDropdown = null; }
 
     private void BulkGreen()  => ApplyBulk("green");
     private void BulkYellow() => ApplyBulk("yellow");
@@ -150,9 +100,9 @@
 
     private void AddRow()
     {
-        Rows.Add(new ProductRow
+        Rows.Add(new DraftBeerRow
         {
-            Product = new Product
+            Beer = new DraftBeer
             {
                 OctopusId = 0, WebId = 0, WebTitle = "",
                 PdfTitle = "", OctopusTitle = "", Available = 0, Category = ""
@@ -160,9 +110,9 @@
         });
     }
 
-    private void DragStart(ProductRow row) { _draggingRow = row; _dragOverRow = null; }
+    private void DragStart(DraftBeerRow row) { _draggingRow = row; _dragOverRow = null; }
 
-    private void DragOver(ProductRow target)
+    private void DragOver(DraftBeerRow target)
     {
         if (_draggingRow == null || _draggingRow == target || _dragOverRow == target) return;
         _dragOverRow = target;
@@ -176,7 +126,7 @@
     private void DragEnd() { _draggingRow = null; _dragOverRow = null; }
 
     // ── Color helpers ────────────────────────────────────────────────────────
-    private static string RowClass(ProductRow row) => row.Color switch
+    private static string RowClass(DraftBeerRow row) => row.Color switch
     {
         "green"  => "row-green",
         "yellow" => "row-yellow",
@@ -184,13 +134,13 @@
         _        => ""
     };
 
-    private static string? RowStyle(ProductRow row) => row.Color switch
+    private static string? RowStyle(DraftBeerRow row) => row.Color switch
     {
         "green" or "yellow" or "red" or null => null,
         _ => $"background-color: {row.Color}"
     };
 
-    private static string ColorHex(ProductRow row) => row.Color switch
+    private static string ColorHex(DraftBeerRow row) => row.Color switch
     {
         "green"  => "#4caf50",
         "yellow" => "#ffeb3b",
@@ -198,4 +148,5 @@
         null     => "#ddd",
         _        => row.Color
     };
+
 }

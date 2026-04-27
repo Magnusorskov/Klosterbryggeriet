@@ -1,0 +1,60 @@
+@page "/fadoel"
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using BlazorApp.Components.PriceList
+@rendermode InteractiveServer
+
+@inject DraftBeerService DraftBeerService
+@inject IJSRuntime JS
+
+<PageTitle>Fadølsliste</PageTitle>
+
+<div class="no-print toolbar">
+    <button @onclick="LoadBeers" disabled="@isLoading">
+        @(isLoading ? "Henter..." : "Generer fadølsliste")
+    </button>
+    @if (rows.Count > 0)
+    {
+        <button @onclick="ExportPdf">Eksporter PDF</button>
+    }
+</div>
+
+@if (rows.Count > 0)
+{
+    <div class="price-list-preview">
+        <div class="price-list-header">
+            <h1>Klosterbryggeriet....... .......når øl ér bedst!</h1>
+            <h2>& Import</h2>
+            <div class="price-list-subheader">
+                <strong>Fadølsliste</strong>
+                <span>@DateTime.Today.ToString("dd.MM.yyyy")</span>
+            </div>
+        </div>
+
+        <div class="category-section">
+            <div class="category-header">FADØL</div>
+            <DraftBeerTable Rows="rows" />
+        </div>
+    </div>
+    <div class="print-page-footer" aria-hidden="true">
+        <strong>Alle priser er + moms, + pant</strong>
+    </div>
+}
+
+@code {
+    private List<DraftBeerRow> rows = [];
+    private bool isLoading;
+
+    private async Task LoadBeers()
+    {
+        isLoading = true;
+        var beers = await DraftBeerService.GetAllAsync();
+        rows = beers.Select(b => new DraftBeerRow { Beer = b }).ToList();
+        isLoading = false;
+    }
+
+    private async Task ExportPdf()
+    {
+        await JS.InvokeVoidAsync("printPriceList");
+    }
+}
