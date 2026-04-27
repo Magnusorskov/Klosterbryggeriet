@@ -80,7 +80,7 @@ if (-not $productCount) {
     Write-Step "Database is empty. Seeding from ${SeedFile}..."
     docker compose cp $SeedFile db:/tmp/seed.sql
     if ($LASTEXITCODE -ne 0) { Write-Fail 'Failed to copy seed file into the database container.' }
-    docker compose exec -T db sh -c "mysql --default-character-set=utf8mb4 -uroot -p$DbPassword $DbName < /tmp/seed.sql"
+    docker compose exec -T db sh -c "cat /tmp/seed.sql | mysql --default-character-set=utf8mb4 -uroot -p$DbPassword $DbName"
     if ($LASTEXITCODE -ne 0) { Write-Fail 'Seeding failed.' }
     Write-Step 'Seed applied.'
 } else {
