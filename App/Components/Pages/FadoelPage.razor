@@ -9,13 +9,40 @@
 
 <PageTitle>Fadølsliste</PageTitle>
 
+<header class="no-print prisliste-header">
+    <p class="prisliste-eyebrow">Eksport</p>
+    <h1 class="prisliste-title">Fadølsliste</h1>
+    <p class="prisliste-lede">
+        Generer en fadølsliste over alle fadøl i brug. Klik <strong>Generer fadølsliste</strong> for at hente det aktuelle udvalg, og eksportér derefter til PDF.
+    </p>
+</header>
+
 <div class="no-print toolbar">
-    <button @onclick="LoadBeers" disabled="@isLoading">
-        @(isLoading ? "Henter..." : "Generer fadølsliste")
+    <button class="btn-generate" @onclick="LoadBeers" disabled="@isLoading">
+        @if (isLoading)
+        {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Henter...</span>
+        }
+        else
+        {
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M23 4v6h-6" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            <span>Generer fadølsliste</span>
+        }
     </button>
     @if (rows.Count > 0)
     {
-        <button @onclick="ExportPdf">Eksporter PDF</button>
+        <button class="btn-export" @onclick="ExportPdf">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Eksporter PDF</span>
+        </button>
     }
 </div>
 
@@ -35,9 +62,45 @@
             <div class="category-header">FADØL</div>
             <DraftBeerTable Rows="rows" />
         </div>
-    </div>
-    <div class="print-page-footer" aria-hidden="true">
-        <strong>Alle priser er + moms, + pant</strong>
+
+        <p class="fadoel-glas-note editable-block" contenteditable="true">
+            Glas: Klosterbryg, Het anker, Amarcord, Bevog, Primator, Ayinger, Westmalle, Gulden Draak, St. Bernardus, Dubuisson
+        </p>
+
+        <div class="price-list-levering">
+            <div class="editable-block" contenteditable="true">
+                <strong>Leveringsbetingelser:</strong> Fragtfrit minimums leverance ved 15 enheder (ved 25-33cl fl. = 360flasker)<br>
+                <br>
+                <strong>1 enhed ér:</strong><br>
+                24 x 25-35 cl flasker<br>
+                12/15 x 50 cl flasker<br>
+                12 x 75 cl flasker<br>
+                <strong>Fustager</strong><br>
+                6 fustager 30L fragtfrit leveret<br>
+                <br>
+                Ovenstående leveringsbetingelser er gældende fra 1.november 2017. Levering under 15 enheder (300fl.25/33cl fl.),<br>
+                Pr.10.januar 2025 FRAGT;<br>
+                Sjælland 325 +moms<br>
+                Jylland &amp; Fyn 275 +moms<br>
+                Ikke brofaste øer efter aftale.<br>
+                <br>
+                <strong>Kulsyre:</strong><br>
+                4-6 kg 275,- +moms. +pant<br>
+                10 kg: 450,- +moms. +pant (bestilles forud da vi ikke er lagerførende)<br>
+                <br>
+                <strong>Fadølsanlæg:</strong><br>
+                Leje af anlæg incl. kulsyre 300,- +moms<br>
+                Levering og afhentning 400,- +moms<br>
+                <br>
+                <strong>Fadølsvogn :</strong> Fadølshaner, køleskab og salgssider hele vejen rundt. 3000,- +moms (weekend)<br>
+                Udlejes kun ved særlig indgået aftale<br>
+                <br>
+                Pr.1.juni 2017 pålægges ekspeditionsgebyr på fakturaer under 2000kr ex moms<br>
+                <br>
+                Vi tager forbehold for udsolgte varer, samt uforudsete prisjusteringer<br>
+                <strong>Ved fejl i prislisten, er den fakturerede pris der er gældende</strong>
+            </div>
+        </div>
     </div>
 }
 
@@ -55,6 +118,9 @@
 
     private async Task ExportPdf()
     {
-        await JS.InvokeVoidAsync("printPriceList");
+        // Pass true so the JS print helper injects an override that empties the
+        // global "Alle priser er + moms, + pant" bottom-right margin box —
+        // the leveringsbetingelser block already carries that info.
+        await JS.InvokeVoidAsync("printPriceList", true);
     }
 }

@@ -532,6 +532,12 @@ tr:hover .row-color-ctrl { opacity: 1; }
     padding: 4px 6px;
 }
 
+.fadoel-glas-note {
+    margin: 0.75rem 0 0;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .editable-block {
     display: block;
     width: 100%;
@@ -629,4 +635,122 @@ tr:hover .row-color-ctrl { opacity: 1; }
         font-size: 10px;
         font-weight: bold;
     }
+}
+
+/* ── Shared page header (prisliste & fadølsliste) ─────────────────────────── */
+.prisliste-header {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 0.5rem 0;
+}
+
+.prisliste-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a65f2b;
+    margin: 0 0 1rem;
+}
+
+.prisliste-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #221812;
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.prisliste-lede {
+    color: #6b5c45;
+    font-size: 1rem;
+    line-height: 1.55;
+    margin: 0 0 1.5rem;
+    max-width: 640px;
+}
+
+.prisliste-lede strong {
+    color: #3a2a1c;
+    font-weight: 600;
+}
+
+/* ── Shared toolbar buttons (prisliste & fadølsliste) ─────────────────────── */
+.btn-generate,
+.btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.15rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease,
+                box-shadow 0.15s ease, transform 0.05s ease;
+    line-height: 1;
+}
+
+/* Primary (filled copper) */
+.btn-generate {
+    background: linear-gradient(180deg, #b86a33 0%, #a65f2b 100%);
+    color: #fff7e2;
+    border: 1px solid #8a4f24;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(34, 24, 18, 0.12);
+}
+
+.btn-generate:hover:not(:disabled) {
+    background: linear-gradient(180deg, #a65f2b 0%, #8a4f24 100%);
+    box-shadow: 0 2px 6px rgba(34, 24, 18, 0.18);
+}
+
+.btn-generate:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn-generate:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Secondary (ghost cream) */
+.btn-export {
+    background: #faf5ec;
+    color: #3a2a1c;
+    border: 1px solid rgba(109, 68, 35, 0.25);
+    font-weight: 500;
+}
+
+.btn-export:hover {
+    background: #ffffff;
+    border-color: rgba(166, 95, 43, 0.55);
+    color: #221812;
+    box-shadow: 0 1px 3px rgba(34, 24, 18, 0.08);
+}
+
+.btn-export:active {
+    transform: translateY(1px);
+}
+
+.btn-export svg {
+    color: #a65f2b;
+}
+
+/* Loading spinner for the generate button */
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 247, 226, 0.35);
+    border-top-color: #fff7e2;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
