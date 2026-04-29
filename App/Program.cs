@@ -22,6 +22,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
+builder.Services.AddScoped<CsvImportSession>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
 builder.Services.AddScoped<CategoryService>();
