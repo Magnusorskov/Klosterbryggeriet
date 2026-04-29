@@ -57,7 +57,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new LoggerService(db);
+            var service = new LoggerService(_fixture);
             await service.LogProductChange(product, ProductStatus.Available, ProductStatus.SoldOut);
         }
 
@@ -81,7 +81,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new LoggerService(db);
+            var service = new LoggerService(_fixture);
             await service.LogProductChange(product, ProductStatus.Available, ProductStatus.SoldOut);
 
             var entries = await service.GetLogEntries();
@@ -100,7 +100,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
         }
 
@@ -122,7 +122,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
         }
 
@@ -142,7 +142,7 @@ public class LoggerServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAsy
 
         await using (var db = _fixture.CreateDbContext())
         {
-            var service = new OctopusService(db);
+            var service = new OctopusService(_fixture, new LoggerService(_fixture));
             await service.UpdateAvailableFromOctopusCsv(GetFileFromPath("TestData/OctopusTestData.csv"));
         }
 

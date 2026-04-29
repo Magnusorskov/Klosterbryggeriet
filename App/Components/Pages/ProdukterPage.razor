@@ -148,7 +148,7 @@
                     {
                         @foreach (var p in rows)
                         {
-                            var soldOut = p.Available <= Product.SoldOutThreshold;
+                            var soldOut = p.Available < Product.SoldOutThreshold;
                             var dotClass = !p.InUse ? "dot-off" : (soldOut ? "dot-soldout" : "dot-ok");
                             var pid = p.OctopusId;
                             <button class="list-row @(p.OctopusId == _selectedId ? "list-row-selected" : "")"
@@ -497,9 +497,9 @@
             q = q.Where(p => p.Category == _catFilter);
 
         if (_statusFilter == "Tilgængelig")
-            q = q.Where(p => p.Available > Product.SoldOutThreshold);
+            q = q.Where(p => p.Available >= Product.SoldOutThreshold);
         else if (_statusFilter == "Udsolgt")
-            q = q.Where(p => p.Available <= Product.SoldOutThreshold);
+            q = q.Where(p => p.Available < Product.SoldOutThreshold);
 
         if (_inUseFilter == "I brug")
             q = q.Where(p => p.InUse);
