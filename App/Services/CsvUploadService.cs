@@ -7,6 +7,10 @@ namespace BlazorApp.Services;
 
 public class CsvUploadService : ICsvUploadService
 {
+    // Set to true to push stock to the HostedShop webshop after a CSV commit.
+    // Disabled while we test the import flow without touching the live shop.
+    private const bool PushToHostedShopEnabled = false;
+
     private readonly OctopusService _octopus;
     private readonly IHostedShopService _shop;
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
@@ -110,6 +114,8 @@ public class CsvUploadService : ICsvUploadService
         IReadOnlyList<ProductCreated> created,
         CsvImportResult result)
     {
+        if (!PushToHostedShopEnabled) return;
+
         var ids = updated.Select(u => u.OctopusId)
             .Concat(created.Select(c => c.OctopusId))
             .ToList();
