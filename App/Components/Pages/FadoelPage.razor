@@ -48,7 +48,7 @@
 
 @if (rows.Count > 0)
 {
-    <div class="price-list-preview fadoel-preview">
+    <div class="price-list-preview">
         <div class="price-list-header">
             <h1>Klosterbryggeriet....... .......når øl ér bedst!</h1>
             <h2>& Import</h2>
@@ -118,6 +118,9 @@
 
     private async Task ExportPdf()
     {
-        await JS.InvokeVoidAsync("printPriceList");
+        // Pass true so the JS print helper injects an override that empties the
+        // global "Alle priser er + moms, + pant" bottom-right margin box —
+        // the leveringsbetingelser block already carries that info.
+        await JS.InvokeVoidAsync("printPriceList", true);
     }
 }

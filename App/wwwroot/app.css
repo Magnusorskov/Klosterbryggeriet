@@ -637,16 +637,6 @@ tr:hover .row-color-ctrl { opacity: 1; }
     }
 }
 
-/* Named page used by the fadølsliste preview to drop the global footer line. */
-@page no-price-footer {
-    size: A4;
-    margin: 1.5cm;
-}
-
-.fadoel-preview {
-    page: no-price-footer;
-}
-
 /* ── Shared page header (prisliste & fadølsliste) ─────────────────────────── */
 .prisliste-header {
     max-width: 1100px;
