@@ -1,6 +1,8 @@
 @page "/admin/produkter"
 @using BlazorApp.Models
 @using BlazorApp.Services
+@using BlazorApp.Components
+@using System.Globalization
 @rendermode InteractiveServer
 
 @inject ProductService ProductService
@@ -118,133 +120,290 @@
             }
         </div>
 
-        <div class="table-wrap">
-            <table class="prod-table">
-                <thead>
-                    <tr>
-                        @foreach (var col in Cols)
-                        {
-                            var key = col.Key;
-                            <th class="prod-th @(_sortCol == key ? "prod-th-active" : "")"
-                                style="min-width:@(col.Width)px"
-                                @onclick="() => ToggleSort(key)">
-                                <span class="prod-th-inner">
-                                    @col.Label
-                                    @if (_sortCol == key)
-                                    {
-                                        <svg class="sort-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                                            @if (_sortAsc)
-                                            {
-                                                <line x1="12" y1="19" x2="12" y2="5" />
-                                                <polyline points="5 12 12 5 19 12" />
-                                            }
-                                            else
-                                            {
-                                                <line x1="12" y1="5" x2="12" y2="19" />
-                                                <polyline points="19 12 12 19 5 12" />
-                                            }
-                                        </svg>
-                                    }
-                                    else
-                                    {
-                                        <svg class="sort-arrow sort-arrow-idle" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                            <line x1="12" y1="5" x2="12" y2="19" />
-                                            <polyline points="19 12 12 19 5 12" />
-                                        </svg>
-                                    }
-                                </span>
-                            </th>
-                        }
-                        <th class="prod-th prod-th-actions"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @{
-                        var rows = FilteredProducts();
-                    }
+        <div class="split">
+            @{
+                var rows = FilteredProducts();
+            }
+            @* ── Left: list ───────────────────────────────────────────── *@
+            <aside class="list-pane">
+                <div class="list-toolbar">
+                    <span class="list-toolbar-count">@rows.Count produkter</span>
+                    <div class="list-sort-wrap">
+                        <label for="prod-sort" class="list-sort-label">Sortér</label>
+                        <select id="prod-sort" class="list-sort" @bind="_sortKey">
+                            @foreach (var opt in SortOptions)
+                            {
+                                <option value="@opt.Key">@opt.Label</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="list-rows">
                     @if (rows.Count == 0)
                     {
-                        <tr>
-                            <td class="prod-empty" colspan="@(Cols.Length + 1)">
-                                Ingen produkter matcher de valgte filtre
-                            </td>
-                        </tr>
+                        <div class="list-empty">Ingen produkter matcher de valgte filtre</div>
                     }
                     else
                     {
                         @foreach (var p in rows)
                         {
                             var soldOut = p.Available < Product.SoldOutThreshold;
-                            <tr class="prod-row">
-                                <td class="prod-cell">@p.OctopusId</td>
-                                <td class="prod-cell">@p.WebId</td>
-                                <td class="prod-cell prod-cell-text">@p.OctopusTitle</td>
-                                <td class="prod-cell prod-cell-text">@p.WebTitle</td>
-                                <td class="prod-cell prod-cell-text @(string.IsNullOrWhiteSpace(p.PdfTitle) ? "prod-cell-missing" : "")">
-                                    @if (string.IsNullOrWhiteSpace(p.PdfTitle))
-                                    { <span class="mangler-text">Mangler</span> }
-                                    else { @p.PdfTitle }
-                                </td>
-                                <td class="prod-cell prod-cell-text">
-                                    <span class="cat-chip">@p.Category</span>
-                                </td>
-                                <td class="prod-cell">
-                                    <span class="avail-pill @(soldOut ? "avail-soldout" : "avail-ok")">
-                                        <span class="avail-dot"></span>@p.Available
-                                    </span>
-                                </td>
-                                <td class="prod-cell @(p.Str == 0 ? "prod-cell-missing" : "")">
-                                    @if (p.Str == 0)
-                                    { <span class="mangler-text">Mangler</span> }
-                                    else { @p.Str.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) }
-                                </td>
-                                <td class="prod-cell @(p.Alcohol == 0 ? "prod-cell-missing" : "")">
-                                    @if (p.Alcohol == 0)
-                                    { <span class="mangler-text">Mangler</span> }
-                                    else { @($"{p.Alcohol}%") }
-                                </td>
-                                <td class="prod-cell @((p.KegCollar ?? 0) == 0 ? "prod-cell-missing" : "")">
-                                    @if ((p.KegCollar ?? 0) == 0)
-                                    { <span class="mangler-text">Mangler</span> }
-                                    else { @p.KegCollar }
-                                </td>
-                                <td class="prod-cell @(p.PricePrUnit == 0 ? "prod-cell-missing" : "")">
-                                    @if (p.PricePrUnit == 0)
-                                    { <span class="mangler-text">Mangler</span> }
-                                    else { @($"{p.PricePrUnit.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)} kr") }
-                                </td>
-                                <td class="prod-cell">@(p.VariantId1 == 0 ? "—" : p.VariantId1.ToString())</td>
-                                <td class="prod-cell">@(p.VariantId2 == 0 ? "—" : p.VariantId2.ToString())</td>
-                                <td class="prod-cell">
-                                    <span class="use-pill @(p.InUse ? "use-on" : "use-off")">
-                                        @(p.InUse ? "I brug" : "Ikke i brug")
-                                    </span>
-                                </td>
-                                <td class="prod-cell">
-                                    @if (p.HalfKolli)
-                                    { <span class="half-pill">Halv kasse</span> }
-                                    else
-                                    { <span class="chip-empty-cell">—</span> }
-                                </td>
-                                <td class="prod-cell prod-cell-actions">
-                                    <button class="edit-btn" @onclick="() => OpenEdit(p)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                        </svg>
-                                        Rediger
-                                    </button>
-                                </td>
-                            </tr>
+                            var dotClass = !p.InUse ? "dot-off" : (soldOut ? "dot-soldout" : "dot-ok");
+                            var pid = p.OctopusId;
+                            <button class="list-row @(p.OctopusId == _selectedId ? "list-row-selected" : "")"
+                                    @onclick="() => SelectProduct(pid)"
+                                    type="button">
+                                <span class="lr-id">#@p.OctopusId</span>
+                                <span class="lr-main">
+                                    <span class="lr-title">@p.OctopusTitle</span>
+                                    <span class="lr-cat">@p.Category</span>
+                                </span>
+                                <span class="lr-status">
+                                    <span class="status-dot @dotClass"></span>
+                                    <span class="lr-avail">@p.Available</span>
+                                </span>
+                            </button>
                         }
                     }
-                </tbody>
-            </table>
+                </div>
+            </aside>
+
+            @* ── Right: detail ────────────────────────────────────────── *@
+            <section class="detail-pane">
+                @if (_draft == null || _original == null)
+                {
+                    <div class="detail-empty">
+                        <p class="detail-empty-eyebrow">Vælg et produkt</p>
+                        <p class="detail-empty-text">Klik et produkt i listen til venstre for at se og redigere alle felter.</p>
+                    </div>
+                }
+                else
+                {
+                    var d = _draft;
+                    var soldOut = d.Available <= Product.SoldOutThreshold;
+                    var dotClass = !d.InUse ? "dot-off" : (soldOut ? "dot-soldout" : "dot-ok");
+                    var dirtyCount = DirtyFieldCount();
+
+                    <header class="detail-head">
+                        <p class="detail-eyebrow">@d.Category</p>
+                        <h2 class="detail-title">@d.OctopusTitle</h2>
+                        <p class="detail-ids">
+                            Octopus <span class="detail-id-strong">#@d.OctopusId</span>
+                            <span class="detail-id-sep">·</span>
+                            Web <span class="detail-id-strong">#@d.WebId</span>
+                        </p>
+                    </header>
+
+                    @if (_pendingSwitchTo.HasValue)
+                    {
+                        <div class="dirty-prompt">
+                            <span>Du har ugemte ændringer på #@_original.OctopusId.</span>
+                            <button class="link-btn" @onclick="ConfirmSwitchDiscard">Forkast og skift</button>
+                            <button class="link-btn link-btn-strong" @onclick="CancelSwitch">Bliv her</button>
+                        </div>
+                    }
+
+                    <div class="detail-section">
+                        <p class="detail-section-label">Status &amp; lager</p>
+                        <div class="status-row">
+                            <div class="status-tile @(_editingField == "Available" ? "status-tile-editing" : "") @(FieldDirty("Available") ? "is-dirty" : "")">
+                                <span class="status-dot status-dot-lg @dotClass"></span>
+                                @if (_editingField == "Available")
+                                {
+                                    <input @ref="_availableRef" class="status-input" type="number"
+                                           value="@d.Available"
+                                           @oninput="e => { if (int.TryParse(e.Value?.ToString(), out var v)) d.Available = v; }"
+                                           @onblur="EndEdit"
+                                           @onkeydown="HandleEditKey" />
+                                }
+                                else
+                                {
+                                    <button type="button" class="status-value-btn"
+                                            @onclick='() => BeginEditAvailable()'>
+                                        <span class="status-value">@d.Available</span>
+                                        <span class="status-value-label">Disponibel</span>
+                                    </button>
+                                }
+                            </div>
+
+                            <button type="button"
+                                    class="toggle-pill @(d.InUse ? "tp-on" : "tp-off") @(FieldDirty("InUse") ? "is-dirty" : "")"
+                                    @onclick="ToggleInUse">
+                                <span class="tp-dot"></span>
+                                @(d.InUse ? "I brug" : "Ikke i brug")
+                            </button>
+
+                            <button type="button"
+                                    class="toggle-pill @(d.HalfKolli ? "tp-half-on" : "tp-half-off") @(FieldDirty("HalfKolli") ? "is-dirty" : "")"
+                                    @onclick="ToggleHalfKolli">
+                                <span class="tp-dot"></span>
+                                @(d.HalfKolli ? "Halv kasse tilladt" : "Ingen halv kasse")
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <p class="detail-section-label">Titler</p>
+                        <div class="ef-grid">
+                            <EditableField Label="Octopus-titel"
+                                           DisplayValue="@d.OctopusTitle"
+                                           InputValue="@d.OctopusTitle"
+                                           IsEditing="@(_editingField == "OctopusTitle")"
+                                           IsDirty="@FieldDirty("OctopusTitle")"
+                                           OnBeginEdit='@(() => BeginEdit("OctopusTitle"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => d.OctopusTitle = v ?? "")" />
+
+                            <EditableField Label="Web-titel"
+                                           DisplayValue="@d.WebTitle"
+                                           InputValue="@d.WebTitle"
+                                           IsEditing="@(_editingField == "WebTitle")"
+                                           IsDirty="@FieldDirty("WebTitle")"
+                                           OnBeginEdit='@(() => BeginEdit("WebTitle"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => d.WebTitle = v ?? "")" />
+
+                            <EditableField Label="PDF-titel"
+                                           DisplayValue="@d.PdfTitle"
+                                           InputValue="@d.PdfTitle"
+                                           IsEditing="@(_editingField == "PdfTitle")"
+                                           IsDirty="@FieldDirty("PdfTitle")"
+                                           IsMissing="@string.IsNullOrWhiteSpace(d.PdfTitle)"
+                                           OnBeginEdit='@(() => BeginEdit("PdfTitle"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => d.PdfTitle = v ?? "")" />
+
+                            <EditableField Label="Kategori"
+                                           DisplayValue="@d.Category"
+                                           InputValue="@d.Category"
+                                           IsEditing="@(_editingField == "Category")"
+                                           IsDirty="@FieldDirty("Category")"
+                                           OnBeginEdit='@(() => BeginEdit("Category"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => d.Category = v ?? "")" />
+
+                            <EditableField Label="Web ID"
+                                           DisplayValue="@d.WebId.ToString()"
+                                           InputValue="@d.WebId.ToString()"
+                                           InputType="number"
+                                           IsEditing="@(_editingField == "WebId")"
+                                           IsDirty="@FieldDirty("WebId")"
+                                           OnBeginEdit='@(() => BeginEdit("WebId"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (int.TryParse(v, out var n)) d.WebId = n; })" />
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <p class="detail-section-label">Specifikationer</p>
+                        <div class="ef-grid">
+                            <EditableField Label="Størrelse (L)"
+                                           DisplayValue="@(d.Str.ToString("0.##", CultureInfo.InvariantCulture) + " L")"
+                                           InputValue="@d.Str.ToString(CultureInfo.InvariantCulture)"
+                                           InputType="number" Step="0.01"
+                                           IsEditing="@(_editingField == "Str")"
+                                           IsDirty="@FieldDirty("Str")"
+                                           IsMissing="@(d.Str == 0)"
+                                           OnBeginEdit='@(() => BeginEdit("Str"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var n)) d.Str = n; else if (string.IsNullOrWhiteSpace(v)) d.Str = 0; })" />
+
+                            <EditableField Label="Alkohol %"
+                                           DisplayValue="@(d.Alcohol.ToString("0.##", CultureInfo.InvariantCulture) + " %")"
+                                           InputValue="@d.Alcohol.ToString(CultureInfo.InvariantCulture)"
+                                           InputType="number" Step="0.1"
+                                           IsEditing="@(_editingField == "Alcohol")"
+                                           IsDirty="@FieldDirty("Alcohol")"
+                                           IsMissing="@(d.Alcohol == 0)"
+                                           OnBeginEdit='@(() => BeginEdit("Alcohol"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var n)) d.Alcohol = n; else if (string.IsNullOrWhiteSpace(v)) d.Alcohol = 0; })" />
+
+                            <EditableField Label="Pris pr. enhed"
+                                           DisplayValue="@(d.PricePrUnit.ToString("0.00", CultureInfo.InvariantCulture) + " kr")"
+                                           InputValue="@d.PricePrUnit.ToString(CultureInfo.InvariantCulture)"
+                                           InputType="number" Step="0.01"
+                                           IsEditing="@(_editingField == "PricePrUnit")"
+                                           IsDirty="@FieldDirty("PricePrUnit")"
+                                           IsMissing="@(d.PricePrUnit == 0)"
+                                           OnBeginEdit='@(() => BeginEdit("PricePrUnit"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var n)) d.PricePrUnit = n; else if (string.IsNullOrWhiteSpace(v)) d.PricePrUnit = 0; })" />
+
+                            <EditableField Label="Kasse / Kolli"
+                                           DisplayValue="@(d.KegCollar?.ToString() ?? "")"
+                                           InputValue="@(d.KegCollar?.ToString() ?? "")"
+                                           InputType="number"
+                                           IsEditing="@(_editingField == "KegCollar")"
+                                           IsDirty="@FieldDirty("KegCollar")"
+                                           IsMissing="@((d.KegCollar ?? 0) == 0)"
+                                           OnBeginEdit='@(() => BeginEdit("KegCollar"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (string.IsNullOrWhiteSpace(v)) d.KegCollar = null; else if (int.TryParse(v, out var n)) d.KegCollar = n == 0 ? null : n; })" />
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <p class="detail-section-label">Webshop-varianter</p>
+                        <div class="ef-grid">
+                            <EditableField Label="Variant 1"
+                                           DisplayValue="@(d.VariantId1 == 0 ? "—" : d.VariantId1.ToString())"
+                                           InputValue="@d.VariantId1.ToString()"
+                                           InputType="number"
+                                           IsEditing="@(_editingField == "VariantId1")"
+                                           IsDirty="@FieldDirty("VariantId1")"
+                                           OnBeginEdit='@(() => BeginEdit("VariantId1"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (int.TryParse(v, out var n)) d.VariantId1 = n; else if (string.IsNullOrWhiteSpace(v)) d.VariantId1 = 0; })" />
+
+                            <EditableField Label="Variant 2"
+                                           DisplayValue="@(d.VariantId2 == 0 ? "—" : d.VariantId2.ToString())"
+                                           InputValue="@d.VariantId2.ToString()"
+                                           InputType="number"
+                                           IsEditing="@(_editingField == "VariantId2")"
+                                           IsDirty="@FieldDirty("VariantId2")"
+                                           OnBeginEdit='@(() => BeginEdit("VariantId2"))'
+                                           OnEndEdit="EndEdit"
+                                           OnInput="@(v => { if (int.TryParse(v, out var n)) d.VariantId2 = n; else if (string.IsNullOrWhiteSpace(v)) d.VariantId2 = 0; })" />
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_saveError))
+                    {
+                        <div class="detail-section">
+                            <p class="field-error">@_saveError</p>
+                        </div>
+                    }
+
+                    <div class="detail-spacer"></div>
+
+                    @if (dirtyCount > 0 || _saving)
+                    {
+                        <div class="save-bar">
+                            <span class="save-bar-text">
+                                @if (_saving)
+                                {
+                                    <span>Gemmer @dirtyCount @(dirtyCount == 1 ? "ændring" : "ændringer")…</span>
+                                }
+                                else
+                                {
+                                    <span><strong>@dirtyCount</strong> @(dirtyCount == 1 ? "ændring" : "ændringer") ikke gemt</span>
+                                }
+                            </span>
+                            <div class="save-bar-actions">
+                                <button class="btn-ghost" type="button" @onclick="DiscardDraft" disabled="@_saving">Forkast</button>
+                                <button class="btn-primary" type="button" @onclick="SaveDraft" disabled="@_saving">
+                                    @(_saving ? "Gemmer…" : "Færdiggør")
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+            </section>
         </div>
     }
 </section>
-
-<ProductEditModal Editing="_editing" OnSaved="OnEditSaved" OnCancelled="CloseEdit" />
 
 @code {
     private List<Product> _products = [];
@@ -261,30 +420,18 @@
     private bool _missingOpen;
 
     // Sort
-    private string _sortCol = "OctopusId";
-    private bool _sortAsc = true;
+    private string _sortKey = "OctopusId-asc";
 
-    // Edit
-    private Product? _editing;
-
-    private static readonly (string Key, string Label, int Width)[] Cols =
-    [
-        ("OctopusId",    "Octopus ID",    80),
-        ("WebId",        "Web ID",        70),
-        ("OctopusTitle", "Octopus-titel", 220),
-        ("WebTitle",     "Web-titel",     200),
-        ("PdfTitle",     "PDF-titel",     160),
-        ("Category",     "Kategori",      180),
-        ("Available",    "Disponibel",    90),
-        ("Str",          "Str. (L)",      80),
-        ("Alcohol",      "Alkohol%",      80),
-        ("KegCollar",    "Kasse/Kolli",   90),
-        ("PricePrUnit",  "Pris/enhed",    90),
-        ("VariantId1",   "Variant 1",     80),
-        ("VariantId2",   "Variant 2",     80),
-        ("InUse",        "I brug",        90),
-        ("HalfKolli",    "Halv kasse",    100),
-    ];
+    // Selection / edit
+    private int? _selectedId;
+    private Product? _original;
+    private Product? _draft;
+    private string? _editingField;
+    private bool _focusAvailableOnRender;
+    private ElementReference _availableRef;
+    private string _saveError = "";
+    private bool _saving;
+    private int? _pendingSwitchTo;
 
     private static readonly (string Key, string Label, Func<Product, bool> Check)[] MissingOptions =
     [
@@ -293,6 +440,17 @@
         ("Str",         "Størrelse mangler",    p => p.Str == 0),
         ("KegCollar",   "Kasse/Kolli mangler",  p => (p.KegCollar ?? 0) == 0),
         ("PricePrUnit", "Pris mangler",         p => p.PricePrUnit == 0),
+    ];
+
+    private static readonly (string Key, string Label)[] SortOptions =
+    [
+        ("OctopusId-asc",  "Octopus ID ↑"),
+        ("OctopusId-desc", "Octopus ID ↓"),
+        ("Title-asc",      "Titel A→Å"),
+        ("Title-desc",     "Titel Å→A"),
+        ("Available-asc",  "Disponibel ↑"),
+        ("Available-desc", "Disponibel ↓"),
+        ("Category-asc",   "Kategori A→Å"),
     ];
 
     private IEnumerable<string> _allCats => _products
@@ -306,6 +464,17 @@
         _loading = true;
         _products = await ProductService.ListProducts();
         _loading = false;
+        var first = SortProducts(_products).FirstOrDefault();
+        if (first != null) DoSelect(first.OctopusId);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusAvailableOnRender && _editingField == "Available")
+        {
+            _focusAvailableOnRender = false;
+            try { await _availableRef.FocusAsync(); } catch { /* element gone */ }
+        }
     }
 
     private List<Product> FilteredProducts()
@@ -346,78 +515,176 @@
         return SortProducts(q).ToList();
     }
 
-    private IEnumerable<Product> SortProducts(IEnumerable<Product> src)
+    private IEnumerable<Product> SortProducts(IEnumerable<Product> src) => _sortKey switch
     {
-        IEnumerable<Product> OrderByKey<T>(Func<Product, T> key) =>
-            _sortAsc ? src.OrderBy(key) : src.OrderByDescending(key);
-
-        return _sortCol switch
-        {
-            "OctopusId"    => OrderByKey(p => p.OctopusId),
-            "WebId"        => OrderByKey(p => p.WebId),
-            "OctopusTitle" => OrderByKey(p => p.OctopusTitle ?? ""),
-            "WebTitle"     => OrderByKey(p => p.WebTitle ?? ""),
-            "PdfTitle"     => OrderByKey(p => p.PdfTitle ?? ""),
-            "Category"     => OrderByKey(p => p.Category ?? ""),
-            "Available"    => OrderByKey(p => p.Available),
-            "Str"          => OrderByKey(p => p.Str),
-            "Alcohol"      => OrderByKey(p => p.Alcohol),
-            "KegCollar"    => OrderByKey(p => p.KegCollar ?? 0),
-            "PricePrUnit"  => OrderByKey(p => p.PricePrUnit),
-            "VariantId1"   => OrderByKey(p => p.VariantId1),
-            "VariantId2"   => OrderByKey(p => p.VariantId2),
-            "InUse"        => OrderByKey(p => p.InUse),
-            "HalfKolli"    => OrderByKey(p => p.HalfKolli),
-            _              => src,
-        };
-    }
-
-    private void ToggleSort(string col)
-    {
-        if (_sortCol == col) _sortAsc = !_sortAsc;
-        else { _sortCol = col; _sortAsc = true; }
-    }
+        "OctopusId-asc"  => src.OrderBy(p => p.OctopusId),
+        "OctopusId-desc" => src.OrderByDescending(p => p.OctopusId),
+        "Title-asc"      => src.OrderBy(p => p.OctopusTitle ?? ""),
+        "Title-desc"     => src.OrderByDescending(p => p.OctopusTitle ?? ""),
+        "Available-asc"  => src.OrderBy(p => p.Available),
+        "Available-desc" => src.OrderByDescending(p => p.Available),
+        "Category-asc"   => src.OrderBy(p => p.Category ?? "").ThenBy(p => p.OctopusTitle ?? ""),
+        _                => src,
+    };
 
     private void ToggleMissingOpen() => _missingOpen = !_missingOpen;
 
     private void ToggleMissing(string key)
     {
-        if (!_missingFilters.Add(key))
-            _missingFilters.Remove(key);
+        if (!_missingFilters.Add(key)) _missingFilters.Remove(key);
     }
 
     private void ClearMissing() => _missingFilters.Clear();
 
-    private void OpenEdit(Product p)
+    // ── Selection ─────────────────────────────────────────────────────────
+    private void SelectProduct(int id)
     {
-        _editing = new Product
+        if (_selectedId == id) return;
+        if (DirtyFieldCount() > 0)
         {
-            OctopusId    = p.OctopusId,
-            WebId        = p.WebId,
-            WebTitle     = p.WebTitle,
-            PdfTitle     = p.PdfTitle,
-            OctopusTitle = p.OctopusTitle,
-            Available    = p.Available,
-            KegCollar    = p.KegCollar,
-            Str          = p.Str,
-            Alcohol      = p.Alcohol,
-            PricePrUnit  = p.PricePrUnit,
-            Category     = p.Category,
-            VariantId1   = p.VariantId1,
-            VariantId2   = p.VariantId2,
-            InUse        = p.InUse,
-            HalfKolli    = p.HalfKolli,
+            _pendingSwitchTo = id;
+            return;
+        }
+        DoSelect(id);
+    }
+
+    private void DoSelect(int id)
+    {
+        var p = _products.FirstOrDefault(x => x.OctopusId == id);
+        if (p == null) return;
+        _selectedId = id;
+        _original = Clone(p);
+        _draft = Clone(p);
+        _editingField = null;
+        _saveError = "";
+        _pendingSwitchTo = null;
+    }
+
+    private void ConfirmSwitchDiscard()
+    {
+        if (_pendingSwitchTo.HasValue) DoSelect(_pendingSwitchTo.Value);
+    }
+
+    private void CancelSwitch() => _pendingSwitchTo = null;
+
+    // ── Click-to-edit ─────────────────────────────────────────────────────
+    private void BeginEdit(string field)
+    {
+        if (_draft == null) return;
+        _editingField = field;
+    }
+
+    private void BeginEditAvailable()
+    {
+        BeginEdit("Available");
+        _focusAvailableOnRender = true;
+    }
+
+    private void EndEdit()
+    {
+        _editingField = null;
+    }
+
+    private void HandleEditKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" || e.Key == "Escape") EndEdit();
+    }
+
+    private void ToggleInUse()
+    {
+        if (_draft == null) return;
+        _draft.InUse = !_draft.InUse;
+    }
+
+    private void ToggleHalfKolli()
+    {
+        if (_draft == null) return;
+        _draft.HalfKolli = !_draft.HalfKolli;
+    }
+
+    // ── Dirty tracking ────────────────────────────────────────────────────
+    private bool FieldDirty(string field)
+    {
+        if (_draft == null || _original == null) return false;
+        return field switch
+        {
+            "OctopusTitle" => _draft.OctopusTitle != _original.OctopusTitle,
+            "WebTitle"     => _draft.WebTitle != _original.WebTitle,
+            "PdfTitle"     => _draft.PdfTitle != _original.PdfTitle,
+            "Category"     => _draft.Category != _original.Category,
+            "WebId"        => _draft.WebId != _original.WebId,
+            "Available"    => _draft.Available != _original.Available,
+            "Str"          => Math.Abs(_draft.Str - _original.Str) > 1e-9,
+            "Alcohol"      => Math.Abs(_draft.Alcohol - _original.Alcohol) > 1e-9,
+            "PricePrUnit"  => Math.Abs(_draft.PricePrUnit - _original.PricePrUnit) > 1e-9,
+            "KegCollar"    => (_draft.KegCollar ?? 0) != (_original.KegCollar ?? 0),
+            "VariantId1"   => _draft.VariantId1 != _original.VariantId1,
+            "VariantId2"   => _draft.VariantId2 != _original.VariantId2,
+            "InUse"        => _draft.InUse != _original.InUse,
+            "HalfKolli"    => _draft.HalfKolli != _original.HalfKolli,
+            _              => false,
         };
     }
 
-    private void CloseEdit()
+    private static readonly string[] AllFields =
+    [
+        "OctopusTitle", "WebTitle", "PdfTitle", "Category", "WebId",
+        "Available", "Str", "Alcohol", "PricePrUnit", "KegCollar",
+        "VariantId1", "VariantId2", "InUse", "HalfKolli"
+    ];
+
+    private int DirtyFieldCount() => AllFields.Count(FieldDirty);
+
+    private void DiscardDraft()
     {
-        _editing = null;
+        if (_original == null) return;
+        _draft = Clone(_original);
+        _editingField = null;
+        _saveError = "";
     }
 
-    private async Task OnEditSaved()
+    private async Task SaveDraft()
     {
-        _products = await ProductService.ListProducts();
-        _editing = null;
+        if (_draft == null) return;
+        _saving = true;
+        _saveError = "";
+        try
+        {
+            await ProductService.UpdateAsync(_draft);
+            _products = await ProductService.ListProducts();
+            var dbCopy = _products.FirstOrDefault(p => p.OctopusId == _draft.OctopusId);
+            if (dbCopy != null)
+            {
+                _original = Clone(dbCopy);
+                _draft = Clone(dbCopy);
+            }
+        }
+        catch (Exception ex)
+        {
+            _saveError = $"Kunne ikke gemme: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
     }
+
+    private static Product Clone(Product p) => new()
+    {
+        OctopusId    = p.OctopusId,
+        WebId        = p.WebId,
+        WebTitle     = p.WebTitle,
+        PdfTitle     = p.PdfTitle,
+        OctopusTitle = p.OctopusTitle,
+        Available    = p.Available,
+        KegCollar    = p.KegCollar,
+        Str          = p.Str,
+        Alcohol      = p.Alcohol,
+        PricePrUnit  = p.PricePrUnit,
+        Category     = p.Category,
+        VariantId1   = p.VariantId1,
+        VariantId2   = p.VariantId2,
+        InUse        = p.InUse,
+        HalfKolli    = p.HalfKolli,
+    };
 }
