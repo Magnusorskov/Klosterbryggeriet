@@ -79,6 +79,12 @@
     padding: 0.15rem 0.75rem;
 }
 
+.nav-divider {
+    border: 0;
+    border-top: 1px solid rgba(243, 230, 204, 0.1);
+    margin: 0.6rem 1.5rem;
+}
+
 .nav-item ::deep .nav-link {
     color: #c9b591;
     background: none;

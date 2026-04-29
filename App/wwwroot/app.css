@@ -64,8 +64,8 @@ html, body {
 
 .overview-card:hover,
 .overview-card:focus-visible {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(34, 24, 18, 0.06), 0 14px 32px rgba(34, 24, 18, 0.08);
+    transform: translateY(-4px);
+    box-shadow: 0 3px 6px rgba(34, 24, 18, 0.08), 0 18px 40px rgba(34, 24, 18, 0.12);
     outline: none;
     text-decoration: none;
     color: inherit;
@@ -116,7 +116,8 @@ html, body {
 }
 
 .overview-card-link {
-    margin-top: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
     color: #b86a33;
     font-weight: 600;
     font-size: 0.98rem;
