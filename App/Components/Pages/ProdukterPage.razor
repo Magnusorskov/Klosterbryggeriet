@@ -1,4 +1,4 @@
-@page "/admin/produkter"
+@page "/produkter"
 @using BlazorApp.Models
 @using BlazorApp.Services
 @using BlazorApp.Components
@@ -145,7 +145,7 @@
                     {
                         @foreach (var p in rows)
                         {
-                            var soldOut = p.Available < Product.SoldOutThreshold;
+                            var soldOut = p.Status == ProductStatus.SoldOut;
                             var dotClass = !p.InUse ? "dot-off" : (soldOut ? "dot-soldout" : "dot-ok");
                             var pid = p.OctopusId;
                             <button class="list-row @(p.OctopusId == _selectedId ? "list-row-selected" : "")"
@@ -178,7 +178,7 @@
                 else
                 {
                     var d = _draft;
-                    var soldOut = d.Available <= Product.SoldOutThreshold;
+                    var soldOut = d.Status == ProductStatus.SoldOut;
                     var dotClass = !d.InUse ? "dot-off" : (soldOut ? "dot-soldout" : "dot-ok");
                     var dirtyCount = DirtyFieldCount();
 
@@ -496,9 +496,9 @@
             q = q.Where(p => p.Category == _catFilter);
 
         if (_statusFilter == "Tilgængelig")
-            q = q.Where(p => p.Available >= Product.SoldOutThreshold);
+            q = q.Where(p => p.Status == ProductStatus.Available);
         else if (_statusFilter == "Udsolgt")
-            q = q.Where(p => p.Available < Product.SoldOutThreshold);
+            q = q.Where(p => p.Status == ProductStatus.SoldOut);
 
         if (_inUseFilter == "I brug")
             q = q.Where(p => p.InUse);
