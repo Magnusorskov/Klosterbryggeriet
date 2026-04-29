@@ -33,10 +33,11 @@ public class ProductService
 
     public async Task DeleteAsync(int octopusId)
     {
-        var existing = await _db.Products.FindAsync(octopusId);
+        await using var db = _contextFactory.CreateDbContext();
+        var existing = await db.Products.FindAsync(octopusId);
         if (existing == null) return;
-        _db.Products.Remove(existing);
-        await _db.SaveChangesAsync();
+        db.Products.Remove(existing);
+        await db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(Product update)
