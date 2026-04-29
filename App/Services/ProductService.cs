@@ -6,21 +6,23 @@ namespace BlazorApp.Services;
 
 public class ProductService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public ProductService(AppDbContext db)
+    public ProductService(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _db = db;
+        _contextFactory = contextFactory;
     }
 
-    public Task<List<Product>> ListProducts()
+    public async Task<List<Product>> ListProducts()
     {
-        return _db.Products.ToListAsync();
+        await using var db = _contextFactory.CreateDbContext();
+        return await db.Products.ToListAsync();
     }
 
-    public Task<List<Product>> ListInUseProducts()
+    public async Task<List<Product>> ListInUseProducts()
     {
-        return _db.Products.Where(p => p.InUse).ToListAsync();
+        await using var db = _contextFactory.CreateDbContext();
+        return await db.Products.Where(p => p.InUse).ToListAsync();
     }
 
     public async Task<Dictionary<string, List<Product>>> MapProductsByCategory() {
@@ -29,9 +31,19 @@ public class ProductService
             .ToDictionary(g => g.Key, g => g.ToList());
     }
 
+    public async Task DeleteAsync(int octopusId)
+    {
+        await using var db = _contextFactory.CreateDbContext();
+        var existing = await db.Products.FindAsync(octopusId);
+        if (existing == null) return;
+        db.Products.Remove(existing);
+        await db.SaveChangesAsync();
+    }
+
     public async Task UpdateAsync(Product update)
     {
-        var existing = await _db.Products.FindAsync(update.OctopusId);
+        await using var db = _contextFactory.CreateDbContext();
+        var existing = await db.Products.FindAsync(update.OctopusId);
         if (existing == null) return;
 
         existing.WebId        = update.WebId;
@@ -49,6 +61,6 @@ public class ProductService
         existing.InUse        = update.InUse;
         existing.HalfKolli    = update.HalfKolli;
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
     }
 }

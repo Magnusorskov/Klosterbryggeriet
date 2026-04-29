@@ -11,4 +11,5 @@ public class AppDbContext : DbContext
     public DbSet<LogEntry> LogEntries { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<CategoryColumn> CategoryColumns { get; set; }
+    public DbSet<DraftBeer> DraftBeers { get; set; }
 }

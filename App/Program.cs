@@ -6,13 +6,14 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
         mySqlOptions => mySqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(5),
             errorNumbersToAdd: null)));
 
+builder.Services.AddScoped<LoggerService>();
 builder.Services.AddScoped<OctopusService>();
 builder.Services.AddScoped<IHostedShopService, HostedShopService>();
 
@@ -21,11 +22,19 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
+builder.Services.AddScoped<CsvImportSession>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<DraftBeerService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

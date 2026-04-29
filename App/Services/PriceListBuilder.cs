@@ -24,7 +24,7 @@ public class PriceListBuilder(ProductService productService, CategoryService cat
                     ? products.Select(p => new ProductRow
                     {
                         Product = p,
-                        Status  = p.Available < 30 ? "Udsolgt" : ""
+                        Status  = p.Status == ProductStatus.SoldOut ? "Udsolgt" : ""
                     }).ToList()
                     : []
             })

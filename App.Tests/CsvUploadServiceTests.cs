@@ -1,7 +1,7 @@
 using System.Text;
 using BlazorApp.Models;
+using BlazorApp.Models.Dtos;
 using BlazorApp.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace App.Tests;
 
@@ -34,14 +34,14 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         var csv = BuildCsv((101, 50), (102, 75), (103, 10));
         var fake = new FakeHostedShopService();
 
-        CsvUploadResult result;
+        CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var sut = new CsvUploadService(new OctopusService(db), fake, db);
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
             result = await sut.UploadCsvAsync(StreamFor(csv), "test.csv");
         }
 
-        Assert.Equal(3, result.DbProductsUpdated);
+        Assert.Equal(3, result.Updated.Count);
         Assert.Equal(2, result.PushAttempted);
         Assert.Equal(2, result.PushSucceeded);
         Assert.Equal(0, result.PushFailed);
@@ -61,10 +61,10 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         var csv = BuildCsv((201, 5), (202, 6));
         var fake = new FakeHostedShopService { FailingVariantIds = { 8002 } };
 
-        CsvUploadResult result;
+        CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var sut = new CsvUploadService(new OctopusService(db), fake, db);
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
             result = await sut.UploadCsvAsync(StreamFor(csv), "test.csv");
         }
 
@@ -83,14 +83,14 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         var csv = BuildCsv((301, 42));
         var fake = new FakeHostedShopService();
 
-        CsvUploadResult result;
+        CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var sut = new CsvUploadService(new OctopusService(db), fake, db);
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
             result = await sut.UploadCsvAsync(StreamFor(csv), "test.csv");
         }
 
-        Assert.Equal(1, result.DbProductsUpdated);
+        Assert.Equal(1, result.Updated.Count);
         Assert.Equal(0, result.PushAttempted);
         Assert.Empty(fake.Calls);
     }
@@ -104,14 +104,14 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         var csv = BuildCsv((401, 99));
         var fake = new FakeHostedShopService();
 
-        CsvUploadResult result;
+        CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var sut = new CsvUploadService(new OctopusService(db), fake, db);
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
             result = await sut.UploadCsvAsync(StreamFor(csv), "test.csv");
         }
 
-        Assert.Equal(1, result.DbProductsUpdated);
+        Assert.Equal(1, result.Updated.Count);
         Assert.Equal(0, result.PushAttempted);
         Assert.Empty(fake.Calls);
     }
@@ -125,10 +125,10 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         var csv = BuildCsv((501, 12));
         var fake = new FakeHostedShopService();
 
-        CsvUploadResult result;
+        CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var sut = new CsvUploadService(new OctopusService(db), fake, db);
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
             result = await sut.UploadCsvAsync(StreamFor(csv), "test.csv");
         }
 
@@ -144,14 +144,14 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         var fake = new FakeHostedShopService();
         var csv = "header\n";
 
-        CsvUploadResult result;
+        CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var sut = new CsvUploadService(new OctopusService(db), fake, db);
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
             result = await sut.UploadCsvAsync(StreamFor(csv), "empty.csv");
         }
 
-        Assert.Equal(0, result.DbProductsUpdated);
+        Assert.Equal(0, result.Updated.Count);
         Assert.Equal(0, result.PushAttempted);
         Assert.Empty(fake.Calls);
     }

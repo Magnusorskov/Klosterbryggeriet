@@ -75,6 +75,67 @@ namespace BlazorApp.Migrations
                     b.ToTable("CategoryColumns");
                 });
 
+            modelBuilder.Entity("BlazorApp.Models.DraftBeer", b =>
+                {
+                    b.Property<int>("OctopusId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OctopusId"));
+
+                    b.Property<double>("Alcohol")
+                        .HasColumnType("double");
+
+                    b.Property<int>("Available")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("InUse")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Kobling")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Land")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OctopusTitle")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PdfTitle")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<double>("PricePrUnit")
+                        .HasColumnType("double");
+
+                    b.Property<double>("Str")
+                        .HasColumnType("double");
+
+                    b.Property<int>("VariantId1")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariantId2")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WebId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("WebTitle")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("OctopusId");
+
+                    b.ToTable("DraftBeers");
+                });
+
             modelBuilder.Entity("BlazorApp.Models.LogEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -86,13 +147,16 @@ namespace BlazorApp.Migrations
                     b.Property<DateTime>("DateChanged")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("NewStatus")
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NewStatus")
                         .HasColumnType("int");
 
                     b.Property<int>("OctopusId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PreviousStatus")
+                    b.Property<int?>("PreviousStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("ProductName")

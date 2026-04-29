@@ -46,7 +46,7 @@
                     <td class="@CellClass(col.FieldName)">
                         <div class="cell-inline">
                             <input class="edit-cell text-right" value="@GetFieldValue(row.Product, col.FieldName)"
-                                   @onchange="@(e => SetFieldValue(row.Product, col.FieldName, e.Value?.ToString()))" />
+                                   @onchange="@((ChangeEventArgs e) => SetFieldValue(row.Product, col.FieldName, e.Value?.ToString()))" />
                             @if (col.FieldName == "KegCollar")
                             {
                                 <span class="suffix @(row.Product.HalfKolli ? "" : "suffix-hidden")">*</span>

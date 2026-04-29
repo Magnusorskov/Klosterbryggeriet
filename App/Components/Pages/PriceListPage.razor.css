@@ -1,3 +1,43 @@
+/* ── Prisliste page header ───────────────────────────────────────────────── */
+.prisliste-header {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 0.5rem 0;
+}
+
+.prisliste-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a65f2b;
+    margin: 0 0 1rem;
+}
+
+.prisliste-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #221812;
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.prisliste-lede {
+    color: #6b5c45;
+    font-size: 1rem;
+    line-height: 1.55;
+    margin: 0 0 1.5rem;
+    max-width: 640px;
+}
+
+.prisliste-lede strong {
+    color: #3a2a1c;
+    font-weight: 600;
+}
+
+
 /* ── Prisliste toolbar buttons ───────────────────────────────────────────── */
 
 .btn-generate,

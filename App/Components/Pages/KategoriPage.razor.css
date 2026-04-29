@@ -7,14 +7,41 @@
 
 .kategori-header {
     display: flex;
-    align-items: flex-start;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 2rem;
     margin-bottom: 2.25rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(109, 68, 35, 0.14);
 }
 
 .kategori-header-text {
     min-width: 0;
+    flex: 1;
+}
+
+.kategori-hint {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 1rem 0 0;
+    padding: 0.6rem 0.85rem;
+    background: #f4ead9;
+    border-radius: 8px;
+    color: #6b4a1e;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.kategori-hint svg {
+    flex-shrink: 0;
+    color: #a65f2b;
+    margin-top: 0.15rem;
+}
+
+.kategori-hint strong {
+    color: #221812;
+    font-weight: 700;
 }
 
 .kategori-eyebrow {
@@ -76,7 +103,8 @@
 
 .btn-new {
     flex-shrink: 0;
-    margin-top: 0.35rem;
+    align-self: flex-end;
+    margin-bottom: 0.15rem;
 }
 
 .btn-plus {
@@ -358,6 +386,10 @@
     background-repeat: no-repeat;
     background-position: right 0.85rem center;
     padding-right: 2.25rem;
+}
+
+.form-input-spaced {
+    margin-top: 0.5rem;
 }
 
 /* ── Column builder ──────────────────────────────────────────────────────── */
