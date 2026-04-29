@@ -15,13 +15,19 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddScoped<LoggerService>();
 builder.Services.AddScoped<OctopusService>();
-builder.Services.AddScoped<HostedShopService>();
+builder.Services.AddScoped<IHostedShopService, HostedShopService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
+// HostedShop push is disabled while we test the CSV import flow against
+// real data. Flip pushToHostedShopEnabled to true to re-enable.
+builder.Services.AddScoped<ICsvUploadService>(sp => new CsvUploadService(
+    sp.GetRequiredService<OctopusService>(),
+    sp.GetRequiredService<IHostedShopService>(),
+    sp.GetRequiredService<IDbContextFactory<AppDbContext>>(),
+    pushToHostedShopEnabled: false));
 builder.Services.AddScoped<CsvImportSession>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();

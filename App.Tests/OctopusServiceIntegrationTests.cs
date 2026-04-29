@@ -85,7 +85,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), new NoOpHostedShopService(), _fixture);
             await uploader.UploadCsvAsync(testFile, "octopus.csv");
         }
 
@@ -110,7 +110,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         var testFile = GetFileFromPath("TestData/OctopusTestData.csv");
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), new NoOpHostedShopService(), _fixture);
             await uploader.UploadCsvAsync(testFile, "octopus.csv");
         }
 
@@ -143,7 +143,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         BlazorApp.Models.Dtos.CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), new NoOpHostedShopService(), _fixture);
             result = await uploader.UploadCsvAsync(csv, "test.csv");
         }
 
@@ -172,7 +172,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         BlazorApp.Models.Dtos.CsvImportResult result;
         await using (var db = _fixture.CreateDbContext())
         {
-            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)));
+            var uploader = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), new NoOpHostedShopService(), _fixture);
             result = await uploader.UploadCsvAsync(testFile, "octopus.csv");
         }
 
@@ -278,5 +278,10 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
     private FileStream GetFileFromPath(string filePath)
     {
         return File.OpenRead(filePath);
+    }
+
+    private class NoOpHostedShopService : IHostedShopService
+    {
+        public Task<bool> OpdaterLager(int variantId, int antal, int lagerId = 1) => Task.FromResult(true);
     }
 }

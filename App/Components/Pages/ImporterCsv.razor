@@ -352,6 +352,14 @@
                 </div>
             }
 
+            @if (_finishReceipt.FailedVariantIds.Count > 0)
+            {
+                <div class="finish-receipt-section">
+                    <p class="finish-receipt-section-label">Webshop-fejl (@_finishReceipt.FailedVariantIds.Count)</p>
+                    <p class="finish-receipt-sub">Følgende variant-IDs kunne ikke opdateres på webshoppen: @string.Join(", ", _finishReceipt.FailedVariantIds)</p>
+                </div>
+            }
+
             <div class="finish-receipt-actions">
                 <button class="btn-finish-receipt-ok" @onclick="DismissFinishReceipt">OK</button>
             </div>
@@ -470,7 +478,8 @@
         string Subtitle,
         bool HasErrors,
         List<FinishReceiptItem> SavedProducts,
-        List<string> NewCategories);
+        List<string> NewCategories,
+        IReadOnlyList<int> FailedVariantIds);
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -588,13 +597,19 @@
                 r.Product.InUse)).ToList();
 
             var savedCount = result.Updated.Count + result.Created.Count;
+            var pushSegment = result.PushAttempted > 0
+                ? $" · webshop: {result.PushSucceeded}/{result.PushAttempted}"
+                  + (result.PushFailed > 0 ? $" ({result.PushFailed} fejl)" : "")
+                : "";
             _finishReceipt = new FinishReceipt(
                 Title: savedCount == 0 ? "Intet at gemme" : "Import færdiggjort",
                 Subtitle: $"{result.Updated.Count} opdateret · {result.Created.Count} ny{(result.Created.Count == 1 ? "t" : "e")}"
-                          + (newCategoryNames.Count > 0 ? $" · {newCategoryNames.Count} nye kategori{(newCategoryNames.Count == 1 ? "" : "er")} oprettet" : ""),
-                HasErrors: false,
+                          + (newCategoryNames.Count > 0 ? $" · {newCategoryNames.Count} nye kategori{(newCategoryNames.Count == 1 ? "" : "er")} oprettet" : "")
+                          + pushSegment,
+                HasErrors: result.PushFailed > 0,
                 SavedProducts: savedItems,
-                NewCategories: newCategoryNames);
+                NewCategories: newCategoryNames,
+                FailedVariantIds: result.FailedVariantIds);
 
             Session.LastResult = result;
             Session.Preview = null;
