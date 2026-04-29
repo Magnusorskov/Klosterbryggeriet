@@ -21,7 +21,7 @@ html, body {
 
 .overview-title {
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 2.75rem;
+    font-size: 2.5rem;
     font-weight: 700;
     line-height: 1.1;
     color: #221812;
@@ -31,7 +31,8 @@ html, body {
 
 .overview-lede {
     color: #6b5c45;
-    font-size: 1.05rem;
+    font-size: 1rem;
+    line-height: 1.55;
     margin: 0 0 1.75rem;
 }
 
