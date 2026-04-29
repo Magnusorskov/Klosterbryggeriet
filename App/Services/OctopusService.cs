@@ -187,6 +187,7 @@ public class OctopusService
         foreach (var dbProduct in dbProducts)
         {
             var row = existingRows.First(r => r.OctopusId == dbProduct.OctopusId);
+            if (row.Available == dbProduct.Available) continue;
             var newStatus = Product.StatusFor(row.Available);
             updates.Add(new PendingUpdate
             {
