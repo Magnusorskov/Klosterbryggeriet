@@ -5,8 +5,8 @@
 @rendermode InteractiveServer
 
 @inject ICsvUploadService CsvUploadService
-@inject ProductService ProductService
 @inject CategoryService CategoryService
+@inject CsvImportSession Session
 
 <PageTitle>Importer CSV</PageTitle>
 
@@ -17,53 +17,56 @@
         <p class="csv-lede">Upload en eksportfil fra Octopus for at synkronisere produkternes tilgængelighed.</p>
     </header>
 
-    <label class="dropzone">
-        <InputFile OnChange="HandleFileSelected" accept=".csv"
-                   style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:1;" />
-        <div class="dropzone-content">
-            <span class="dropzone-icon" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-            </span>
-            <p class="dropzone-title">Træk og slip din CSV-fil her</p>
-            <p class="dropzone-sub">eller klik for at vælge en fil fra din computer</p>
-            <span class="dropzone-pill">Understøttede formater: .csv</span>
-        </div>
-    </label>
-
-    @if (selectedFile is not null)
+    @if (Session.Preview is null)
     {
-        <div class="selected-card">
-            <div class="selected-info">
-                <span class="file-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-                        <polyline points="13 2 13 9 20 9" />
+        <label class="dropzone">
+            <InputFile OnChange="HandleFileSelected" accept=".csv"
+                       style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:1;" />
+            <div class="dropzone-content">
+                <span class="dropzone-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
                 </span>
-                <div class="selected-text">
-                    <p class="selected-label">Valgt fil</p>
-                    <p class="selected-name">@selectedFile.Name</p>
-                </div>
+                <p class="dropzone-title">Træk og slip din CSV-fil her</p>
+                <p class="dropzone-sub">eller klik for at vælge en fil fra din computer</p>
+                <span class="dropzone-pill">Understøttede formater: .csv</span>
             </div>
-            <button class="btn-upload" @onclick="UploadCsv" disabled="@isUploading">
-                @if (isUploading)
-                {
-                    <span class="spinner" aria-hidden="true"></span>
-                    <span>Uploader...</span>
-                }
-                else
-                {
-                    <span>Upload</span>
-                }
-            </button>
-        </div>
+        </label>
+
+        @if (selectedFile is not null)
+        {
+            <div class="selected-card">
+                <div class="selected-info">
+                    <span class="file-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                            <polyline points="13 2 13 9 20 9" />
+                        </svg>
+                    </span>
+                    <div class="selected-text">
+                        <p class="selected-label">Valgt fil</p>
+                        <p class="selected-name">@selectedFile.Name</p>
+                    </div>
+                </div>
+                <button class="btn-upload" @onclick="UploadCsv" disabled="@isUploading">
+                    @if (isUploading)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>Forbereder...</span>
+                    }
+                    else
+                    {
+                        <span>Læs ind</span>
+                    }
+                </button>
+            </div>
+        }
     }
 
-    @if (errorMessage is not null)
+    @if (Session.ErrorMessage is not null)
     {
         <div class="status-card status-error">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -71,146 +74,213 @@
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            @errorMessage
+            @Session.ErrorMessage
         </div>
     }
 
-    @if (successMessage is not null)
+    @if (Session.SuccessMessage is not null)
     {
         <div class="status-card status-success">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
             </svg>
-            @successMessage
+            @Session.SuccessMessage
         </div>
     }
 
-    <div class="info-card">
-        <strong>Eksportér fra Octopus:</strong>
-        <span>Gå til Produkter → Eksportér → Vælg CSV-format og download filen.</span>
-    </div>
-
-    @if (_needsAttention.Count > 0)
+    @if (Session.Preview is null)
     {
-        <section class="attention-block">
-            <header class="attention-header">
-                <h2 class="attention-title">Nye produkter til gennemgang</h2>
-                <p class="attention-sub">
-                    Disse produkter blev lige oprettet fra CSV-importen. Udfyld felterne og klik <strong>Færdiggør</strong>. Manuelle felter er påkrævede når <em>I brug</em> er slået til.
-                </p>
+        <div class="info-card">
+            <strong>Eksportér fra Octopus:</strong>
+            <span>Gå til Produkter → Eksportér → Vælg CSV-format og download filen.</span>
+        </div>
+    }
+
+    @if (Session.Preview is not null)
+    {
+        var preview = Session.Preview;
+        <section class="preview-block">
+            <header class="preview-header">
+                <div>
+                    <h2 class="preview-title">Forhåndsvisning af import</h2>
+                    <p class="preview-meta">
+                        @preview.FileName · @preview.UploadedAt.ToString("dd.MM.yyyy HH:mm")
+                        · @preview.RowsParsed rækker læst
+                        @if (preview.RowsSkipped > 0)
+                        {
+                            <span> · @preview.RowsSkipped sprunget over</span>
+                        }
+                    </p>
+                    <p class="preview-counts">
+                        @preview.PendingUpdates.Count opdateres
+                        · @preview.PendingNewProducts.Count ny@(preview.PendingNewProducts.Count == 1 ? "t" : "e")
+                        · @preview.StatusFlipCount status-skift
+                    </p>
+                </div>
+                <p class="preview-hint">Intet er gemt endnu. Gennemgå ændringerne nedenfor og klik <strong>Færdiggør import</strong> når du er klar — eller <strong>Annuller</strong> hvis filen var forkert.</p>
             </header>
 
-
-            <div class="attention-rows">
-                @foreach (var row in _needsAttention)
-                {
-                    var p = row.Product;
-                    var inUse = p.InUse;
-                    <div class="attention-row @(row.Errors.Count > 0 ? "attention-row-error" : "")">
-                        <div class="attention-row-head">
-                            <span class="row-id">#@p.OctopusId</span>
-                            <span class="row-title">@(string.IsNullOrWhiteSpace(p.OctopusTitle) ? "—" : p.OctopusTitle)</span>
-                            <span class="row-stock">Disponibel: <strong>@p.Available</strong></span>
-                        </div>
-
-                        <div class="row-fields row-fields-manual">
-                            <label class="row-field">
-                                <span class="row-field-label">
-                                    Kategori@(inUse ? "*" : "")
-                                    @if (row.CustomCategory && !string.IsNullOrWhiteSpace(p.Category))
-                                    {
-                                        <span class="new-category-chip">ny</span>
-                                    }
-                                </span>
-                                <select class="row-input @ErrClass(row, "Category")"
-                                        @bind:get="CategorySelectValue(row)"
-                                        @bind:set="@((string v) => OnCategorySelect(row, v))">
-                                    <option value="">— Vælg kategori —</option>
-                                    @foreach (var cat in _categories)
-                                    {
-                                        <option value="@cat.Name">@cat.Name</option>
-                                    }
-                                    <option value="__new__">+ Opret ny kategori…</option>
-                                </select>
-                                @if (row.CustomCategory)
-                                {
-                                    <input class="row-input row-input-new-cat @ErrClass(row, "Category")"
-                                           placeholder="Skriv navn på ny kategori"
-                                           @bind="p.Category" @bind:event="oninput" />
-                                }
-                            </label>
-                            <label class="row-field">
-                                <span class="row-field-label">PDF-titel@(inUse ? "*" : "")</span>
-                                <input class="row-input @ErrClass(row, "PdfTitle")"
-                                       @bind="p.PdfTitle" @bind:event="oninput" />
-                            </label>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Kasse/Kolli@(inUse ? "*" : "")</span>
-                                <input class="row-input @ErrClass(row, "KegCollar")" type="number"
-                                       @bind="row.KegCollarInput" />
-                            </label>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Str (L)@(inUse ? "*" : "")</span>
-                                <input class="row-input @ErrClass(row, "Str")" type="number" step="0.01"
-                                       @bind="p.Str" />
-                            </label>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Alkohol %@(inUse ? "*" : "")</span>
-                                <input class="row-input @ErrClass(row, "Alcohol")" type="number" step="0.1"
-                                       @bind="p.Alcohol" />
-                            </label>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Pris/enhed@(inUse ? "*" : "")</span>
-                                <input class="row-input @ErrClass(row, "PricePrUnit")" type="number" step="0.01"
-                                       @bind="p.PricePrUnit" />
-                            </label>
-                        </div>
-
-                        <div class="row-fields row-fields-shop">
-                            <div class="row-fields-shop-label">
-                                Webshop <span class="row-fields-shop-hint">(valgfrit — udfyldes hvis produktet er på webshoppen)</span>
-                            </div>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Web ID</span>
-                                <input class="row-input" type="number" @bind="p.WebId" />
-                            </label>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Variant 1</span>
-                                <input class="row-input" type="number" @bind="p.VariantId1" />
-                            </label>
-                            <label class="row-field row-field-narrow">
-                                <span class="row-field-label">Variant 2</span>
-                                <input class="row-input" type="number" @bind="p.VariantId2" />
-                            </label>
-                        </div>
-
-                        <div class="row-toggles">
-                            <label class="row-toggle">
-                                <input type="checkbox" @bind="p.InUse" />
-                                <span><strong>I brug</strong> — vises på prislisten og opdateres på webshoppen</span>
-                            </label>
-                            <label class="row-toggle">
-                                <input type="checkbox" @bind="p.HalfKolli" />
-                                <span>Halv kasse tilgængelig</span>
-                            </label>
-                        </div>
-
-                        @if (row.Errors.Count > 0)
+            @if (preview.Warnings.Count > 0)
+            {
+                <div class="receipt-warnings">
+                    <p class="receipt-warnings-title">Advarsler</p>
+                    <ul>
+                        @foreach (var w in preview.Warnings)
                         {
-                            <ul class="row-errors">
-                                @foreach (var err in row.Errors)
-                                {
-                                    <li>@err</li>
-                                }
-                            </ul>
+                            <li>@w</li>
                         }
-                    </div>
-                }
-            </div>
+                    </ul>
+                </div>
+            }
 
-            <div class="attention-footer">
-                <button class="btn-finish" @onclick="FinishAll" disabled="@_finishing">
-                    @(_finishing ? "Gemmer…" : "Færdiggør")
+            @if (preview.PendingUpdates.Count > 0)
+            {
+                <h3 class="preview-section-title">Opdateringer (@preview.PendingUpdates.Count)</h3>
+                <ul class="diff-list">
+                    @foreach (var u in preview.PendingUpdates)
+                    {
+                        <li class="diff-row @DiffRowClass(u)">
+                            <span class="diff-marker">~</span>
+                            <span class="diff-id">#@u.OctopusId</span>
+                            <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
+                            <span class="diff-detail">
+                                @u.PreviousAvailable → @u.NewAvailable
+                                @if (u.StatusFlipped)
+                                {
+                                    <span class="diff-status"> (@StatusLabel(u.PreviousStatus) → @StatusLabel(u.NewStatus))</span>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (preview.PendingNewProducts.Count > 0)
+            {
+                <h3 class="preview-section-title">Nye produkter (@preview.PendingNewProducts.Count)</h3>
+                <p class="attention-sub">
+                    Udfyld felterne for de produkter, der skal være <em>I brug</em>. Manuelle felter er påkrævede når <em>I brug</em> er slået til.
+                </p>
+
+                <div class="attention-rows">
+                    @foreach (var row in preview.PendingNewProducts)
+                    {
+                        var p = row.Product;
+                        var inUse = p.InUse;
+                        <div class="attention-row @(row.Errors.Count > 0 ? "attention-row-error" : "")">
+                            <div class="attention-row-head">
+                                <span class="row-id">#@p.OctopusId</span>
+                                <span class="row-title">@(string.IsNullOrWhiteSpace(p.OctopusTitle) ? "—" : p.OctopusTitle)</span>
+                                <span class="row-stock">Disponibel: <strong>@p.Available</strong></span>
+                            </div>
+
+                            <div class="row-fields row-fields-manual">
+                                <label class="row-field">
+                                    <span class="row-field-label">
+                                        Kategori@(inUse ? "*" : "")
+                                        @if (row.CustomCategory && !string.IsNullOrWhiteSpace(p.Category))
+                                        {
+                                            <span class="new-category-chip">ny</span>
+                                        }
+                                    </span>
+                                    <select class="row-input @ErrClass(row, "Category")"
+                                            @bind:get="CategorySelectValue(row)"
+                                            @bind:set="@((string v) => OnCategorySelect(row, v))">
+                                        <option value="">— Vælg kategori —</option>
+                                        @foreach (var cat in _categories)
+                                        {
+                                            <option value="@cat.Name">@cat.Name</option>
+                                        }
+                                        <option value="__new__">+ Opret ny kategori…</option>
+                                    </select>
+                                    @if (row.CustomCategory)
+                                    {
+                                        <input class="row-input row-input-new-cat @ErrClass(row, "Category")"
+                                               placeholder="Skriv navn på ny kategori"
+                                               @bind="p.Category" @bind:event="oninput" />
+                                    }
+                                </label>
+                                <label class="row-field">
+                                    <span class="row-field-label">PDF-titel@(inUse ? "*" : "")</span>
+                                    <input class="row-input @ErrClass(row, "PdfTitle")"
+                                           @bind="p.PdfTitle" @bind:event="oninput" />
+                                </label>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Kasse/Kolli</span>
+                                    <input class="row-input" type="number"
+                                           @bind="row.KegCollarInput" />
+                                </label>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Str (L)@(inUse ? "*" : "")</span>
+                                    <input class="row-input @ErrClass(row, "Str")" type="number" step="0.01"
+                                           @bind="p.Str" />
+                                </label>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Alkohol %</span>
+                                    <input class="row-input" type="number" step="0.1"
+                                           @bind="p.Alcohol" />
+                                </label>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Pris/enhed@(inUse ? "*" : "")</span>
+                                    <input class="row-input @ErrClass(row, "PricePrUnit")" type="number" step="0.01"
+                                           @bind="p.PricePrUnit" />
+                                </label>
+                            </div>
+
+                            <div class="row-fields row-fields-shop">
+                                <div class="row-fields-shop-label">
+                                    Webshop <span class="row-fields-shop-hint">(valgfrit — udfyldes hvis produktet er på webshoppen)</span>
+                                </div>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Web ID</span>
+                                    <input class="row-input" type="number" @bind="p.WebId" />
+                                </label>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Variant 1</span>
+                                    <input class="row-input" type="number" @bind="p.VariantId1" />
+                                </label>
+                                <label class="row-field row-field-narrow">
+                                    <span class="row-field-label">Variant 2</span>
+                                    <input class="row-input" type="number" @bind="p.VariantId2" />
+                                </label>
+                            </div>
+
+                            <div class="row-toggles">
+                                <label class="row-toggle">
+                                    <input type="checkbox" @bind="p.InUse" />
+                                    <span><strong>I brug</strong> — vises på prislisten og opdateres på webshoppen</span>
+                                </label>
+                                <label class="row-toggle">
+                                    <input type="checkbox" @bind="p.HalfKolli" />
+                                    <span>Halv kasse tilgængelig</span>
+                                </label>
+                            </div>
+
+                            @if (row.Errors.Count > 0)
+                            {
+                                <ul class="row-errors">
+                                    @foreach (var err in row.Errors)
+                                    {
+                                        <li>@err</li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (preview.PendingUpdates.Count == 0 && preview.PendingNewProducts.Count == 0)
+            {
+                <p class="receipt-empty">Ingen ændringer i denne import.</p>
+            }
+
+            <div class="preview-footer">
+                <button class="btn-cancel" @onclick="CancelImport" disabled="@(_finishing)">
+                    Annuller
+                </button>
+                <button class="btn-finish" @onclick="FinalizeImport" disabled="@(_finishing)">
+                    @(_finishing ? "Gemmer…" : "Færdiggør import")
                 </button>
             </div>
         </section>
@@ -282,54 +352,50 @@
                 </div>
             }
 
-            @if (_finishReceipt.PendingCount > 0)
-            {
-                <p class="finish-receipt-pending">@_finishReceipt.PendingCount produkt@(_finishReceipt.PendingCount == 1 ? "" : "er") venter stadig på udfyldelse — se listen ovenfor.</p>
-            }
-
             <div class="finish-receipt-actions">
                 <button class="btn-finish-receipt-ok" @onclick="DismissFinishReceipt">OK</button>
             </div>
         </div>
     }
 
-    @if (_lastResult is not null)
+    @if (Session.Preview is null && Session.LastResult is not null)
     {
+        var lr = Session.LastResult;
         <section class="receipt-block">
             <header class="receipt-header">
                 <h2 class="receipt-title">Seneste import</h2>
                 <p class="receipt-meta">
-                    @_lastResult.FileName · @_lastResult.ImportedAt.ToString("dd.MM.yyyy HH:mm")
-                    · @_lastResult.RowsParsed rækker læst
-                    @if (_lastResult.RowsSkipped > 0)
+                    @lr.FileName · @lr.ImportedAt.ToString("dd.MM.yyyy HH:mm")
+                    · @lr.RowsParsed rækker læst
+                    @if (lr.RowsSkipped > 0)
                     {
-                        <span> · @_lastResult.RowsSkipped sprunget over</span>
+                        <span> · @lr.RowsSkipped sprunget over</span>
                     }
                 </p>
                 <p class="receipt-counts">
-                    @_lastResult.Updated.Count opdateret
-                    · @_lastResult.Created.Count ny@(_lastResult.Created.Count == 1 ? "t" : "e")
-                    · @_lastResult.StatusFlipCount status-skift
+                    @lr.Updated.Count opdateret
+                    · @lr.Created.Count ny@(lr.Created.Count == 1 ? "t" : "e")
+                    · @lr.StatusFlipCount status-skift
                 </p>
             </header>
 
-            @if (_lastResult.Updated.Count == 0 && _lastResult.Created.Count == 0)
+            @if (lr.Updated.Count == 0 && lr.Created.Count == 0)
             {
                 <p class="receipt-empty">Ingen ændringer i denne import.</p>
             }
             else
             {
                 <ul class="diff-list">
-                    @foreach (var c in _lastResult.Created)
+                    @foreach (var c in lr.Created)
                     {
                         <li class="diff-row diff-add">
                             <span class="diff-marker">+</span>
                             <span class="diff-id">#@c.OctopusId</span>
                             <span class="diff-title">@(string.IsNullOrWhiteSpace(c.OctopusTitle) ? "—" : c.OctopusTitle)</span>
-                            <span class="diff-detail">Disponibel=@c.Available · oprettet som «Ikke i brug»</span>
+                            <span class="diff-detail">Disponibel=@c.Available</span>
                         </li>
                     }
-                    @foreach (var u in _lastResult.Updated)
+                    @foreach (var u in lr.Updated)
                     {
                         <li class="diff-row @DiffRowClass(u)">
                             <span class="diff-marker">~</span>
@@ -347,12 +413,12 @@
                 </ul>
             }
 
-            @if (_lastResult.Warnings.Count > 0)
+            @if (lr.Warnings.Count > 0)
             {
                 <div class="receipt-warnings">
                     <p class="receipt-warnings-title">Advarsler</p>
                     <ul>
-                        @foreach (var w in _lastResult.Warnings)
+                        @foreach (var w in lr.Warnings)
                         {
                             <li>@w</li>
                         }
@@ -366,12 +432,6 @@
 @code {
     private IBrowserFile? selectedFile;
     private bool isUploading;
-    private string? errorMessage;
-    private string? successMessage;
-
-    private CsvImportResult? _lastResult;
-    private List<EditRow> _needsAttention = [];
-    private HashSet<int> _recentlyCreatedIds = [];
     private bool _finishing;
     private FinishReceipt? _finishReceipt;
     private List<Category> _categories = [];
@@ -381,41 +441,25 @@
         _categories = await CategoryService.GetAllAsync();
     }
 
-    private string CategorySelectValue(EditRow row)
+    private string CategorySelectValue(PendingNewProduct row)
     {
         if (row.CustomCategory) return "__new__";
         if (string.IsNullOrWhiteSpace(row.Product.Category)) return "";
-        // If the stored category exists in the list, the select shows it; otherwise switch to custom mode.
         return _categories.Any(c => c.Name == row.Product.Category)
             ? row.Product.Category
             : "__new__";
     }
 
-    private void OnCategorySelect(EditRow row, string value)
+    private void OnCategorySelect(PendingNewProduct row, string value)
     {
         if (value == "__new__")
         {
             row.CustomCategory = true;
-            // keep any existing value so the free-text input pre-fills
         }
         else
         {
             row.CustomCategory = false;
             row.Product.Category = value;
-        }
-    }
-
-    private class EditRow
-    {
-        public required Product Product { get; set; }
-        public List<string> Errors { get; set; } = [];
-        public HashSet<string> FieldErrors { get; set; } = [];
-        public bool CustomCategory { get; set; }
-
-        public int KegCollarInput
-        {
-            get => Product.KegCollar ?? 0;
-            set => Product.KegCollar = value == 0 ? null : value;
         }
     }
 
@@ -426,51 +470,7 @@
         string Subtitle,
         bool HasErrors,
         List<FinishReceiptItem> SavedProducts,
-        List<string> NewCategories,
-        int PendingCount);
-
-    private async Task ReloadNeedsAttention()
-    {
-        if (_recentlyCreatedIds.Count == 0)
-        {
-            _needsAttention = [];
-            return;
-        }
-        var all = await ProductService.ListProducts();
-        var knownNames = _categories.Select(c => c.Name).ToHashSet();
-        _needsAttention = all
-            .Where(p => _recentlyCreatedIds.Contains(p.OctopusId))
-            .OrderBy(p => p.OctopusId)
-            .Select(p =>
-            {
-                var clone = CloneProduct(p);
-                return new EditRow
-                {
-                    Product = clone,
-                    CustomCategory = !string.IsNullOrWhiteSpace(clone.Category) && !knownNames.Contains(clone.Category),
-                };
-            })
-            .ToList();
-    }
-
-    private static Product CloneProduct(Product p) => new()
-    {
-        OctopusId    = p.OctopusId,
-        WebId        = p.WebId,
-        WebTitle     = p.WebTitle,
-        PdfTitle     = p.PdfTitle,
-        OctopusTitle = p.OctopusTitle,
-        Available    = p.Available,
-        KegCollar    = p.KegCollar,
-        Str          = p.Str,
-        Alcohol      = p.Alcohol,
-        PricePrUnit  = p.PricePrUnit,
-        Category     = p.Category,
-        VariantId1   = p.VariantId1,
-        VariantId2   = p.VariantId2,
-        InUse        = p.InUse,
-        HalfKolli    = p.HalfKolli,
-    };
+        List<string> NewCategories);
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -478,14 +478,14 @@
         if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
             selectedFile = null;
-            errorMessage = "Kun CSV-filer er tilladt.";
-            successMessage = null;
+            Session.ErrorMessage = "Kun CSV-filer er tilladt.";
+            Session.SuccessMessage = null;
             return;
         }
 
         selectedFile = file;
-        errorMessage = null;
-        successMessage = null;
+        Session.ErrorMessage = null;
+        Session.SuccessMessage = null;
     }
 
     private async Task UploadCsv()
@@ -494,25 +494,31 @@
 
         var uploadedName = selectedFile.Name;
         isUploading = true;
-        errorMessage = null;
-        successMessage = null;
+        Session.ErrorMessage = null;
+        Session.SuccessMessage = null;
         _finishReceipt = null;
 
         try
         {
             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            _lastResult = await CsvUploadService.UploadCsvAsync(stream, uploadedName);
-            _recentlyCreatedIds = _lastResult.Created.Select(c => c.OctopusId).ToHashSet();
-            selectedFile = null;
-            await ReloadNeedsAttention();
+            var preview = await CsvUploadService.BuildPreviewAsync(stream, uploadedName);
 
-            var created = _lastResult.Created.Count;
-            var updated = _lastResult.Updated.Count;
-            successMessage = $"{uploadedName} blev importeret — {updated} opdateret, {created} ny{(created == 1 ? "t" : "e")}.";
+            // Pre-mark new products whose CSV-derived category isn't a known one.
+            var knownNames = _categories.Select(c => c.Name).ToHashSet();
+            foreach (var pn in preview.PendingNewProducts)
+            {
+                pn.CustomCategory = !string.IsNullOrWhiteSpace(pn.Product.Category) && !knownNames.Contains(pn.Product.Category);
+            }
+
+            Session.Preview = preview;
+            Session.LastResult = null;
+            selectedFile = null;
+
+            Session.SuccessMessage = $"{uploadedName} blev læst ind — {preview.PendingUpdates.Count} opdateres, {preview.PendingNewProducts.Count} ny{(preview.PendingNewProducts.Count == 1 ? "t" : "e")}. Klik Færdiggør for at gemme.";
         }
         catch (Exception ex)
         {
-            errorMessage = $"Fejl under upload: {ex.Message}";
+            Session.ErrorMessage = $"Fejl under upload: {ex.Message}";
         }
         finally
         {
@@ -520,23 +526,38 @@
         }
     }
 
-    private async Task FinishAll()
+    private void CancelImport()
     {
-        _finishing = true;
+        Session.Preview = null;
+        Session.SuccessMessage = null;
+        Session.ErrorMessage = "Importen blev annulleret. Ingen ændringer blev gemt.";
         _finishReceipt = null;
+    }
 
-        foreach (var row in _needsAttention)
+    private async Task FinalizeImport()
+    {
+        if (Session.Preview is null) return;
+
+        _finishing = true;
+
+        foreach (var row in Session.Preview.PendingNewProducts)
         {
             ValidateRow(row);
         }
 
-        var savable = _needsAttention.Where(r => r.Errors.Count == 0).ToList();
+        if (Session.Preview.PendingNewProducts.Any(r => r.Errors.Count > 0))
+        {
+            var blocked = Session.Preview.PendingNewProducts.Count(r => r.Errors.Count > 0);
+            Session.ErrorMessage = $"Kan ikke færdiggøre: {blocked} ny{(blocked == 1 ? "t produkt" : "e produkter")} mangler påkrævede felter.";
+            _finishing = false;
+            return;
+        }
 
-        // Any savable row that references a Category name we don't yet have an entity for
-        // → create a bare-bones Category so the product will appear on the price list.
-        // Dedup by name (case-insensitive) to avoid inserting duplicates within one click.
+        // Create any missing categories referenced by InUse new products so the
+        // saved products end up on the price list immediately.
         var existingNames = _categories.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var newCategoryNames = savable
+        var newCategoryNames = Session.Preview.PendingNewProducts
+            .Where(r => r.Product.InUse)
             .Select(r => (r.Product.Category ?? "").Trim())
             .Where(n => n.Length > 0 && !existingNames.Contains(n))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -550,48 +571,49 @@
             _categories = await CategoryService.GetAllAsync();
         }
 
-        var savedItems = new List<FinishReceiptItem>();
-        foreach (var row in savable)
+        // Normalize stored category names so they match the entity name exactly.
+        foreach (var row in Session.Preview.PendingNewProducts)
         {
-            try
-            {
-                // Normalize so the stored Category string exactly matches the entity name.
-                row.Product.Category = (row.Product.Category ?? "").Trim();
-                await ProductService.UpdateAsync(row.Product);
-                savedItems.Add(new FinishReceiptItem(
-                    row.Product.OctopusId,
-                    string.IsNullOrWhiteSpace(row.Product.PdfTitle) ? (row.Product.OctopusTitle ?? "—") : row.Product.PdfTitle,
-                    string.IsNullOrWhiteSpace(row.Product.Category) ? "—" : row.Product.Category,
-                    row.Product.InUse));
-            }
-            catch (Exception ex)
-            {
-                row.Errors.Add($"Kunne ikke gemme: {ex.Message}");
-            }
+            row.Product.Category = (row.Product.Category ?? "").Trim();
         }
 
-        _needsAttention = _needsAttention.Where(r => r.Errors.Count > 0).ToList();
+        try
+        {
+            var result = await CsvUploadService.CommitPreviewAsync(Session.Preview);
 
-        var hasErrors = _needsAttention.Count > 0;
-        var savedCount = savedItems.Count;
-        _finishReceipt = new FinishReceipt(
-            Title: hasErrors
-                ? "Færdiggjort med advarsler"
-                : (savedCount == 0 ? "Intet at gemme" : "Produkter gemt"),
-            Subtitle: $"{savedCount} produkt{(savedCount == 1 ? "" : "er")} gemt"
-                      + (newCategoryNames.Count > 0 ? $" · {newCategoryNames.Count} nye kategori{(newCategoryNames.Count == 1 ? "" : "er")} oprettet" : "")
-                      + (hasErrors ? $" · {_needsAttention.Count} venter på udfyldelse" : ""),
-            HasErrors: hasErrors,
-            SavedProducts: savedItems,
-            NewCategories: newCategoryNames,
-            PendingCount: _needsAttention.Count);
+            var savedItems = Session.Preview.PendingNewProducts.Select(r => new FinishReceiptItem(
+                r.Product.OctopusId,
+                string.IsNullOrWhiteSpace(r.Product.PdfTitle) ? (r.Product.OctopusTitle ?? "—") : r.Product.PdfTitle,
+                string.IsNullOrWhiteSpace(r.Product.Category) ? "—" : r.Product.Category,
+                r.Product.InUse)).ToList();
 
-        _finishing = false;
+            var savedCount = result.Updated.Count + result.Created.Count;
+            _finishReceipt = new FinishReceipt(
+                Title: savedCount == 0 ? "Intet at gemme" : "Import færdiggjort",
+                Subtitle: $"{result.Updated.Count} opdateret · {result.Created.Count} ny{(result.Created.Count == 1 ? "t" : "e")}"
+                          + (newCategoryNames.Count > 0 ? $" · {newCategoryNames.Count} nye kategori{(newCategoryNames.Count == 1 ? "" : "er")} oprettet" : ""),
+                HasErrors: false,
+                SavedProducts: savedItems,
+                NewCategories: newCategoryNames);
+
+            Session.LastResult = result;
+            Session.Preview = null;
+            Session.SuccessMessage = null;
+            Session.ErrorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            Session.ErrorMessage = $"Kunne ikke færdiggøre importen: {ex.Message}";
+        }
+        finally
+        {
+            _finishing = false;
+        }
     }
 
     private void DismissFinishReceipt() => _finishReceipt = null;
 
-    private static void ValidateRow(EditRow row)
+    private static void ValidateRow(PendingNewProduct row)
     {
         row.Errors.Clear();
         row.FieldErrors.Clear();
@@ -601,16 +623,19 @@
         var p = row.Product;
         if (string.IsNullOrWhiteSpace(p.Category)) { row.FieldErrors.Add("Category"); row.Errors.Add("Kategori er påkrævet når produktet er i brug."); }
         if (string.IsNullOrWhiteSpace(p.PdfTitle)) { row.FieldErrors.Add("PdfTitle"); row.Errors.Add("PDF-titel er påkrævet når produktet er i brug."); }
-        if ((p.KegCollar ?? 0) == 0) { row.FieldErrors.Add("KegCollar"); row.Errors.Add("Kasse/Kolli er påkrævet når produktet er i brug."); }
         if (p.Str == 0) { row.FieldErrors.Add("Str"); row.Errors.Add("Størrelse er påkrævet når produktet er i brug."); }
-        if (p.Alcohol == 0) { row.FieldErrors.Add("Alcohol"); row.Errors.Add("Alkohol% er påkrævet når produktet er i brug."); }
         if (p.PricePrUnit == 0) { row.FieldErrors.Add("PricePrUnit"); row.Errors.Add("Pris pr. enhed er påkrævet når produktet er i brug."); }
     }
 
-    private static string ErrClass(EditRow row, string field) =>
+    private static string ErrClass(PendingNewProduct row, string field) =>
         row.FieldErrors.Contains(field) ? "row-input-error" : "";
 
     private static string DiffRowClass(ProductChange u) =>
+        u.StatusFlipped
+            ? (u.NewStatus == ProductStatus.Available ? "diff-flip-up" : "diff-flip-down")
+            : "diff-update";
+
+    private static string DiffRowClass(PendingUpdate u) =>
         u.StatusFlipped
             ? (u.NewStatus == ProductStatus.Available ? "diff-flip-up" : "diff-flip-down")
             : "diff-update";

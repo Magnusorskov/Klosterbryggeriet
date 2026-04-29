@@ -521,6 +521,97 @@ select.row-input {
     padding-top: 0.5rem;
 }
 
+/* ── Preview block (forhåndsvisning) ─────────────────────────────────────── */
+.preview-block {
+    margin-top: 1.5rem;
+    padding: 1.5rem 1.5rem 1.25rem;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid rgba(109, 68, 35, 0.14);
+    box-shadow: 0 1px 3px rgba(34, 24, 18, 0.05);
+}
+
+.preview-header {
+    margin-bottom: 1rem;
+}
+
+.preview-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #221812;
+    margin: 0 0 0.3rem;
+}
+
+.preview-meta {
+    color: #8a7356;
+    font-size: 0.82rem;
+    margin: 0;
+}
+
+.preview-counts {
+    color: #6b5c45;
+    font-size: 0.88rem;
+    margin: 0.4rem 0 0;
+    font-weight: 500;
+}
+
+.preview-hint {
+    margin: 0.85rem 0 0;
+    padding: 0.65rem 0.85rem;
+    background: #fff8ec;
+    border: 1px solid #f0d6a0;
+    border-radius: 8px;
+    color: #6b4a1e;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.preview-hint strong {
+    color: #3a2a1c;
+    font-weight: 600;
+}
+
+.preview-section-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #221812;
+    margin: 1.25rem 0 0.5rem;
+}
+
+.preview-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(109, 68, 35, 0.1);
+}
+
+.btn-cancel {
+    padding: 0.85rem 1.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(109, 68, 35, 0.3);
+    background: #ffffff;
+    color: #6b5c45;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: #faf5ec;
+    border-color: rgba(109, 68, 35, 0.5);
+}
+
+.btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .btn-finish {
     padding: 0.85rem 2.75rem;
     border-radius: 10px;

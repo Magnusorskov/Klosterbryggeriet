@@ -170,4 +170,56 @@ public class OctopusService
         var (existing, _) = await PartitionByExistence(rows);
         await ApplyUpdatesToExisting(existing);
     }
+
+    // Build the diff vs. current DB state for a CSV's existing rows without
+    // committing anything. Used by the preview-then-commit upload flow.
+    public async Task<List<PendingUpdate>> BuildPendingUpdatesAsync(IReadOnlyList<OctopusCsvRow> existingRows)
+    {
+        if (existingRows.Count == 0) return [];
+
+        await using var db = _contextFactory.CreateDbContext();
+        var ids = existingRows.Select(r => r.OctopusId).ToList();
+        var dbProducts = await db.Products
+            .Where(p => ids.Contains(p.OctopusId))
+            .ToListAsync();
+
+        var updates = new List<PendingUpdate>();
+        foreach (var dbProduct in dbProducts)
+        {
+            var row = existingRows.First(r => r.OctopusId == dbProduct.OctopusId);
+            var newStatus = Product.StatusFor(row.Available);
+            updates.Add(new PendingUpdate
+            {
+                OctopusId = dbProduct.OctopusId,
+                OctopusTitle = dbProduct.OctopusTitle,
+                PreviousAvailable = dbProduct.Available,
+                NewAvailable = row.Available,
+                PreviousStatus = dbProduct.Status,
+                NewStatus = newStatus,
+            });
+        }
+        return updates;
+    }
+
+    // Persists user-edited new products and logs each creation.
+    public async Task<List<ProductCreated>> CommitNewProductsAsync(IReadOnlyList<Product> products)
+    {
+        if (products.Count == 0) return [];
+
+        await using var db = _contextFactory.CreateDbContext();
+        await db.Products.AddRangeAsync(products);
+        await db.SaveChangesAsync();
+
+        foreach (var product in products)
+        {
+            await _logger.LogProductCreated(product);
+        }
+
+        return products.Select(p => new ProductCreated
+        {
+            OctopusId = p.OctopusId,
+            OctopusTitle = p.OctopusTitle,
+            Available = p.Available,
+        }).ToList();
+    }
 }
