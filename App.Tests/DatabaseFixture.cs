@@ -4,7 +4,7 @@ using Testcontainers.MySql;
 
 namespace App.Tests;
 
-public class DatabaseFixture : IAsyncLifetime
+public class DatabaseFixture : IAsyncLifetime, IDbContextFactory<AppDbContext>
 {
     private readonly MySqlContainer _mysql = new MySqlBuilder()
         .WithImage("mysql:8.0")

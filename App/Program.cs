@@ -13,20 +13,34 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
             maxRetryDelay: TimeSpan.FromSeconds(5),
             errorNumbersToAdd: null)));
 
+builder.Services.AddScoped<LoggerService>();
 builder.Services.AddScoped<OctopusService>();
-builder.Services.AddScoped<HostedShopService>();
+builder.Services.AddScoped<IHostedShopService, HostedShopService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
+// HostedShop push is disabled while we test the CSV import flow against
+// real data. Flip pushToHostedShopEnabled to true to re-enable.
+builder.Services.AddScoped<ICsvUploadService>(sp => new CsvUploadService(
+    sp.GetRequiredService<OctopusService>(),
+    sp.GetRequiredService<IHostedShopService>(),
+    sp.GetRequiredService<IDbContextFactory<AppDbContext>>(),
+    pushToHostedShopEnabled: false));
+builder.Services.AddScoped<CsvImportSession>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<DraftBeerService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

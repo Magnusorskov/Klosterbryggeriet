@@ -4,7 +4,7 @@ using DotNetEnv;
 
 namespace BlazorApp.Services
 {
-    public class HostedShopService
+    public class HostedShopService : IHostedShopService
     {
         private readonly IConfiguration _config;
 
@@ -13,7 +13,7 @@ namespace BlazorApp.Services
             _config = config;
         }
 
-        public async Task<bool> OpdaterLager(int variantId, int lagerId, int antal)
+        public async Task<bool> OpdaterLager(int variantId, int antal, int lagerId = 1)
         {
             try 
             {

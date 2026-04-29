@@ -56,6 +56,29 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.overview-card:hover,
+.overview-card:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(34, 24, 18, 0.06), 0 14px 32px rgba(34, 24, 18, 0.08);
+    outline: none;
+    text-decoration: none;
+    color: inherit;
+}
+
+.overview-card:hover .overview-card-link span,
+.overview-card:focus-visible .overview-card-link span {
+    transform: translateX(3px);
+}
+
+.overview-card:hover .overview-card-link,
+.overview-card:focus-visible .overview-card-link {
+    color: #8a4f24;
 }
 
 .overview-card-icon {
@@ -192,7 +215,9 @@ h1:focus {
 /* ── Price list preview ───────────────────────────────────────────────── */
 
 .toolbar {
-    margin-bottom: 1rem;
+    max-width: 1100px;
+    margin: 0 auto 1.5rem;
+    padding: 0 0.5rem;
     display: flex;
     gap: 0.5rem;
 }
