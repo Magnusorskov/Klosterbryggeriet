@@ -174,7 +174,7 @@
                     {
                         @foreach (var p in rows)
                         {
-                            var soldOut = p.Available <= Product.SoldOutThreshold;
+                            var soldOut = p.Available < Product.SoldOutThreshold;
                             <tr class="prod-row">
                                 <td class="prod-cell">@p.OctopusId</td>
                                 <td class="prod-cell">@p.WebId</td>
@@ -328,9 +328,9 @@
             q = q.Where(p => p.Category == _catFilter);
 
         if (_statusFilter == "Tilgængelig")
-            q = q.Where(p => p.Available > Product.SoldOutThreshold);
+            q = q.Where(p => p.Available >= Product.SoldOutThreshold);
         else if (_statusFilter == "Udsolgt")
-            q = q.Where(p => p.Available <= Product.SoldOutThreshold);
+            q = q.Where(p => p.Available < Product.SoldOutThreshold);
 
         if (_inUseFilter == "I brug")
             q = q.Where(p => p.InUse);
