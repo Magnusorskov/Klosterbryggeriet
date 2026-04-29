@@ -25,8 +25,15 @@ builder.Services.AddScoped<ICsvUploadService, CsvUploadService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IPriceListBuilder, PriceListBuilder>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<DraftBeerService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

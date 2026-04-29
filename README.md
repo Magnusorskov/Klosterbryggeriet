@@ -1,92 +1,150 @@
 # Klosterbryggeriet
-Fjerde semester projekt
+Fjerde semester projekt.
 
 ## Tech stack
 - .NET 10 (Blazor Server)
+- MySQL 8
 - Docker
 
-## Project structure
+---
+
+## User guide
+
+For end users running the app on their own machine. The only thing you need installed is **Docker Desktop** — no .NET SDK, no manual database setup.
+
+### 1. Install Docker Desktop
+Download and install from <https://www.docker.com/products/docker-desktop/>, then start it. Wait until the Docker icon in your taskbar/menu bar shows that it's running.
+
+### 2. Run the start script
+
+**macOS / Linux**
+```bash
+./start.sh
 ```
-Klosterbryggeriet/
-├── App/                  # Blazor Server application
-│   ├── Components/       # Razor components (Pages, Layout)
-│   ├── Core/             # Core logic
-│   ├── Models/           # Domain models / entities
-│   ├── Repository/       # Data access layer
-│   ├── Services/         # Business logic layer
-│   └── wwwroot/          # Static files (CSS, images)
-├── App.Tests/            # xUnit test project
-├── compose.yaml
-└── Makefile
+If your shell complains that the file isn't executable (e.g. after downloading the project as a zip), use:
+```bash
+bash start.sh
 ```
 
-## Getting started
+**Windows**
+
+Right-click `start.ps1` → **Run with PowerShell**.
+
+Or, from a PowerShell terminal in the project folder:
+```powershell
+powershell -ExecutionPolicy Bypass -File start.ps1
+```
+If Windows says the script is blocked because it was downloaded from the internet, run `Unblock-File .\start.ps1` once and try again.
+
+### What the script does
+1. Checks that Docker is installed and running.
+2. Builds and starts the application + MySQL containers.
+3. Waits for the database, then waits for the app to come online.
+4. Applies any pending database migrations automatically (handled inside the app on startup).
+5. If the product catalog is empty, seeds it from `App/Data/product_datafill.sql`.
+6. Opens <http://localhost:5008> in your default browser.
+
+The first run takes a few minutes (Docker has to download images and build the app). Subsequent runs are much faster.
+
+### Stopping the app
+From the project folder:
+```bash
+docker compose down
+```
+
+### Resetting everything
+To wipe the database and start fresh:
+```bash
+docker compose down -v
+```
+The next `start.sh` / `start.ps1` will rebuild and re-seed.
+
+---
+
+## Development guide
+
+For working on the codebase.
 
 ### Prerequisites
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Docker](https://www.docker.com/products/docker-desktop)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ### First-time setup
-Run these commands once after cloning the repo:
-
 ```bash
-make setup   # configure git hooks (conventional commits)
-make init    # start containers, apply migrations, seed the database
+make setup    # configure git hooks (conventional commits) and install dotnet-ef
+./start.sh    # build containers, run migrations, seed the DB
 ```
 
-`make init` will:
-1. Build and start the `app` and `db` services via Docker Compose
-2. Wait for MySQL to be reachable
-3. Apply all EF Core migrations
-4. Seed the database with product data from `App/Data/product_datafill.sql`
-
-Once it finishes, the app is available at `http://localhost:5008` and the database is exposed on `localhost:3308`.
+After this, you can stop the containers (`docker compose down`) and switch to the hot-reload dev loop below.
 
 ### Day-to-day development
+```bash
+make watch
+```
+Starts MySQL in Docker and runs the Blazor app locally with `dotnet watch`, so code changes reload automatically. The app connects to MySQL on `localhost:3308` using the connection string in `App/appsettings.json`.
 
-You have two options depending on what you need:
-
-**Option A — full Docker stack (`make run`)**
-Runs both the app and the database in Docker. Best when you want a clean, production-like environment. No hot reload.
+For a production-like local run (everything in Docker, no hot reload):
 ```bash
 make run
 ```
 
-**Option B — hot reload (`make watch`)** *(recommended for development)*
-Starts only the database in Docker and runs the Blazor app locally with `dotnet watch`, so code changes reload automatically.
-```bash
-make watch
+### Project structure
 ```
-The app connects to the DB on `localhost:3308` using the connection string in `App/appsettings.json`.
-
-### After pulling new changes
-If a teammate added a migration, apply it before running the app:
-```bash
-make db-update
+Klosterbryggeriet/
+├── App/                  # Blazor Server application
+│   ├── Components/       # Razor components (Pages, Layout)
+│   ├── Data/             # AppDbContext + seed SQL
+│   ├── Migrations/       # EF Core migrations
+│   ├── Models/           # Domain models / entities
+│   ├── Services/         # Business logic layer
+│   └── wwwroot/          # Static files (CSS, images)
+├── App.Tests/            # xUnit test project (Testcontainers-based)
+├── compose.yaml
+├── Makefile
+├── start.sh              # User-facing bootstrap (macOS/Linux)
+└── start.ps1             # User-facing bootstrap (Windows)
 ```
 
-### Creating a migration
-After changing an entity or `DbContext`:
+### Migrations
+Migrations are applied automatically when the app starts (`db.Database.Migrate()` in `App/Program.cs`). To create a new migration after changing an entity or `DbContext`:
 ```bash
 make migrate name=DescribeYourChange
-make db-update
+```
+The next `dotnet watch` / container start will apply it. To apply migrations against the DB without starting the app:
+```bash
+cd App && dotnet ef database update
 ```
 
-### Running tests
+### Seeding
+Seed data lives at `App/Data/product_datafill.sql`. The start scripts seed only when the `Products` table is empty. To force a re-seed (truncates + reloads):
+```bash
+make db-seed
+```
+
+### Tests
 ```bash
 make test
 ```
+The suite uses **Testcontainers.MySql** to spin up a real MySQL container per test fixture, so Docker must be running. Run a single test with:
+```bash
+dotnet test App.Tests/App.Tests.csproj --filter "FullyQualifiedName~ProductServiceIntegrationTest.MapProductsByCategory_GroupsProductsByCategory"
+```
 
-## Make commands
+### Make commands
 
 | Command | Description |
 |---|---|
-| `make setup` | Configure git hooks for conventional commit validation |
-| `make init` | First-time setup: start containers, wait for DB, apply migrations, and seed data |
-| `make build` | Build the full solution in Release mode (mirrors CI) |
-| `make run` | Build and start the app with Docker Compose |
-| `make watch` | Run the app locally with hot reload (requires .NET SDK) |
-| `make test` | Run the xUnit test suite |
+| `make setup` | Configure git hooks and install `dotnet-ef` |
+| `make watch` | DB in Docker + `dotnet watch` locally (recommended dev loop) |
+| `make run` | Full Docker stack, no hot reload |
+| `make build` | Release build of the solution (mirrors CI) |
+| `make test` | Run the xUnit suite |
 | `make migrate name=MyMigrationName` | Create a new EF Core migration |
-| `make db-update` | Apply all pending migrations to the database |
-| `make db-seed` | Seed the database with product data |
+| `make db-seed` | Truncate + re-seed the `Products` table |
+
+### Commit convention
+`make setup` wires `.github/hooks/commit-msg` as the git hooks path. Commit headers must follow Conventional Commits:
+```
+type(scope)!: subject
+```
+where `type` ∈ `build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test`. Merge and revert auto-messages are allowed through.
