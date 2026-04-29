@@ -98,6 +98,12 @@ namespace BlazorApp.Migrations
             migrationBuilder.InsertData("Categories", ["Id", "Name", "PriceLabel"], [30, "EGGENBERG - ØSTRIG",                             "pr. enhed"]);
             migrationBuilder.InsertData("Categories", ["Id", "Name", "PriceLabel"], [31, "Øvrige",                                         "pr. enhed"]);
 
+            // New categories added in session 2026-04-27
+            migrationBuilder.InsertData("Categories", ["Id", "Name", "PriceLabel"], [32, "HOUTHAKKER - BELGIEN",                             "pr. enhed"]);
+            migrationBuilder.InsertData("Categories", ["Id", "Name", "PriceLabel"], [33, "SIBILLA - ITALIEN",                                 "pr. enhed"]);
+            migrationBuilder.InsertData("Categories", ["Id", "Name", "PriceLabel"], [34, "HEROLD - TJEKKIET",                                 "pr. enhed"]);
+            migrationBuilder.InsertData("Categories", ["Id", "Name", "PriceLabel"], [35, "VELDENSTEINER - TYSKLAND",                          "pr. enhed"]);
+
             // ----------------------------------------------------------------
             // Seed: category columns
             // Col ID 1-2: Saft (catId=2) — KegCollar=Antal, Str
@@ -107,9 +113,9 @@ namespace BlazorApp.Migrations
             migrationBuilder.InsertData("CategoryColumns", ["Id", "CategoryId", "FieldName", "DisplayLabel", "SortOrder"],
                 [2, 2, "Str", "Str.", 2]);
 
-            // Standard categories (ids 3-31): KegCollar, Str, Alcohol
+            // Standard categories (ids 3-35): KegCollar, Str, Alcohol
             int colId = 3;
-            int[] standardCatIds = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
+            int[] standardCatIds = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
             foreach (var catId in standardCatIds)
             {
                 migrationBuilder.InsertData("CategoryColumns", ["Id", "CategoryId", "FieldName", "DisplayLabel", "SortOrder"],
