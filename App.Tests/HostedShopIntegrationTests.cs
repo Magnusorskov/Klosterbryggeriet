@@ -7,7 +7,7 @@ namespace App.Tests
 {
     public class HostedShopIntegrationTests
     {
-        [Fact]
+        [Fact(Skip = "Hits the live HostedShop SOAP API; requires SHOP_API_USER/SHOP_API_PASS in a .env file. Run manually.")]
         public async Task Test_ApiConnection_ShouldReturnTrue()
         {
             //Opsæt servicen
@@ -24,7 +24,7 @@ namespace App.Tests
             //sat til false for at passe
             Assert.True(result); // Forventer true pga. korrekt ID
         }
-        [Fact]
+        [Fact(Skip = "Hits the live HostedShop SOAP API; requires SHOP_API_USER/SHOP_API_PASS in a .env file. Run manually.")]
         public async Task Test_OpdaterToVarianter_BeggeSkalLykkedes()
         {
             var service = new HostedShopService(null);
