@@ -11,11 +11,8 @@
 
 <section class="produkter-page">
     <div class="produkter-header">
-        <div class="produkter-header-text">
-            <p class="produkter-eyebrow">Katalog</p>
-            <h1 class="produkter-title">Produkter</h1>
-            <p class="produkter-lede">@_products.Count produkter i databasen</p>
-        </div>
+        <h1 class="produkter-title">Produkter</h1>
+        <span class="produkter-count">@_products.Count i databasen</span>
     </div>
 
     @if (_loading)
@@ -207,24 +204,10 @@
                     <div class="detail-section">
                         <p class="detail-section-label">Status &amp; lager</p>
                         <div class="status-row">
-                            <div class="status-tile @(_editingField == "Available" ? "status-tile-editing" : "") @(FieldDirty("Available") ? "is-dirty" : "")">
+                            <div class="status-tile">
                                 <span class="status-dot status-dot-lg @dotClass"></span>
-                                @if (_editingField == "Available")
-                                {
-                                    <input @ref="_availableRef" class="status-input" type="number"
-                                           value="@d.Available"
-                                           @oninput="e => { if (int.TryParse(e.Value?.ToString(), out var v)) d.Available = v; }"
-                                           @onblur="EndEdit"
-                                           @onkeydown="HandleEditKey" />
-                                }
-                                else
-                                {
-                                    <button type="button" class="status-value-btn"
-                                            @onclick='() => BeginEditAvailable()'>
-                                        <span class="status-value">@d.Available</span>
-                                        <span class="status-value-label">Disponibel</span>
-                                    </button>
-                                }
+                                <span class="status-value">@d.Available</span>
+                                <span class="status-value-label">Disponibel</span>
                             </div>
 
                             <button type="button"
@@ -304,7 +287,6 @@
                                            InputType="number" Step="0.01"
                                            IsEditing="@(_editingField == "Str")"
                                            IsDirty="@FieldDirty("Str")"
-                                           IsMissing="@(d.Str == 0)"
                                            OnBeginEdit='@(() => BeginEdit("Str"))'
                                            OnEndEdit="EndEdit"
                                            OnInput="@(v => { if (double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var n)) d.Str = n; else if (string.IsNullOrWhiteSpace(v)) d.Str = 0; })" />
@@ -315,7 +297,6 @@
                                            InputType="number" Step="0.1"
                                            IsEditing="@(_editingField == "Alcohol")"
                                            IsDirty="@FieldDirty("Alcohol")"
-                                           IsMissing="@(d.Alcohol == 0)"
                                            OnBeginEdit='@(() => BeginEdit("Alcohol"))'
                                            OnEndEdit="EndEdit"
                                            OnInput="@(v => { if (double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var n)) d.Alcohol = n; else if (string.IsNullOrWhiteSpace(v)) d.Alcohol = 0; })" />
@@ -378,6 +359,33 @@
 
                     <div class="detail-spacer"></div>
 
+                    <div class="detail-danger">
+                        @if (_confirmingDelete)
+                        {
+                            <div class="delete-confirm">
+                                <p class="delete-confirm-text">
+                                    Slet <strong>#@d.OctopusId @d.OctopusTitle</strong> permanent? Denne handling kan ikke fortrydes.
+                                </p>
+                                <div class="delete-confirm-actions">
+                                    <button class="btn-ghost" type="button"
+                                            @onclick="() => _confirmingDelete = false"
+                                            disabled="@_deleting">Annuller</button>
+                                    <button class="btn-danger" type="button"
+                                            @onclick="DeleteSelected" disabled="@_deleting">
+                                        @(_deleting ? "Sletter…" : "Ja, slet permanent")
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="delete-trigger" type="button"
+                                    @onclick="() => _confirmingDelete = true">
+                                Slet produkt
+                            </button>
+                        }
+                    </div>
+
                     @if (dirtyCount > 0 || _saving)
                     {
                         <div class="save-bar">
@@ -427,17 +435,17 @@
     private Product? _original;
     private Product? _draft;
     private string? _editingField;
-    private bool _focusAvailableOnRender;
-    private ElementReference _availableRef;
     private string _saveError = "";
     private bool _saving;
     private int? _pendingSwitchTo;
 
+    // Delete
+    private bool _confirmingDelete;
+    private bool _deleting;
+
     private static readonly (string Key, string Label, Func<Product, bool> Check)[] MissingOptions =
     [
         ("PdfTitle",    "PDF-titel mangler",    p => string.IsNullOrWhiteSpace(p.PdfTitle)),
-        ("Alcohol",     "Alkohol% mangler",     p => p.Alcohol == 0),
-        ("Str",         "Størrelse mangler",    p => p.Str == 0),
         ("KegCollar",   "Kasse/Kolli mangler",  p => (p.KegCollar ?? 0) == 0),
         ("PricePrUnit", "Pris mangler",         p => p.PricePrUnit == 0),
     ];
@@ -466,15 +474,6 @@
         _loading = false;
         var first = SortProducts(_products).FirstOrDefault();
         if (first != null) DoSelect(first.OctopusId);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_focusAvailableOnRender && _editingField == "Available")
-        {
-            _focusAvailableOnRender = false;
-            try { await _availableRef.FocusAsync(); } catch { /* element gone */ }
-        }
     }
 
     private List<Product> FilteredProducts()
@@ -558,6 +557,7 @@
         _editingField = null;
         _saveError = "";
         _pendingSwitchTo = null;
+        _confirmingDelete = false;
     }
 
     private void ConfirmSwitchDiscard()
@@ -574,20 +574,9 @@
         _editingField = field;
     }
 
-    private void BeginEditAvailable()
-    {
-        BeginEdit("Available");
-        _focusAvailableOnRender = true;
-    }
-
     private void EndEdit()
     {
         _editingField = null;
-    }
-
-    private void HandleEditKey(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" || e.Key == "Escape") EndEdit();
     }
 
     private void ToggleInUse()
@@ -641,6 +630,33 @@
         _draft = Clone(_original);
         _editingField = null;
         _saveError = "";
+    }
+
+    private async Task DeleteSelected()
+    {
+        if (_draft == null) return;
+        var idToRemove = _draft.OctopusId;
+        _deleting = true;
+        _saveError = "";
+        try
+        {
+            await ProductService.DeleteAsync(idToRemove);
+            _products = await ProductService.ListProducts();
+            _confirmingDelete = false;
+            _draft = null;
+            _original = null;
+            _selectedId = null;
+            var next = SortProducts(_products).FirstOrDefault();
+            if (next != null) DoSelect(next.OctopusId);
+        }
+        catch (Exception ex)
+        {
+            _saveError = $"Kunne ikke slette: {ex.Message}";
+        }
+        finally
+        {
+            _deleting = false;
+        }
     }
 
     private async Task SaveDraft()

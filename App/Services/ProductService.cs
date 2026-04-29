@@ -31,6 +31,14 @@ public class ProductService
             .ToDictionary(g => g.Key, g => g.ToList());
     }
 
+    public async Task DeleteAsync(int octopusId)
+    {
+        var existing = await _db.Products.FindAsync(octopusId);
+        if (existing == null) return;
+        _db.Products.Remove(existing);
+        await _db.SaveChangesAsync();
+    }
+
     public async Task UpdateAsync(Product update)
     {
         await using var db = _contextFactory.CreateDbContext();
