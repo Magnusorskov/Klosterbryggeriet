@@ -735,7 +735,11 @@
         ("Category-asc",   "Kategori A→Å"),
     ];
 
+    // Categories listed in the dropdown come from regular products only —
+    // fadøl have their own dedicated Type pill so their FADØL category is
+    // redundant in this list.
     private IEnumerable<string> _allCats => AllItems()
+        .Where(i => i.Kind == PendingProductKind.RegularProduct)
         .Select(i => i.Category)
         .Where(c => !string.IsNullOrWhiteSpace(c))
         .Distinct()
