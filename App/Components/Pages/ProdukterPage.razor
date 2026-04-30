@@ -257,14 +257,15 @@
                                            OnEndEdit="EndEdit"
                                            OnInput="@(v => d.PdfTitle = v ?? "")" />
 
-                            <EditableField Label="Kategori"
-                                           DisplayValue="@d.Category"
-                                           InputValue="@d.Category"
-                                           IsEditing="@(_editingField == "Category")"
-                                           IsDirty="@FieldDirty("Category")"
-                                           OnBeginEdit='@(() => BeginEdit("Category"))'
-                                           OnEndEdit="EndEdit"
-                                           OnInput="@(v => d.Category = v ?? "")" />
+                            <EditableSelect Label="Kategori"
+                                            Options="_allCats"
+                                            DisplayValue="@d.Category"
+                                            InputValue="@d.Category"
+                                            IsEditing="@(_editingField == "Category")"
+                                            IsDirty="@FieldDirty("Category")"
+                                            OnBeginEdit='@(() => BeginEdit("Category"))'
+                                            OnEndEdit="EndEdit"
+                                            OnInput="@(v => d.Category = v ?? "")" />
 
                             <EditableField Label="Web ID"
                                            DisplayValue="@d.WebId.ToString()"
