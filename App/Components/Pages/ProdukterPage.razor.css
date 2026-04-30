@@ -508,14 +508,18 @@
 }
 
 .lr-status {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    justify-content: flex-end;
     gap: 0.35rem;
     font-size: 0.78rem;
     color: #221812;
     font-variant-numeric: tabular-nums;
     font-weight: 500;
+}
+
+.lr-status .lr-avail {
+    text-align: right;
 }
 
 .lr-avail { white-space: nowrap; }
