@@ -51,35 +51,37 @@
                 }
             </select>
 
-            <div class="pill-group" role="group" aria-label="Lagerstatus">
-                <span class="pill-group-label">Lager</span>
-                @foreach (var s in _statusOptions)
-                {
-                    <button class="pill @(_statusFilter == s ? "pill-active" : "")"
-                            @onclick="() => _statusFilter = s">@s</button>
-                }
-            </div>
+            <div class="filter-pills">
+                <div class="pill-group" role="group" aria-label="Lagerstatus">
+                    <span class="pill-group-label">Lager</span>
+                    @foreach (var s in _statusOptions)
+                    {
+                        <button class="pill @(_statusFilter == s ? "pill-active" : "")"
+                                @onclick="() => _statusFilter = s">@s</button>
+                    }
+                </div>
 
-            <span class="filter-divider" aria-hidden="true"></span>
+                <span class="filter-divider" aria-hidden="true"></span>
 
-            <div class="pill-group" role="group" aria-label="I brug">
-                <span class="pill-group-label">Status</span>
-                @foreach (var s in _inUseOptions)
-                {
-                    <button class="pill @(_inUseFilter == s ? "pill-active" : "")"
-                            @onclick="() => _inUseFilter = s">@s</button>
-                }
-            </div>
+                <div class="pill-group" role="group" aria-label="I brug">
+                    <span class="pill-group-label">Status</span>
+                    @foreach (var s in _inUseOptions)
+                    {
+                        <button class="pill @(_inUseFilter == s ? "pill-active" : "")"
+                                @onclick="() => _inUseFilter = s">@s</button>
+                    }
+                </div>
 
-            <span class="filter-divider" aria-hidden="true"></span>
+                <span class="filter-divider" aria-hidden="true"></span>
 
-            <div class="pill-group" role="group" aria-label="Type">
-                <span class="pill-group-label">Type</span>
-                @foreach (var s in _kindOptions)
-                {
-                    <button class="pill @(_kindFilter == s ? "pill-active" : "")"
-                            @onclick="() => _kindFilter = s">@s</button>
-                }
+                <div class="pill-group" role="group" aria-label="Type">
+                    <span class="pill-group-label">Type</span>
+                    @foreach (var s in _kindOptions)
+                    {
+                        <button class="pill @(_kindFilter == s ? "pill-active" : "")"
+                                @onclick="() => _kindFilter = s">@s</button>
+                    }
+                </div>
             </div>
 
             <div class="missing-wrap">
@@ -168,8 +170,8 @@
                                     type="button">
                                 <span class="lr-id">#@item.OctopusId</span>
                                 <span class="lr-main">
-                                    <span class="lr-title">
-                                        @item.OctopusTitle
+                                    <span class="lr-title-row">
+                                        <span class="lr-title">@item.OctopusTitle</span>
                                         @if (pkind == PendingProductKind.DraftBeer)
                                         {
                                             <span class="lr-kind-tag">fadøl</span>

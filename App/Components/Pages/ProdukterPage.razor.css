@@ -106,10 +106,25 @@
     font-family: inherit;
 }
 
+.filter-pills {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.35rem 0.75rem;
+    background: #ffffff;
+    border: 1px solid rgba(109, 68, 35, 0.14);
+    border-radius: 12px;
+}
+
 .pill-group {
     display: flex;
     align-items: center;
     gap: 0.375rem;
+}
+
+.filter-pills .pill {
+    padding: 0.35rem 0.75rem;
 }
 
 .pill-group-label {
@@ -415,7 +430,16 @@
     min-width: 0;
 }
 
+.lr-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
 .lr-title {
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: 0.86rem;
     color: #221812;
     font-weight: 500;
@@ -426,6 +450,7 @@
 }
 
 .lr-kind-tag {
+    flex-shrink: 0;
     display: inline-block;
     background: rgba(166, 95, 43, 0.14);
     color: #a65f2b;
@@ -435,7 +460,6 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: lowercase;
-    margin-left: 0.35rem;
     vertical-align: middle;
 }
 
