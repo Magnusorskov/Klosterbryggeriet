@@ -133,32 +133,6 @@
                 </div>
             }
 
-            @if (preview.PendingUpdates.Count > 0)
-            {
-                <h3 class="preview-section-title">Opdateringer (@preview.PendingUpdates.Count)</h3>
-                <ul class="diff-list">
-                    @foreach (var u in preview.PendingUpdates)
-                    {
-                        <li class="diff-row @DiffRowClass(u)">
-                            <span class="diff-marker">~</span>
-                            <span class="diff-id">#@u.OctopusId</span>
-                            <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
-                            @if (u.Kind == PendingProductKind.DraftBeer)
-                            {
-                                <span class="kind-tag">fadøl</span>
-                            }
-                            <span class="diff-detail">
-                                @u.PreviousAvailable → @u.NewAvailable
-                                @if (u.StatusFlipped)
-                                {
-                                    <span class="diff-status"> (@StatusLabel(u.PreviousStatus) → @StatusLabel(u.NewStatus))</span>
-                                }
-                            </span>
-                        </li>
-                    }
-                </ul>
-            }
-
             @if (preview.PendingNewProducts.Count > 0)
             {
                 <h3 class="preview-section-title">Nye produkter (@preview.PendingNewProducts.Count)</h3>
@@ -324,6 +298,34 @@
                 </div>
             }
 
+            @if (preview.PendingUpdates.Count > 0)
+            {
+                <h3 class="preview-section-title">Opdateringer (@preview.PendingUpdates.Count)</h3>
+                <ul class="diff-list">
+                    @foreach (var u in preview.PendingUpdates)
+                    {
+                        <li class="diff-row @DiffRowClass(u)">
+                            <span class="diff-marker">~</span>
+                            <span class="diff-id">#@u.OctopusId</span>
+                            <span class="diff-title">
+                                <span class="diff-title-text">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
+                                @if (u.Kind == PendingProductKind.DraftBeer)
+                                {
+                                    <span class="kind-tag">fadøl</span>
+                                }
+                            </span>
+                            <span class="diff-detail">
+                                @u.PreviousAvailable → @u.NewAvailable
+                                @if (u.StatusFlipped)
+                                {
+                                    <span class="diff-status"> (@StatusLabel(u.PreviousStatus) → @StatusLabel(u.NewStatus))</span>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+
             @if (preview.PendingUpdates.Count == 0 && preview.PendingNewProducts.Count == 0)
             {
                 <p class="receipt-empty">Ingen ændringer i denne import.</p>
@@ -477,11 +479,13 @@
                         <li class="diff-row diff-add">
                             <span class="diff-marker">+</span>
                             <span class="diff-id">#@c.OctopusId</span>
-                            <span class="diff-title">@(string.IsNullOrWhiteSpace(c.OctopusTitle) ? "—" : c.OctopusTitle)</span>
-                            @if (c.Kind == PendingProductKind.DraftBeer)
-                            {
-                                <span class="kind-tag">fadøl</span>
-                            }
+                            <span class="diff-title">
+                                <span class="diff-title-text">@(string.IsNullOrWhiteSpace(c.OctopusTitle) ? "—" : c.OctopusTitle)</span>
+                                @if (c.Kind == PendingProductKind.DraftBeer)
+                                {
+                                    <span class="kind-tag">fadøl</span>
+                                }
+                            </span>
                             <span class="diff-detail">Disponibel=@c.Available</span>
                         </li>
                     }
@@ -490,11 +494,13 @@
                         <li class="diff-row @DiffRowClass(u)">
                             <span class="diff-marker">~</span>
                             <span class="diff-id">#@u.OctopusId</span>
-                            <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
-                            @if (u.Kind == PendingProductKind.DraftBeer)
-                            {
-                                <span class="kind-tag">fadøl</span>
-                            }
+                            <span class="diff-title">
+                                <span class="diff-title-text">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
+                                @if (u.Kind == PendingProductKind.DraftBeer)
+                                {
+                                    <span class="kind-tag">fadøl</span>
+                                }
+                            </span>
                             <span class="diff-detail">
                                 @u.PreviousAvailable → @u.NewAvailable
                                 @if (u.StatusFlipped)
