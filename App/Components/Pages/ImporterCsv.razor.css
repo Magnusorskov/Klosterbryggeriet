@@ -1049,3 +1049,67 @@ select.row-input {
         grid-column: 2 / -1;
     }
 }
+
+/* ── Draft beer toggle (subtle) ─────────────────────────────────────────── */
+.kind-pill {
+    border: 1px solid rgba(109, 68, 35, 0.25);
+    background: transparent;
+    color: #8a7356;
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    line-height: 1.2;
+}
+
+.kind-pill:hover {
+    border-color: rgba(166, 95, 43, 0.5);
+    color: #a65f2b;
+}
+
+.kind-pill-on,
+.kind-pill-on:hover {
+    background: #a65f2b;
+    border-color: #a65f2b;
+    color: #fff;
+}
+
+.attention-row-draft {
+    border-left: 3px solid #a65f2b;
+}
+
+.row-field-fixed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.row-input-fixed {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.42rem 0.6rem;
+    border-radius: 6px;
+    border: 1px dashed rgba(109, 68, 35, 0.18);
+    background: rgba(166, 95, 43, 0.06);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6b5c45;
+    letter-spacing: 0.05em;
+    box-sizing: border-box;
+}
+
+.kind-tag {
+    background: rgba(166, 95, 43, 0.14);
+    color: #a65f2b;
+    padding: 0.05rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    margin-left: 0.25rem;
+}

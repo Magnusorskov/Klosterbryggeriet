@@ -16,4 +16,10 @@ public class CsvImportResult
     public List<int> FailedVariantIds { get; set; } = [];
 
     public int StatusFlipCount => Updated.Count(u => u.StatusFlipped);
+
+    public IEnumerable<ProductCreated> CreatedProducts =>
+        Created.Where(c => c.Kind == PendingProductKind.RegularProduct);
+
+    public IEnumerable<ProductCreated> CreatedDraftBeers =>
+        Created.Where(c => c.Kind == PendingProductKind.DraftBeer);
 }

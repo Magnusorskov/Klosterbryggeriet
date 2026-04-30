@@ -8,6 +8,7 @@ public class ProductChange
     public required int NewAvailable { get; set; }
     public required ProductStatus PreviousStatus { get; set; }
     public required ProductStatus NewStatus { get; set; }
+    public PendingProductKind Kind { get; set; } = PendingProductKind.RegularProduct;
     public bool StatusFlipped => PreviousStatus != NewStatus;
     public int Delta => NewAvailable - PreviousAvailable;
 }

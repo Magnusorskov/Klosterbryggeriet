@@ -425,6 +425,20 @@
     line-height: 1.25;
 }
 
+.lr-kind-tag {
+    display: inline-block;
+    background: rgba(166, 95, 43, 0.14);
+    color: #a65f2b;
+    padding: 0.05rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    margin-left: 0.35rem;
+    vertical-align: middle;
+}
+
 .lr-cat {
     font-size: 0.72rem;
     color: #8a7356;
