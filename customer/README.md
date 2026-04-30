@@ -22,13 +22,9 @@ bash start.sh
 ```
 
 ### Windows
-Right-click `start.ps1` → **Run with PowerShell**.
+Double-click `start.bat`.
 
-If Windows blocks the script with a security warning, open PowerShell in this folder and run:
-```powershell
-Unblock-File .\start.ps1
-.\start.ps1
-```
+(`start.bat` is a small wrapper that runs `start.ps1` without you having to change PowerShell's execution policy. If Windows shows a security warning the first time, click **More info** → **Run anyway**.)
 
 ## What the script does
 
