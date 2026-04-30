@@ -878,6 +878,7 @@ select.ef-input {
     -webkit-appearance: none;
     -moz-appearance: none;
     background-color: #ffffff;
+    padding-left: 0;
     padding-right: 1.75rem;
     cursor: pointer;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%238a7356' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>");
