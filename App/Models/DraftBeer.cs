@@ -5,6 +5,9 @@ namespace BlazorApp.Models;
 
 public class DraftBeer
 {
+    public static ProductStatus StatusFor(int available)
+        => available <= 0 ? ProductStatus.SoldOut : ProductStatus.Available;
+
     [Key]
     public required int OctopusId { get; set; }
 

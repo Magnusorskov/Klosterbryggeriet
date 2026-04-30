@@ -1,6 +1,8 @@
 using System.Text;
 using BlazorApp.Models;
+using BlazorApp.Models.Dtos;
 using BlazorApp.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Tests;
 
@@ -21,6 +23,7 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         await using var db = _fixture.CreateDbContext();
         db.LogEntries.RemoveRange(db.LogEntries);
         db.Products.RemoveRange(db.Products);
+        db.DraftBeers.RemoveRange(db.DraftBeers);
         await db.SaveChangesAsync();
     }
 
@@ -243,6 +246,149 @@ public class OctopusServiceIntegrationTest : IClassFixture<DatabaseFixture>, IAs
         Assert.Single(warnings);
         Assert.Contains("Duplicate OctopusId 42", warnings[0]);
     }
+
+    // Draft beer: a DraftBeers row's OctopusId must land in ExistingDraftBeers,
+    // not Fresh — otherwise the import flow would try to insert a duplicate.
+    [Fact]
+    public async Task PartitionByExistence_ClassifiesDraftBeersCorrectly()
+    {
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.Products.AddAsync(CreateSeedProduct(100, available: 50));
+            await db.DraftBeers.AddAsync(CreateSeedDraftBeer(200));
+            await db.SaveChangesAsync();
+        }
+
+        var rows = new List<OctopusService.OctopusCsvRow>
+        {
+            new(100, "Eksisterende produkt", 12),
+            new(200, "Eksisterende fadøl", 5),
+            new(99001, "Helt ny vare", 1),
+        };
+
+        var service = new OctopusService(_fixture, new LoggerService(_fixture));
+        var partitioned = await service.PartitionByExistence(rows);
+
+        Assert.Single(partitioned.ExistingProducts);
+        Assert.Equal(100, partitioned.ExistingProducts[0].OctopusId);
+        Assert.Single(partitioned.ExistingDraftBeers);
+        Assert.Equal(200, partitioned.ExistingDraftBeers[0].OctopusId);
+        Assert.Single(partitioned.Fresh);
+        Assert.Equal(99001, partitioned.Fresh[0].OctopusId);
+    }
+
+    // Draft beer: Available updates from CSV must hit DraftBeers.Available.
+    [Fact]
+    public async Task ApplyUpdatesToExistingDraftBeers_UpdatesAvailable()
+    {
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.DraftBeers.AddAsync(CreateSeedDraftBeer(200, available: 10));
+            await db.SaveChangesAsync();
+        }
+
+        var rows = new List<OctopusService.OctopusCsvRow> { new(200, "Eksisterende fadøl", 0) };
+        var service = new OctopusService(_fixture, new LoggerService(_fixture));
+        var changes = await service.ApplyUpdatesToExistingDraftBeers(rows);
+
+        Assert.Single(changes);
+        Assert.Equal(PendingProductKind.DraftBeer, changes[0].Kind);
+        Assert.Equal(10, changes[0].PreviousAvailable);
+        Assert.Equal(0, changes[0].NewAvailable);
+        Assert.Equal(ProductStatus.Available, changes[0].PreviousStatus);
+        Assert.Equal(ProductStatus.SoldOut, changes[0].NewStatus);
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var saved = await db.DraftBeers.FindAsync(200);
+            Assert.NotNull(saved);
+            Assert.Equal(0, saved.Available);
+        }
+    }
+
+    // Draft beer: a status flip on a draft beer should generate a log entry
+    // tagged with the [Fadøl] prefix so it's distinguishable in the audit log.
+    [Fact]
+    public async Task ApplyUpdatesToExistingDraftBeers_StatusFlip_LogsWithFadoelPrefix()
+    {
+        await using (var db = _fixture.CreateDbContext())
+        {
+            await db.DraftBeers.AddAsync(CreateSeedDraftBeer(200, available: 5, pdfTitle: "Westmalle Tripel"));
+            await db.SaveChangesAsync();
+        }
+
+        var rows = new List<OctopusService.OctopusCsvRow> { new(200, "irrelevant", 0) };
+        var service = new OctopusService(_fixture, new LoggerService(_fixture));
+        await service.ApplyUpdatesToExistingDraftBeers(rows);
+
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var entries = db.LogEntries
+                .Where(e => e.Kind == LogEntryKind.StatusChanged && e.OctopusId == 200)
+                .ToList();
+            Assert.Single(entries);
+            Assert.StartsWith("[Fadøl]", entries[0].ProductName);
+            Assert.Equal(ProductStatus.Available, entries[0].PreviousStatus);
+            Assert.Equal(ProductStatus.SoldOut, entries[0].NewStatus);
+        }
+    }
+
+    // Draft beer: CommitNewDraftBeersAsync inserts into DraftBeers (not Products)
+    // and returns the created rows tagged with Kind=DraftBeer.
+    [Fact]
+    public async Task CommitNewDraftBeersAsync_AddsRowsAndLogsCreation()
+    {
+        var beer = new BlazorApp.Models.DraftBeer
+        {
+            OctopusId = 555,
+            WebId = 0,
+            WebTitle = "Westmalle 20L",
+            PdfTitle = "Westmalle Tripel",
+            OctopusTitle = "Westmalle Tripel",
+            Available = 6,
+            Str = 20,
+            Alcohol = 9.5,
+            PricePrUnit = 80,
+            Category = "FADØL",
+            Kobling = "S",
+            Land = "Belgien",
+        };
+
+        var service = new OctopusService(_fixture, new LoggerService(_fixture));
+        var created = await service.CommitNewDraftBeersAsync([beer]);
+
+        Assert.Single(created);
+        Assert.Equal(PendingProductKind.DraftBeer, created[0].Kind);
+        Assert.Equal(ProductStatus.Available, created[0].Status);
+
+        await using var db = _fixture.CreateDbContext();
+        Assert.True(await db.DraftBeers.AnyAsync(b => b.OctopusId == 555));
+        Assert.False(await db.Products.AnyAsync(p => p.OctopusId == 555));
+
+        var logEntry = await db.LogEntries
+            .Where(e => e.Kind == LogEntryKind.ProductCreated && e.OctopusId == 555)
+            .SingleAsync();
+        Assert.StartsWith("[Fadøl]", logEntry.ProductName);
+    }
+
+    private static BlazorApp.Models.DraftBeer CreateSeedDraftBeer(
+        int octopusId,
+        int available = 5,
+        string pdfTitle = "Seed Fadøl") => new()
+    {
+        OctopusId    = octopusId,
+        WebId        = 0,
+        WebTitle     = "seed",
+        PdfTitle     = pdfTitle,
+        OctopusTitle = "seed",
+        Available    = available,
+        Str          = 30,
+        Alcohol      = 5.0,
+        PricePrUnit  = 30,
+        Category     = "FADØL",
+        Kobling      = "S",
+        Land         = "Danmark",
+    };
 
     private static Product CreateSeedProduct(int octopusId, int available)
     {
