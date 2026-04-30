@@ -201,7 +201,7 @@
 .missing-menu {
     position: absolute;
     top: calc(100% + 0.4rem);
-    left: 0;
+    right: 0;
     z-index: 100;
     background: #ffffff;
     border: 1px solid rgba(109, 68, 35, 0.14);
