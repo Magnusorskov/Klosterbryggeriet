@@ -22,9 +22,9 @@ bash start.sh
 ```
 
 ### Windows
-Double-click `start.bat`.
+Double-click `Klosterbryggeriet`.
 
-(`start.bat` is a small wrapper that runs `start.ps1` without you having to change PowerShell's execution policy. If Windows shows a security warning the first time, click **More info** → **Run anyway**.)
+(It's a small wrapper that runs `start.ps1` without you having to change PowerShell's execution policy. If Windows shows a security warning the first time, click **More info** → **Run anyway**.)
 
 ## What the script does
 
