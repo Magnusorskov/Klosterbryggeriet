@@ -8,6 +8,7 @@
 
 @inject ProductService ProductService
 @inject DraftBeerService DraftBeerService
+@inject IJSRuntime JS
 
 <PageTitle>Produkter</PageTitle>
 
@@ -23,113 +24,142 @@
     }
     else
     {
-        <div class="filter-bar">
-            <div class="search-box">
-                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input class="search-input" @bind="_search" @bind:event="oninput"
-                       placeholder="Søg ID, titel, kategori…" />
-                @if (!string.IsNullOrEmpty(_search))
-                {
-                    <button class="search-clear" @onclick="() => _search = string.Empty"
-                            aria-label="Ryd søgning">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                    </button>
-                }
-            </div>
-
-            <select class="filter-select" @bind="_catFilter">
-                <option value="Alle">Alle kategorier</option>
-                @foreach (var cat in _allCats)
-                {
-                    <option value="@cat">@cat</option>
-                }
-            </select>
-
-            <div class="filter-pills">
-                <div class="pill-group" role="group" aria-label="Lagerstatus">
-                    <span class="pill-group-label">Lager</span>
-                    @foreach (var s in _statusOptions)
-                    {
-                        <button class="pill @(_statusFilter == s ? "pill-active" : "")"
-                                @onclick="() => _statusFilter = s">@s</button>
-                    }
-                </div>
-
-                <span class="filter-divider" aria-hidden="true"></span>
-
-                <div class="pill-group" role="group" aria-label="I brug">
-                    <span class="pill-group-label">Status</span>
-                    @foreach (var s in _inUseOptions)
-                    {
-                        <button class="pill @(_inUseFilter == s ? "pill-active" : "")"
-                                @onclick="() => _inUseFilter = s">@s</button>
-                    }
-                </div>
-
-                <span class="filter-divider" aria-hidden="true"></span>
-
-                <div class="pill-group" role="group" aria-label="Type">
-                    <span class="pill-group-label">Type</span>
-                    @foreach (var s in _kindOptions)
-                    {
-                        <button class="pill @(_kindFilter == s ? "pill-active" : "")"
-                                @onclick="() => _kindFilter = s">@s</button>
-                    }
-                </div>
-            </div>
-
-            <div class="missing-wrap">
-                <button class="missing-btn @(_missingFilters.Count > 0 ? "missing-btn-on" : "")"
-                        @onclick="ToggleMissingOpen">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                        <line x1="12" y1="9" x2="12" y2="13" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" />
+        <div class="filter-card">
+            <div class="filter-card-row filter-card-row-search">
+                <div class="search-box">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
-                    Manglende felter
-                    @if (_missingFilters.Count > 0)
+                    <input class="search-input" @bind="_search" @bind:event="oninput"
+                           placeholder="Søg ID, titel, kategori…" />
+                    @if (!string.IsNullOrEmpty(_search))
                     {
-                        <span class="missing-count">@_missingFilters.Count</span>
+                        <button class="search-clear" @onclick="() => _search = string.Empty"
+                                aria-label="Ryd søgning">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
                     }
-                </button>
-                @if (_missingOpen)
-                {
-                    <div class="missing-backdrop" @onclick="() => _missingOpen = false"></div>
-                    <div class="missing-menu" @onclick:stopPropagation>
-                        <div class="missing-menu-label">Vis kun produkter hvor</div>
-                        @foreach (var opt in MissingOptions)
-                        {
-                            var key = opt.Key;
-                            <label class="missing-opt">
-                                <input type="checkbox"
-                                       checked="@_missingFilters.Contains(key)"
-                                       @onchange="() => ToggleMissing(key)" />
-                                @opt.Label
-                            </label>
-                        }
+                </div>
+
+                <select class="filter-select @(_catFilter != "Alle" ? "filter-select-active" : "")" @bind="_catFilter">
+                    <option value="Alle">Alle kategorier</option>
+                    @foreach (var cat in _allCats)
+                    {
+                        <option value="@cat">@cat</option>
+                    }
+                </select>
+            </div>
+
+            <div class="filter-card-row filter-card-row-segs">
+                <div class="seg-sliding" role="group" aria-label="Lagerstatus" data-active="@_statusFilter">
+                    <div class="seg-pill"></div>
+                    @foreach (var (value, label, dot) in StatusSegItems)
+                    {
+                        var v = value;
+                        <button type="button"
+                                class="seg-btn @(_statusFilter == v ? "seg-btn-active" : "")"
+                                data-value="@v"
+                                @onclick="() => _statusFilter = v">
+                            @if (dot != null)
+                            {
+                                <span class="seg-dot" style="background:@dot"></span>
+                            }
+                            @label
+                        </button>
+                    }
+                </div>
+
+                <span class="seg-divider" aria-hidden="true"></span>
+
+                <div class="seg-sliding" role="group" aria-label="I brug" data-active="@_inUseFilter">
+                    <div class="seg-pill"></div>
+                    @foreach (var (value, label, dot) in InUseSegItems)
+                    {
+                        var v = value;
+                        <button type="button"
+                                class="seg-btn @(_inUseFilter == v ? "seg-btn-active" : "")"
+                                data-value="@v"
+                                @onclick="() => _inUseFilter = v">
+                            @if (dot != null)
+                            {
+                                <span class="seg-dot" style="background:@dot"></span>
+                            }
+                            @label
+                        </button>
+                    }
+                </div>
+
+                <span class="seg-divider" aria-hidden="true"></span>
+
+                <div class="seg-sliding" role="group" aria-label="Type" data-active="@_kindFilter">
+                    <div class="seg-pill"></div>
+                    @foreach (var (value, label, dot) in KindSegItems)
+                    {
+                        var v = value;
+                        <button type="button"
+                                class="seg-btn @(_kindFilter == v ? "seg-btn-active" : "")"
+                                data-value="@v"
+                                @onclick="() => _kindFilter = v">
+                            @if (dot != null)
+                            {
+                                <span class="seg-dot" style="background:@dot"></span>
+                            }
+                            @label
+                        </button>
+                    }
+                </div>
+
+                <div class="missing-wrap">
+                    <button class="missing-btn @(_missingFilters.Count > 0 ? "missing-btn-on" : "")"
+                            @onclick="ToggleMissingOpen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        Manglende
                         @if (_missingFilters.Count > 0)
                         {
-                            <div class="missing-menu-footer">
-                                <button class="missing-clear" @onclick="ClearMissing">Ryd filtre</button>
-                            </div>
+                            <span class="missing-count">@_missingFilters.Count</span>
                         }
-                    </div>
+                    </button>
+                    @if (_missingOpen)
+                    {
+                        <div class="missing-backdrop" @onclick="() => _missingOpen = false"></div>
+                        <div class="missing-menu" @onclick:stopPropagation>
+                            <div class="missing-menu-label">Vis kun produkter hvor</div>
+                            @foreach (var opt in MissingOptions)
+                            {
+                                var key = opt.Key;
+                                <label class="missing-opt">
+                                    <input type="checkbox"
+                                           checked="@_missingFilters.Contains(key)"
+                                           @onchange="() => ToggleMissing(key)" />
+                                    @opt.Label
+                                </label>
+                            }
+                            @if (_missingFilters.Count > 0)
+                            {
+                                <div class="missing-menu-footer">
+                                    <button class="missing-clear" @onclick="ClearMissing">Ryd filtre</button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="filter-card-footer">
+                Viser @FilteredItems().Count af @TotalCount produkter
+                @if (_missingFilters.Count > 0)
+                {
+                    <span class="results-accent">· @_missingFilters.Count manglende-felt filter@(_missingFilters.Count > 1 ? "e" : "") aktive</span>
                 }
             </div>
-        </div>
-
-        <div class="results-line">
-            Viser @FilteredItems().Count af @TotalCount produkter
-            @if (_missingFilters.Count > 0)
-            {
-                <span class="results-accent">· @_missingFilters.Count manglende-felt filter@(_missingFilters.Count > 1 ? "e" : "") aktive</span>
-            }
         </div>
 
         <div class="split">
@@ -672,11 +702,29 @@
     private string _search = "";
     private string _catFilter = "Alle";
     private string _statusFilter = "Alle";
-    private readonly string[] _statusOptions = ["Alle", "Tilgængelig", "Udsolgt"];
     private string _inUseFilter = "Alle";
-    private readonly string[] _inUseOptions = ["Alle", "I brug", "Ikke i brug"];
     private string _kindFilter = "Alle";
-    private readonly string[] _kindOptions = ["Alle", "Produkt", "Fadøl"];
+
+    // (value, label, dotColor) tuples drive the sliding segs; dotColor is null for the "Alle" option.
+    private static readonly (string Value, string Label, string? Dot)[] StatusSegItems =
+    [
+        ("Alle",        "Lager: Alle",   null),
+        ("Tilgængelig", "Tilgængelig",   "#2E7D4F"),
+        ("Udsolgt",     "Udsolgt",       "#B83333"),
+    ];
+    private static readonly (string Value, string Label, string? Dot)[] InUseSegItems =
+    [
+        ("Alle",        "Status: Alle",  null),
+        ("I brug",      "I brug",        "#2E7D4F"),
+        ("Ikke i brug", "Ikke i brug",   "#999999"),
+    ];
+    private static readonly (string Value, string Label, string? Dot)[] KindSegItems =
+    [
+        ("Alle",    "Type: Alle", null),
+        ("Produkt", "Produkt",    "#6A8FC8"),
+        ("Fadøl",   "Fadøl",      "#C8A046"),
+    ];
+
     private HashSet<string> _missingFilters = [];
     private bool _missingOpen;
 
@@ -779,6 +827,12 @@
         _loading = false;
         var first = SortItems(AllItems()).FirstOrDefault();
         if (first != null) DoSelect(first.OctopusId, first.Kind);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading) return;
+        await JS.InvokeVoidAsync("klosterFilters.layoutPills");
     }
 
     private List<ListItem> FilteredItems()
