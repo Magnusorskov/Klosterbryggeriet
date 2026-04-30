@@ -986,9 +986,22 @@ select.row-input {
 
 .diff-title {
     font-family: inherit;
-    white-space: nowrap;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.diff-title-text {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.diff-title > .kind-tag {
+    flex-shrink: 0;
+    margin-left: 0;
 }
 
 .diff-detail {
