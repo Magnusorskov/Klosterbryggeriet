@@ -200,14 +200,14 @@
                                     type="button">
                                 <span class="lr-id">#@item.OctopusId</span>
                                 <span class="lr-main">
-                                    <span class="lr-title-row">
-                                        <span class="lr-title">@item.OctopusTitle</span>
-                                        @if (pkind == PendingProductKind.DraftBeer)
-                                        {
-                                            <span class="lr-kind-tag">fadøl</span>
-                                        }
-                                    </span>
+                                    <span class="lr-title">@item.OctopusTitle</span>
                                     <span class="lr-cat">@item.Category</span>
+                                </span>
+                                <span class="lr-kind-col">
+                                    @if (pkind == PendingProductKind.DraftBeer)
+                                    {
+                                        <span class="lr-kind-tag">fadøl</span>
+                                    }
                                 </span>
                                 <span class="lr-status">
                                     <span class="status-dot @dotClass"></span>

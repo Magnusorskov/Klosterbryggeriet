@@ -425,7 +425,7 @@
 .list-row {
     width: 100%;
     display: grid;
-    grid-template-columns: 56px 1fr auto;
+    grid-template-columns: 56px 1fr 50px auto;
     gap: 0.6rem;
     align-items: center;
     padding: 0.65rem 0.95rem;
@@ -470,16 +470,7 @@
     min-width: 0;
 }
 
-.lr-title-row {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    min-width: 0;
-}
-
 .lr-title {
-    flex: 1 1 auto;
-    min-width: 0;
     font-size: 0.86rem;
     color: #221812;
     font-weight: 500;
@@ -489,18 +480,23 @@
     line-height: 1.25;
 }
 
+.lr-kind-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .lr-kind-tag {
-    flex-shrink: 0;
     display: inline-block;
     background: rgba(166, 95, 43, 0.14);
     color: #a65f2b;
-    padding: 0.05rem 0.4rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 10px;
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: lowercase;
-    vertical-align: middle;
+    line-height: 1.3;
 }
 
 .lr-cat {
