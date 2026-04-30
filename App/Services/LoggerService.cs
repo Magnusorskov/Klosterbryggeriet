@@ -46,6 +46,39 @@ public class LoggerService
         await context.SaveChangesAsync();
     }
 
+    public async Task LogDraftBeerChange(
+        DraftBeer changedBeer,
+        ProductStatus previousStatus,
+        ProductStatus newStatus)
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        var entry = new LogEntry
+        {
+            OctopusId = changedBeer.OctopusId,
+            ProductName = $"[Fadøl] {changedBeer.PdfTitle}",
+            Kind = LogEntryKind.StatusChanged,
+            PreviousStatus = previousStatus,
+            NewStatus = newStatus,
+        };
+        await context.LogEntries.AddAsync(entry);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task LogDraftBeerCreated(DraftBeer created)
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        var entry = new LogEntry
+        {
+            OctopusId = created.OctopusId,
+            ProductName = $"[Fadøl] {created.OctopusTitle}",
+            Kind = LogEntryKind.ProductCreated,
+            PreviousStatus = null,
+            NewStatus = DraftBeer.StatusFor(created.Available),
+        };
+        await context.LogEntries.AddAsync(entry);
+        await context.SaveChangesAsync();
+    }
+
     public async Task<List<LogEntry>> GetLogEntries()
     {
         await using var context = _contextFactory.CreateDbContext();

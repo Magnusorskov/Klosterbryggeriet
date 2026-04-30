@@ -26,13 +26,18 @@ public class CsvUploadService : ICsvUploadService
 
     // Legacy one-shot path: parses, applies updates, and creates products in a
     // single call. Still used by direct/non-interactive callers and tests.
+    // Treats every fresh row as a regular Product — draft beers come in via
+    // the interactive preview flow only.
     public async Task<CsvImportResult> UploadCsvAsync(Stream stream, string fileName)
     {
         var (rows, skipped, warnings) = await _octopus.ParseCsv(stream);
-        var (existing, fresh) = await _octopus.PartitionByExistence(rows);
-        var updated = await _octopus.ApplyUpdatesToExisting(existing);
-        var created = await _octopus.CreateMissingProducts(fresh);
+        var partitioned = await _octopus.PartitionByExistence(rows);
 
+        var updatedProducts = await _octopus.ApplyUpdatesToExisting(partitioned.ExistingProducts);
+        var updatedDraftBeers = await _octopus.ApplyUpdatesToExistingDraftBeers(partitioned.ExistingDraftBeers);
+        var created = await _octopus.CreateMissingProducts(partitioned.Fresh);
+
+        var updated = updatedProducts.Concat(updatedDraftBeers).ToList();
         var result = new CsvImportResult
         {
             FileName = fileName,
@@ -52,10 +57,13 @@ public class CsvUploadService : ICsvUploadService
     public async Task<CsvImportPreview> BuildPreviewAsync(Stream stream, string fileName)
     {
         var (rows, skipped, warnings) = await _octopus.ParseCsv(stream);
-        var (existing, fresh) = await _octopus.PartitionByExistence(rows);
-        var pendingUpdates = await _octopus.BuildPendingUpdatesAsync(existing);
+        var partitioned = await _octopus.PartitionByExistence(rows);
 
-        var pendingNew = fresh.Select(r => new PendingNewProduct
+        var pendingProductUpdates = await _octopus.BuildPendingUpdatesAsync(partitioned.ExistingProducts);
+        var pendingDraftBeerUpdates = await _octopus.BuildPendingDraftBeerUpdatesAsync(partitioned.ExistingDraftBeers);
+        var pendingUpdates = pendingProductUpdates.Concat(pendingDraftBeerUpdates).ToList();
+
+        var pendingNew = partitioned.Fresh.Select(r => new PendingNewProduct
         {
             Product = new Product
             {
@@ -85,12 +93,32 @@ public class CsvUploadService : ICsvUploadService
     // user-edited new products. Caller is expected to have validated rows.
     public async Task<CsvImportResult> CommitPreviewAsync(CsvImportPreview preview)
     {
-        var existingRows = preview.PendingUpdates
+        var productUpdateRows = preview.PendingUpdates
+            .Where(u => u.Kind == PendingProductKind.RegularProduct)
             .Select(u => new OctopusService.OctopusCsvRow(u.OctopusId, u.OctopusTitle, u.NewAvailable))
             .ToList();
-        var updated = await _octopus.ApplyUpdatesToExisting(existingRows);
-        var created = await _octopus.CommitNewProductsAsync(
-            preview.PendingNewProducts.Select(p => p.Product).ToList());
+        var draftBeerUpdateRows = preview.PendingUpdates
+            .Where(u => u.Kind == PendingProductKind.DraftBeer)
+            .Select(u => new OctopusService.OctopusCsvRow(u.OctopusId, u.OctopusTitle, u.NewAvailable))
+            .ToList();
+
+        var updatedProducts = await _octopus.ApplyUpdatesToExisting(productUpdateRows);
+        var updatedDraftBeers = await _octopus.ApplyUpdatesToExistingDraftBeers(draftBeerUpdateRows);
+
+        var newProducts = preview.PendingNewProducts
+            .Where(p => p.Kind == PendingProductKind.RegularProduct)
+            .Select(p => p.Product)
+            .ToList();
+        var newDraftBeers = preview.PendingNewProducts
+            .Where(p => p.Kind == PendingProductKind.DraftBeer)
+            .Select(p => p.ToDraftBeer())
+            .ToList();
+
+        var createdProducts = await _octopus.CommitNewProductsAsync(newProducts);
+        var createdDraftBeers = await _octopus.CommitNewDraftBeersAsync(newDraftBeers);
+
+        var updated = updatedProducts.Concat(updatedDraftBeers).ToList();
+        var created = createdProducts.Concat(createdDraftBeers).ToList();
 
         var result = new CsvImportResult
         {
@@ -106,8 +134,10 @@ public class CsvUploadService : ICsvUploadService
         return result;
     }
 
-    // After DB writes succeed, push the new stock for every affected product
+    // After DB writes succeed, push the new stock for every affected row
     // (updated or newly created) that is InUse and has a webshop variant id.
+    // Covers both Products and DraftBeers — fadøl with variants are still
+    // part of the webshop catalog.
     private async Task PushAffectedToShopAsync(
         IReadOnlyList<ProductChange> updated,
         IReadOnlyList<ProductCreated> created,
@@ -115,22 +145,46 @@ public class CsvUploadService : ICsvUploadService
     {
         if (!_pushToHostedShopEnabled) return;
 
-        var ids = updated.Select(u => u.OctopusId)
-            .Concat(created.Select(c => c.OctopusId))
+        var productIds = updated.Where(u => u.Kind == PendingProductKind.RegularProduct).Select(u => u.OctopusId)
+            .Concat(created.Where(c => c.Kind == PendingProductKind.RegularProduct).Select(c => c.OctopusId))
             .ToList();
-        if (ids.Count == 0) return;
+        var draftBeerIds = updated.Where(u => u.Kind == PendingProductKind.DraftBeer).Select(u => u.OctopusId)
+            .Concat(created.Where(c => c.Kind == PendingProductKind.DraftBeer).Select(c => c.OctopusId))
+            .ToList();
+
+        if (productIds.Count == 0 && draftBeerIds.Count == 0) return;
 
         await using var db = _contextFactory.CreateDbContext();
-        var products = await db.Products
-            .Where(p => ids.Contains(p.OctopusId) && p.InUse && p.VariantId1 > 0)
-            .ToListAsync();
 
-        foreach (var product in products)
+        if (productIds.Count > 0)
         {
-            await PushVariantAsync(product.VariantId1, product.Available, result);
-            if (product.VariantId2 > 0)
+            var products = await db.Products
+                .Where(p => productIds.Contains(p.OctopusId) && p.InUse && p.VariantId1 > 0)
+                .ToListAsync();
+
+            foreach (var product in products)
             {
-                await PushVariantAsync(product.VariantId2, product.Available, result);
+                await PushVariantAsync(product.VariantId1, product.Available, result);
+                if (product.VariantId2 > 0)
+                {
+                    await PushVariantAsync(product.VariantId2, product.Available, result);
+                }
+            }
+        }
+
+        if (draftBeerIds.Count > 0)
+        {
+            var beers = await db.DraftBeers
+                .Where(b => draftBeerIds.Contains(b.OctopusId) && b.InUse && b.VariantId1 > 0)
+                .ToListAsync();
+
+            foreach (var beer in beers)
+            {
+                await PushVariantAsync(beer.VariantId1, beer.Available, result);
+                if (beer.VariantId2 > 0)
+                {
+                    await PushVariantAsync(beer.VariantId2, beer.Available, result);
+                }
             }
         }
     }

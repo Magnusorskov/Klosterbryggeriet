@@ -143,6 +143,10 @@
                             <span class="diff-marker">~</span>
                             <span class="diff-id">#@u.OctopusId</span>
                             <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
+                            @if (u.Kind == PendingProductKind.DraftBeer)
+                            {
+                                <span class="kind-tag">fadøl</span>
+                            }
                             <span class="diff-detail">
                                 @u.PreviousAvailable → @u.NewAvailable
                                 @if (u.StatusFlipped)
@@ -167,51 +171,98 @@
                     {
                         var p = row.Product;
                         var inUse = p.InUse;
-                        <div class="attention-row @(row.Errors.Count > 0 ? "attention-row-error" : "")">
+                        var isDraft = row.Kind == PendingProductKind.DraftBeer;
+                        <div class="attention-row @(row.Errors.Count > 0 ? "attention-row-error" : "") @(isDraft ? "attention-row-draft" : "")">
                             <div class="attention-row-head">
                                 <span class="row-id">#@p.OctopusId</span>
                                 <span class="row-title">@(string.IsNullOrWhiteSpace(p.OctopusTitle) ? "—" : p.OctopusTitle)</span>
+                                <button type="button"
+                                        class="kind-pill @(isDraft ? "kind-pill-on" : "")"
+                                        title="@(isDraft ? "Behandles som fadøl — klik for at skifte tilbage" : "Marker som fadøl")"
+                                        @onclick="() => ToggleKind(row)">
+                                    @(isDraft ? "Fadøl ✓" : "Fadøl?")
+                                </button>
                                 <span class="row-stock">Disponibel: <strong>@p.Available</strong></span>
                             </div>
 
                             <div class="row-fields row-fields-manual">
-                                <label class="row-field">
-                                    <span class="row-field-label">
-                                        Kategori@(inUse ? "*" : "")
-                                        @if (row.CustomCategory && !string.IsNullOrWhiteSpace(p.Category))
+                                @if (!isDraft)
+                                {
+                                    <label class="row-field">
+                                        <span class="row-field-label">
+                                            Kategori@(inUse ? "*" : "")
+                                            @if (row.CustomCategory && !string.IsNullOrWhiteSpace(p.Category))
+                                            {
+                                                <span class="new-category-chip">ny</span>
+                                            }
+                                        </span>
+                                        <select class="row-input @ErrClass(row, "Category")"
+                                                @bind:get="CategorySelectValue(row)"
+                                                @bind:set="@((string v) => OnCategorySelect(row, v))">
+                                            <option value="">— Vælg kategori —</option>
+                                            @foreach (var cat in _categories)
+                                            {
+                                                <option value="@cat.Name">@cat.Name</option>
+                                            }
+                                            <option value="__new__">+ Opret ny kategori…</option>
+                                        </select>
+                                        @if (row.CustomCategory)
                                         {
-                                            <span class="new-category-chip">ny</span>
+                                            <input class="row-input row-input-new-cat @ErrClass(row, "Category")"
+                                                   placeholder="Skriv navn på ny kategori"
+                                                   @bind="p.Category" @bind:event="oninput" />
                                         }
-                                    </span>
-                                    <select class="row-input @ErrClass(row, "Category")"
-                                            @bind:get="CategorySelectValue(row)"
-                                            @bind:set="@((string v) => OnCategorySelect(row, v))">
-                                        <option value="">— Vælg kategori —</option>
-                                        @foreach (var cat in _categories)
-                                        {
-                                            <option value="@cat.Name">@cat.Name</option>
-                                        }
-                                        <option value="__new__">+ Opret ny kategori…</option>
-                                    </select>
-                                    @if (row.CustomCategory)
-                                    {
-                                        <input class="row-input row-input-new-cat @ErrClass(row, "Category")"
-                                               placeholder="Skriv navn på ny kategori"
-                                               @bind="p.Category" @bind:event="oninput" />
-                                    }
-                                </label>
+                                    </label>
+                                }
+                                else
+                                {
+                                    <div class="row-field row-field-fixed">
+                                        <span class="row-field-label">Kategori</span>
+                                        <span class="row-input row-input-fixed">FADØL</span>
+                                    </div>
+                                }
                                 <label class="row-field">
                                     <span class="row-field-label">PDF-titel@(inUse ? "*" : "")</span>
                                     <input class="row-input @ErrClass(row, "PdfTitle")"
                                            @bind="p.PdfTitle" @bind:event="oninput" />
                                 </label>
+                                @if (isDraft)
+                                {
+                                    <label class="row-field row-field-narrow">
+                                        <span class="row-field-label">Kobling@(inUse ? "*" : "")</span>
+                                        <select class="row-input @ErrClass(row, "Kobling")"
+                                                @bind:get="KoblingSelectValue(row)"
+                                                @bind:set="@((string v) => OnKoblingSelect(row, v))">
+                                            <option value="">— Vælg kobling —</option>
+                                            <option value="S">S</option>
+                                            <option value="A">A</option>
+                                            <option value="Key keg">Key keg</option>
+                                            <option value="__new__">+ Anden type…</option>
+                                        </select>
+                                        @if (row.CustomKobling)
+                                        {
+                                            <input class="row-input row-input-new-cat @ErrClass(row, "Kobling")"
+                                                   placeholder="Skriv kobling"
+                                                   @bind="row.Kobling" @bind:event="oninput" />
+                                        }
+                                    </label>
+                                    <label class="row-field row-field-narrow">
+                                        <span class="row-field-label">Land@(inUse ? "*" : "")</span>
+                                        <input class="row-input @ErrClass(row, "Land")"
+                                               placeholder="fx Belgien"
+                                               @bind="row.Land" @bind:event="oninput" />
+                                    </label>
+                                }
+                                else
+                                {
+                                    <label class="row-field row-field-narrow">
+                                        <span class="row-field-label">Kasse/Kolli</span>
+                                        <input class="row-input" type="number"
+                                               @bind="row.KegCollarInput" />
+                                    </label>
+                                }
                                 <label class="row-field row-field-narrow">
-                                    <span class="row-field-label">Kasse/Kolli</span>
-                                    <input class="row-input" type="number"
-                                           @bind="row.KegCollarInput" />
-                                </label>
-                                <label class="row-field row-field-narrow">
-                                    <span class="row-field-label">Str (L)@(inUse ? "*" : "")</span>
+                                    <span class="row-field-label">@(isDraft ? "Str (L pr. fad)" : "Str (L)")@(inUse ? "*" : "")</span>
                                     <input class="row-input @ErrClass(row, "Str")" type="number" step="0.01"
                                            @bind="p.Str" />
                                 </label>
@@ -221,7 +272,7 @@
                                            @bind="p.Alcohol" />
                                 </label>
                                 <label class="row-field row-field-narrow">
-                                    <span class="row-field-label">Pris/enhed@(inUse ? "*" : "")</span>
+                                    <span class="row-field-label">@(isDraft ? "Pris/L" : "Pris/enhed")@(inUse ? "*" : "")</span>
                                     <input class="row-input @ErrClass(row, "PricePrUnit")" type="number" step="0.01"
                                            @bind="p.PricePrUnit" />
                                 </label>
@@ -250,10 +301,13 @@
                                     <input type="checkbox" @bind="p.InUse" />
                                     <span><strong>I brug</strong> — vises på prislisten og opdateres på webshoppen(hvis webId og variantId er udfyldt)</span>
                                 </label>
-                                <label class="row-toggle">
-                                    <input type="checkbox" @bind="p.HalfKolli" />
-                                    <span>Halv kasse tilgængelig</span>
-                                </label>
+                                @if (!isDraft)
+                                {
+                                    <label class="row-toggle">
+                                        <input type="checkbox" @bind="p.HalfKolli" />
+                                        <span>Halv kasse tilgængelig</span>
+                                    </label>
+                                }
                             </div>
 
                             @if (row.Errors.Count > 0)
@@ -319,17 +373,41 @@
                 </button>
             </div>
 
-            @if (_finishReceipt.SavedProducts.Count > 0)
+            @{
+                var savedProducts = _finishReceipt.SavedProducts.Where(s => !s.IsDraftBeer).ToList();
+                var savedDraftBeers = _finishReceipt.SavedProducts.Where(s => s.IsDraftBeer).ToList();
+            }
+            @if (savedProducts.Count > 0)
             {
                 <div class="finish-receipt-section">
-                    <p class="finish-receipt-section-label">Gemt (@_finishReceipt.SavedProducts.Count)</p>
+                    <p class="finish-receipt-section-label">Gemt (@savedProducts.Count)</p>
                     <ul class="finish-receipt-list">
-                        @foreach (var item in _finishReceipt.SavedProducts)
+                        @foreach (var item in savedProducts)
                         {
                             <li class="finish-receipt-item">
                                 <span class="finish-receipt-id">#@item.OctopusId</span>
                                 <span class="finish-receipt-name">@item.DisplayName</span>
                                 <span class="finish-receipt-cat">@item.Category</span>
+                                <span class="finish-receipt-status @(item.InUse ? "status-on" : "status-off")">
+                                    @(item.InUse ? "I brug" : "Ikke i brug")
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (savedDraftBeers.Count > 0)
+            {
+                <div class="finish-receipt-section">
+                    <p class="finish-receipt-section-label">Nye fadøl (@savedDraftBeers.Count)</p>
+                    <ul class="finish-receipt-list">
+                        @foreach (var item in savedDraftBeers)
+                        {
+                            <li class="finish-receipt-item">
+                                <span class="finish-receipt-id">#@item.OctopusId</span>
+                                <span class="finish-receipt-name">@item.DisplayName</span>
+                                <span class="finish-receipt-cat">FADØL</span>
                                 <span class="finish-receipt-status @(item.InUse ? "status-on" : "status-off")">
                                     @(item.InUse ? "I brug" : "Ikke i brug")
                                 </span>
@@ -400,6 +478,10 @@
                             <span class="diff-marker">+</span>
                             <span class="diff-id">#@c.OctopusId</span>
                             <span class="diff-title">@(string.IsNullOrWhiteSpace(c.OctopusTitle) ? "—" : c.OctopusTitle)</span>
+                            @if (c.Kind == PendingProductKind.DraftBeer)
+                            {
+                                <span class="kind-tag">fadøl</span>
+                            }
                             <span class="diff-detail">Disponibel=@c.Available</span>
                         </li>
                     }
@@ -409,6 +491,10 @@
                             <span class="diff-marker">~</span>
                             <span class="diff-id">#@u.OctopusId</span>
                             <span class="diff-title">@(string.IsNullOrWhiteSpace(u.OctopusTitle) ? "—" : u.OctopusTitle)</span>
+                            @if (u.Kind == PendingProductKind.DraftBeer)
+                            {
+                                <span class="kind-tag">fadøl</span>
+                            }
                             <span class="diff-detail">
                                 @u.PreviousAvailable → @u.NewAvailable
                                 @if (u.StatusFlipped)
@@ -471,7 +557,38 @@
         }
     }
 
-    private record FinishReceiptItem(int OctopusId, string DisplayName, string Category, bool InUse);
+    private static readonly string[] StandardKoblings = ["S", "A", "Key keg"];
+
+    private string KoblingSelectValue(PendingNewProduct row)
+    {
+        if (row.CustomKobling) return "__new__";
+        if (string.IsNullOrWhiteSpace(row.Kobling)) return "";
+        return StandardKoblings.Contains(row.Kobling) ? row.Kobling : "__new__";
+    }
+
+    private void OnKoblingSelect(PendingNewProduct row, string value)
+    {
+        if (value == "__new__")
+        {
+            row.CustomKobling = true;
+        }
+        else
+        {
+            row.CustomKobling = false;
+            row.Kobling = value;
+        }
+    }
+
+    private void ToggleKind(PendingNewProduct row)
+    {
+        row.Kind = row.Kind == PendingProductKind.DraftBeer
+            ? PendingProductKind.RegularProduct
+            : PendingProductKind.DraftBeer;
+        // Re-validate so error states refresh as the row's required fields change.
+        ValidateRow(row);
+    }
+
+    private record FinishReceiptItem(int OctopusId, string DisplayName, string Category, bool InUse, bool IsDraftBeer);
 
     private record FinishReceipt(
         string Title,
@@ -562,11 +679,13 @@
             return;
         }
 
-        // Create any missing categories referenced by InUse new products so the
-        // saved products end up on the price list immediately.
+        // Create any missing categories referenced by InUse new regular
+        // products so the saved products end up on the price list immediately.
+        // Draft beers don't go through Categories — they slot under the FADØL
+        // section automatically.
         var existingNames = _categories.Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var newCategoryNames = Session.Preview.PendingNewProducts
-            .Where(r => r.Product.InUse)
+            .Where(r => r.Kind == PendingProductKind.RegularProduct && r.Product.InUse)
             .Select(r => (r.Product.Category ?? "").Trim())
             .Where(n => n.Length > 0 && !existingNames.Contains(n))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -593,8 +712,11 @@
             var savedItems = Session.Preview.PendingNewProducts.Select(r => new FinishReceiptItem(
                 r.Product.OctopusId,
                 string.IsNullOrWhiteSpace(r.Product.PdfTitle) ? (r.Product.OctopusTitle ?? "—") : r.Product.PdfTitle,
-                string.IsNullOrWhiteSpace(r.Product.Category) ? "—" : r.Product.Category,
-                r.Product.InUse)).ToList();
+                r.Kind == PendingProductKind.DraftBeer
+                    ? "FADØL"
+                    : (string.IsNullOrWhiteSpace(r.Product.Category) ? "—" : r.Product.Category),
+                r.Product.InUse,
+                r.Kind == PendingProductKind.DraftBeer)).ToList();
 
             var savedCount = result.Updated.Count + result.Created.Count;
             var pushSegment = result.PushAttempted > 0
@@ -636,10 +758,21 @@
         if (!row.Product.InUse) return;
 
         var p = row.Product;
-        if (string.IsNullOrWhiteSpace(p.Category)) { row.FieldErrors.Add("Category"); row.Errors.Add("Kategori er påkrævet når produktet er i brug."); }
+        var isDraft = row.Kind == PendingProductKind.DraftBeer;
+
         if (string.IsNullOrWhiteSpace(p.PdfTitle)) { row.FieldErrors.Add("PdfTitle"); row.Errors.Add("PDF-titel er påkrævet når produktet er i brug."); }
-        if (p.Str == 0) { row.FieldErrors.Add("Str"); row.Errors.Add("Størrelse er påkrævet når produktet er i brug."); }
-        if (p.PricePrUnit == 0) { row.FieldErrors.Add("PricePrUnit"); row.Errors.Add("Pris pr. enhed er påkrævet når produktet er i brug."); }
+        if (p.Str == 0) { row.FieldErrors.Add("Str"); row.Errors.Add(isDraft ? "Fad-størrelse er påkrævet når fadøllen er i brug." : "Størrelse er påkrævet når produktet er i brug."); }
+        if (p.PricePrUnit == 0) { row.FieldErrors.Add("PricePrUnit"); row.Errors.Add(isDraft ? "Liter-pris er påkrævet når fadøllen er i brug." : "Pris pr. enhed er påkrævet når produktet er i brug."); }
+
+        if (isDraft)
+        {
+            if (string.IsNullOrWhiteSpace(row.Kobling)) { row.FieldErrors.Add("Kobling"); row.Errors.Add("Kobling er påkrævet for fadøl."); }
+            if (string.IsNullOrWhiteSpace(row.Land)) { row.FieldErrors.Add("Land"); row.Errors.Add("Land er påkrævet for fadøl."); }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(p.Category)) { row.FieldErrors.Add("Category"); row.Errors.Add("Kategori er påkrævet når produktet er i brug."); }
+        }
     }
 
     private static string ErrClass(PendingNewProduct row, string field) =>

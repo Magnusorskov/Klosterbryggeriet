@@ -20,6 +20,11 @@ public class OctopusService
 
     public record OctopusCsvRow(int OctopusId, string OctopusTitle, int Available);
 
+    public record PartitionedRows(
+        List<OctopusCsvRow> ExistingProducts,
+        List<OctopusCsvRow> ExistingDraftBeers,
+        List<OctopusCsvRow> Fresh);
+
     public async Task<(List<OctopusCsvRow> Rows, int Skipped, List<string> Warnings)> ParseCsv(Stream fileStream)
     {
         using var reader = new StreamReader(fileStream);
@@ -59,19 +64,30 @@ public class OctopusService
         return (byId.Values.ToList(), skipped, warnings);
     }
 
-    public async Task<(List<OctopusCsvRow> Existing, List<OctopusCsvRow> New)>
-        PartitionByExistence(IReadOnlyList<OctopusCsvRow> rows)
+    // Splits CSV rows into three buckets: existing products, existing draft
+    // beers, and fresh (unknown to either table). OctopusId is unique across
+    // the catalog so a row never lands in more than one bucket.
+    public async Task<PartitionedRows> PartitionByExistence(IReadOnlyList<OctopusCsvRow> rows)
     {
         await using var db = _contextFactory.CreateDbContext();
         var ids = rows.Select(r => r.OctopusId).ToList();
-        var existingIds = (await db.Products
+
+        var productIds = (await db.Products
             .Where(p => ids.Contains(p.OctopusId))
             .Select(p => p.OctopusId)
             .ToListAsync()).ToHashSet();
 
-        var existing = rows.Where(r => existingIds.Contains(r.OctopusId)).ToList();
-        var fresh = rows.Where(r => !existingIds.Contains(r.OctopusId)).ToList();
-        return (existing, fresh);
+        var draftBeerIds = (await db.DraftBeers
+            .Where(b => ids.Contains(b.OctopusId))
+            .Select(b => b.OctopusId)
+            .ToListAsync()).ToHashSet();
+
+        var existingProducts = rows.Where(r => productIds.Contains(r.OctopusId)).ToList();
+        var existingDraftBeers = rows.Where(r => draftBeerIds.Contains(r.OctopusId)).ToList();
+        var fresh = rows.Where(r =>
+            !productIds.Contains(r.OctopusId) && !draftBeerIds.Contains(r.OctopusId)).ToList();
+
+        return new PartitionedRows(existingProducts, existingDraftBeers, fresh);
     }
 
     public async Task<List<ProductChange>> ApplyUpdatesToExisting(IReadOnlyList<OctopusCsvRow> rows)
@@ -109,6 +125,7 @@ public class OctopusService
                 NewAvailable = row.Available,
                 PreviousStatus = previousStatus,
                 NewStatus = newStatus,
+                Kind = PendingProductKind.RegularProduct,
             });
         }
 
@@ -117,6 +134,55 @@ public class OctopusService
         foreach (var (product, previous, next) in statusFlips)
         {
             await _logger.LogProductChange(product, previous, next);
+        }
+
+        return changes;
+    }
+
+    public async Task<List<ProductChange>> ApplyUpdatesToExistingDraftBeers(IReadOnlyList<OctopusCsvRow> rows)
+    {
+        if (rows.Count == 0) return [];
+
+        await using var db = _contextFactory.CreateDbContext();
+        var ids = rows.Select(r => r.OctopusId).ToList();
+        var dbBeers = await db.DraftBeers
+            .Where(b => ids.Contains(b.OctopusId))
+            .ToListAsync();
+
+        var changes = new List<ProductChange>();
+        var statusFlips = new List<(DraftBeer Beer, ProductStatus Previous, ProductStatus New)>();
+
+        foreach (var dbBeer in dbBeers)
+        {
+            var row = rows.First(r => r.OctopusId == dbBeer.OctopusId);
+            var previousAvailable = dbBeer.Available;
+            var previousStatus = DraftBeer.StatusFor(previousAvailable);
+            var newStatus = DraftBeer.StatusFor(row.Available);
+
+            if (previousStatus != newStatus)
+            {
+                statusFlips.Add((dbBeer, previousStatus, newStatus));
+            }
+
+            dbBeer.Available = row.Available;
+
+            changes.Add(new ProductChange
+            {
+                OctopusId = dbBeer.OctopusId,
+                OctopusTitle = dbBeer.OctopusTitle,
+                PreviousAvailable = previousAvailable,
+                NewAvailable = row.Available,
+                PreviousStatus = previousStatus,
+                NewStatus = newStatus,
+                Kind = PendingProductKind.DraftBeer,
+            });
+        }
+
+        await db.SaveChangesAsync();
+
+        foreach (var (beer, previous, next) in statusFlips)
+        {
+            await _logger.LogDraftBeerChange(beer, previous, next);
         }
 
         return changes;
@@ -150,6 +216,7 @@ public class OctopusService
                 OctopusId = row.OctopusId,
                 OctopusTitle = row.OctopusTitle,
                 Available = row.Available,
+                Kind = PendingProductKind.RegularProduct,
             });
         }
 
@@ -167,8 +234,9 @@ public class OctopusService
     public async Task UpdateAvailableFromOctopusCsv(Stream fileStream)
     {
         var (rows, _, _) = await ParseCsv(fileStream);
-        var (existing, _) = await PartitionByExistence(rows);
-        await ApplyUpdatesToExisting(existing);
+        var partitioned = await PartitionByExistence(rows);
+        await ApplyUpdatesToExisting(partitioned.ExistingProducts);
+        await ApplyUpdatesToExistingDraftBeers(partitioned.ExistingDraftBeers);
     }
 
     // Build the diff vs. current DB state for a CSV's existing rows without
@@ -197,6 +265,38 @@ public class OctopusService
                 NewAvailable = row.Available,
                 PreviousStatus = dbProduct.Status,
                 NewStatus = newStatus,
+                Kind = PendingProductKind.RegularProduct,
+            });
+        }
+        return updates;
+    }
+
+    public async Task<List<PendingUpdate>> BuildPendingDraftBeerUpdatesAsync(IReadOnlyList<OctopusCsvRow> existingRows)
+    {
+        if (existingRows.Count == 0) return [];
+
+        await using var db = _contextFactory.CreateDbContext();
+        var ids = existingRows.Select(r => r.OctopusId).ToList();
+        var dbBeers = await db.DraftBeers
+            .Where(b => ids.Contains(b.OctopusId))
+            .ToListAsync();
+
+        var updates = new List<PendingUpdate>();
+        foreach (var dbBeer in dbBeers)
+        {
+            var row = existingRows.First(r => r.OctopusId == dbBeer.OctopusId);
+            if (row.Available == dbBeer.Available) continue;
+            var previousStatus = DraftBeer.StatusFor(dbBeer.Available);
+            var newStatus = DraftBeer.StatusFor(row.Available);
+            updates.Add(new PendingUpdate
+            {
+                OctopusId = dbBeer.OctopusId,
+                OctopusTitle = dbBeer.OctopusTitle,
+                PreviousAvailable = dbBeer.Available,
+                NewAvailable = row.Available,
+                PreviousStatus = previousStatus,
+                NewStatus = newStatus,
+                Kind = PendingProductKind.DraftBeer,
             });
         }
         return updates;
@@ -221,6 +321,29 @@ public class OctopusService
             OctopusId = p.OctopusId,
             OctopusTitle = p.OctopusTitle,
             Available = p.Available,
+            Kind = PendingProductKind.RegularProduct,
+        }).ToList();
+    }
+
+    public async Task<List<ProductCreated>> CommitNewDraftBeersAsync(IReadOnlyList<DraftBeer> beers)
+    {
+        if (beers.Count == 0) return [];
+
+        await using var db = _contextFactory.CreateDbContext();
+        await db.DraftBeers.AddRangeAsync(beers);
+        await db.SaveChangesAsync();
+
+        foreach (var beer in beers)
+        {
+            await _logger.LogDraftBeerCreated(beer);
+        }
+
+        return beers.Select(b => new ProductCreated
+        {
+            OctopusId = b.OctopusId,
+            OctopusTitle = b.OctopusTitle,
+            Available = b.Available,
+            Kind = PendingProductKind.DraftBeer,
         }).ToList();
     }
 }

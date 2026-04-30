@@ -2,6 +2,7 @@ using System.Text;
 using BlazorApp.Models;
 using BlazorApp.Models.Dtos;
 using BlazorApp.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Tests;
 
@@ -20,6 +21,8 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
     {
         await using var db = _fixture.CreateDbContext();
         db.Products.RemoveRange(db.Products);
+        db.DraftBeers.RemoveRange(db.DraftBeers);
+        db.LogEntries.RemoveRange(db.LogEntries);
         await db.SaveChangesAsync();
     }
 
@@ -154,6 +157,110 @@ public class CsvUploadServiceTests : IClassFixture<DatabaseFixture>, IAsyncLifet
         Assert.Equal(0, result.Updated.Count);
         Assert.Equal(0, result.PushAttempted);
         Assert.Empty(fake.Calls);
+    }
+
+    // Draft beer: a row marked as DraftBeer in the preview commits to
+    // DraftBeers (not Products) with Category forced to "FADØL" and the
+    // user-supplied Kobling/Land carried through.
+    [Fact]
+    public async Task CommitPreviewAsync_DraftBeerRow_LandsInDraftBeersTable()
+    {
+        var preview = new CsvImportPreview
+        {
+            FileName = "test.csv",
+            RowsParsed = 1,
+            PendingNewProducts =
+            {
+                new PendingNewProduct
+                {
+                    Kind = PendingProductKind.DraftBeer,
+                    Kobling = "Key keg",
+                    Land = "Belgien",
+                    Product = new Product
+                    {
+                        OctopusId = 8800,
+                        WebId = 0,
+                        WebTitle = "",
+                        PdfTitle = "Westmalle Tripel",
+                        OctopusTitle = "Westmalle Tripel",
+                        Available = 4,
+                        Category = "",
+                        InUse = true,
+                        Str = 20,
+                        Alcohol = 9.5,
+                        PricePrUnit = 80,
+                    },
+                }
+            }
+        };
+
+        var fake = new FakeHostedShopService();
+        CsvImportResult result;
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
+            result = await sut.CommitPreviewAsync(preview);
+        }
+
+        Assert.Single(result.Created);
+        Assert.Equal(PendingProductKind.DraftBeer, result.Created[0].Kind);
+
+        await using var assertDb = _fixture.CreateDbContext();
+        Assert.False(await assertDb.Products.AnyAsync(p => p.OctopusId == 8800));
+        var stored = await assertDb.DraftBeers.FindAsync(8800);
+        Assert.NotNull(stored);
+        Assert.Equal("FADØL", stored.Category);
+        Assert.Equal("Key keg", stored.Kobling);
+        Assert.Equal("Belgien", stored.Land);
+        Assert.Equal(20, stored.Str);
+        Assert.Equal(80, stored.PricePrUnit);
+        Assert.True(stored.InUse);
+    }
+
+    // Draft beer: webshop push covers DraftBeers too. A draft beer with a
+    // VariantId1 should fire the same webshop call as a regular product.
+    [Fact]
+    public async Task CommitPreviewAsync_DraftBeerWithVariant_PushesToWebshop()
+    {
+        var preview = new CsvImportPreview
+        {
+            FileName = "test.csv",
+            PendingNewProducts =
+            {
+                new PendingNewProduct
+                {
+                    Kind = PendingProductKind.DraftBeer,
+                    Kobling = "S",
+                    Land = "Danmark",
+                    Product = new Product
+                    {
+                        OctopusId = 9001,
+                        WebId = 1234,
+                        WebTitle = "",
+                        PdfTitle = "Klosterbryg Pils",
+                        OctopusTitle = "Klosterbryg Pils",
+                        Available = 12,
+                        Category = "",
+                        InUse = true,
+                        Str = 20,
+                        PricePrUnit = 50,
+                        VariantId1 = 4242,
+                    },
+                }
+            }
+        };
+
+        var fake = new FakeHostedShopService();
+        CsvImportResult result;
+        await using (var db = _fixture.CreateDbContext())
+        {
+            var sut = new CsvUploadService(new OctopusService(_fixture, new LoggerService(_fixture)), fake, _fixture);
+            result = await sut.CommitPreviewAsync(preview);
+        }
+
+        Assert.Equal(1, result.PushAttempted);
+        Assert.Equal(1, result.PushSucceeded);
+        Assert.Contains(fake.Calls, c => c.variantId == 4242 && c.antal == 12);
     }
 
     private async Task SeedProducts(params Product[] products)
