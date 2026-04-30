@@ -1,91 +1,59 @@
 #Requires -Version 5.1
-
 Set-Location -Path $PSScriptRoot
 
-$AppUrl     = 'http://localhost:5008'
-$DbName     = 'klosterbryggeriet'
-$DbPassword = 'rootpassword'
+$AppUrl      = 'http://localhost:5008'
+$DbName      = 'klosterbryggeriet'
+$DbPassword  = 'rootpassword'
+$ContainerDb = 'klosterbryggeriet-db-1'
 
-if (Test-Path 'App/Data/product_datafill.sql') {
-    $SeedFile = 'App/Data/product_datafill.sql'
-} elseif (Test-Path 'product_datafill.sql') {
-    $SeedFile = 'product_datafill.sql'
-} else {
-    $SeedFile = $null
-}
+# 1. Locate the SQL seed file
+$SeedFile = Join-Path $PSScriptRoot "App/Data/product_datafill.sql"
+if (-not (Test-Path $SeedFile)) { $SeedFile = Join-Path $PSScriptRoot "product_datafill.sql" }
 
-function Write-Step($msg) { Write-Host "[start] $msg" -ForegroundColor Cyan }
-function Write-Warn($msg) { Write-Host "[start] $msg" -ForegroundColor Yellow }
-function Write-Fail($msg) { Write-Host "[start] $msg" -ForegroundColor Red; exit 1 }
+Write-Host "1. STARTING CONTAINERS..." -ForegroundColor Cyan
+docker compose up -d
 
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Fail 'Docker is not installed. Install Docker Desktop from https://www.docker.com/products/docker-desktop/ and try again.'
-}
-
-docker info 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Write-Fail 'Docker is installed but not running. Start Docker Desktop and try again.'
-}
-
-docker compose version 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Write-Fail "'docker compose' is unavailable. Update Docker Desktop to a recent version."
-}
-
-Write-Step 'Pulling latest images (skipped if offline)...'
-docker compose pull 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) { Write-Warn 'Could not pull updates - using cached images.' }
-
-Write-Step 'Starting containers (this may take a few minutes the first time)...'
-docker compose up --build -d
-if ($LASTEXITCODE -ne 0) { Write-Fail "'docker compose up' failed." }
-
-Write-Step 'Waiting for the database to accept connections...'
-$dbReady = $false
-for ($i = 0; $i -lt 60; $i++) {
-    docker compose exec -T db mysqladmin ping -uroot -p$DbPassword --silent 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) { $dbReady = $true; break }
-    Start-Sleep -Seconds 2
-}
-if (-not $dbReady) {
-    Write-Fail "Database did not become ready in time. Run 'docker compose logs db' to investigate."
-}
-
-Write-Step 'Waiting for the app (migrations apply automatically on startup)...'
-$appReady = $false
-for ($i = 0; $i -lt 120; $i++) {
+Write-Host "2. APP RUNNING MIGRATIONS (Waiting for 200 OK)..." -ForegroundColor Cyan
+$ready = $false
+while (-not $ready) {
     try {
-        $resp = Invoke-WebRequest -Uri $AppUrl -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
-        if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { $appReady = $true; break }
+        $response = Invoke-WebRequest -Uri $AppUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+        if ($response.StatusCode -eq 200) { $ready = $true }
     } catch {
-        # connection refused / 5xx / timeout - keep polling
+        Write-Host "." -NoNewline
+        Start-Sleep -Seconds 2
     }
-    Start-Sleep -Seconds 2
 }
-if (-not $appReady) {
-    Write-Fail "App did not respond on $AppUrl. Run 'docker compose logs app' to investigate."
-}
+Write-Host "`nApp is ready. Migrations complete." -ForegroundColor Green
 
-Write-Step 'Checking whether the database needs to be seeded...'
-$rawCount = 'SELECT COUNT(*) FROM Products' | docker compose exec -T db mysql -N -B -uroot -p$DbPassword $DbName 2>$null
-$productCount = (($rawCount | Out-String) -replace '\s', '')
+Write-Host "3. DATA SEED RUN (Internal Docker)..." -ForegroundColor Cyan
 
-if (-not $productCount) {
-    Write-Warn "Could not read the Products table - skipping seed. Check 'docker compose logs app'."
-} elseif ($productCount -eq '0') {
-    if (-not $SeedFile) {
-        Write-Fail 'Seed file not found (looked for App/Data/product_datafill.sql and product_datafill.sql).'
+# Define the base command for reuse
+# We use --protocol=tcp to bypass the 'localhost' socket issue that causes 1045 errors
+$BaseMysql = "mysql -h 127.0.0.1 -u root -p$DbPassword --protocol=tcp $DbName"
+
+# Get count
+$countStr = docker exec -i $ContainerDb sh -c "$BaseMysql -N -s -e 'SELECT COUNT(*) FROM Products;'" 2>$null
+$count = if ($countStr) { [int]$countStr.Trim() } else { 0 }
+
+if ($count -eq 0) {
+    Write-Host "Seeding data..." -ForegroundColor Yellow
+    if (Test-Path $SeedFile) {
+        # Using sh -c inside the container ensures the pipe is handled correctly
+        Get-Content $SeedFile -Raw | docker exec -i $ContainerDb sh -c "$BaseMysql"
+        
+        # Verify
+        $finalCount = docker exec -i $ContainerDb sh -c "$BaseMysql -N -s -e 'SELECT COUNT(*) FROM Products;'"
+        if ($finalCount -gt 0) {
+            Write-Host "SUCCESS: Data injected. Current row count: $finalCount" -ForegroundColor Green
+        } else {
+            Write-Host "ERROR: Command ran but row count is still 0." -ForegroundColor Red
+        }
+    } else {
+        Write-Host "ERROR: Seed file not found at $SeedFile" -ForegroundColor Red
     }
-    Write-Step "Database is empty. Seeding from ${SeedFile}..."
-    docker compose cp $SeedFile db:/tmp/seed.sql
-    if ($LASTEXITCODE -ne 0) { Write-Fail 'Failed to copy seed file into the database container.' }
-    $seedCmd = 'mysql --default-character-set=utf8mb4 -uroot -p{0} {1} < /tmp/seed.sql' -f $DbPassword, $DbName
-    docker compose exec -T db sh -c $seedCmd
-    if ($LASTEXITCODE -ne 0) { Write-Fail 'Seeding failed.' }
-    Write-Step 'Seed applied.'
 } else {
-    Write-Step "Database already has $productCount products - skipping seed."
+    Write-Host "SKIP: Table already has $count rows." -ForegroundColor Green
 }
 
-Write-Step "Klosterbryggeriet is ready at $AppUrl"
 Start-Process $AppUrl
