@@ -71,6 +71,17 @@
                 }
             </div>
 
+            <span class="filter-divider" aria-hidden="true"></span>
+
+            <div class="pill-group" role="group" aria-label="Type">
+                <span class="pill-group-label">Type</span>
+                @foreach (var s in _kindOptions)
+                {
+                    <button class="pill @(_kindFilter == s ? "pill-active" : "")"
+                            @onclick="() => _kindFilter = s">@s</button>
+                }
+            </div>
+
             <div class="missing-wrap">
                 <button class="missing-btn @(_missingFilters.Count > 0 ? "missing-btn-on" : "")"
                         @onclick="ToggleMissingOpen">
@@ -662,6 +673,8 @@
     private readonly string[] _statusOptions = ["Alle", "Tilgængelig", "Udsolgt"];
     private string _inUseFilter = "Alle";
     private readonly string[] _inUseOptions = ["Alle", "I brug", "Ikke i brug"];
+    private string _kindFilter = "Alle";
+    private readonly string[] _kindOptions = ["Alle", "Produkt", "Fadøl"];
     private HashSet<string> _missingFilters = [];
     private bool _missingOpen;
 
@@ -790,6 +803,11 @@
             q = q.Where(item => item.InUse);
         else if (_inUseFilter == "Ikke i brug")
             q = q.Where(item => !item.InUse);
+
+        if (_kindFilter == "Produkt")
+            q = q.Where(item => item.Kind == PendingProductKind.RegularProduct);
+        else if (_kindFilter == "Fadøl")
+            q = q.Where(item => item.Kind == PendingProductKind.DraftBeer);
 
         if (_missingFilters.Count > 0)
         {
