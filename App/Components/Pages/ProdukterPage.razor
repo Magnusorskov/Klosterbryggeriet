@@ -308,7 +308,7 @@
                                             DisplayValue="@d.Category"
                                             InputValue="@d.Category"
                                             IsEditing="@(_editingField == "Category")"
-                                            IsDirty="@FieldDirty("Category")"
+                                            IsDirty="@ProductFieldDirty("Category")"
                                             OnBeginEdit='@(() => BeginEdit("Category"))'
                                             OnEndEdit="EndEdit"
                                             OnInput="@(v => d.Category = v ?? "")" />
