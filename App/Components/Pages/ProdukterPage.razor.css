@@ -425,7 +425,7 @@
 .list-row {
     width: 100%;
     display: grid;
-    grid-template-columns: 56px 1fr 50px auto;
+    grid-template-columns: 56px 1fr 50px 60px;
     gap: 0.6rem;
     align-items: center;
     padding: 0.65rem 0.95rem;
@@ -510,6 +510,7 @@
 .lr-status {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.35rem;
     font-size: 0.78rem;
     color: #221812;
