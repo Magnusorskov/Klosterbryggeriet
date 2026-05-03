@@ -166,9 +166,18 @@
     <div class="modal-box" @onclick:stopPropagation>
         <h3 class="modal-title">Slet kategori?</h3>
         <p class="modal-body">Er du sikker på at du vil slette <strong>@_deleteTarget.Name</strong>?</p>
+        @if (_deleteAffectedCount > 0)
+        {
+            <p class="modal-body">
+                @_deleteAffectedCount produkter bruger denne kategori. De bliver sat til <strong>ikke i brug</strong>,
+                men beholder kategorinavnet, så du kan finde dem igen under filteret <em>Ikke i brug</em> på <a href="/produkter">/produkter</a>.
+            </p>
+        }
         <div class="modal-actions">
             <button class="btn-ghost" @onclick="CancelDelete">Annuller</button>
-            <button class="btn-delete btn-delete-solid" @onclick="DeleteConfirmed">Slet</button>
+            <button class="btn-delete btn-delete-solid" @onclick="DeleteConfirmed">
+                @(_deleteAffectedCount > 0 ? $"Slet og deaktivér {_deleteAffectedCount}" : "Slet")
+            </button>
         </div>
     </div>
 }
@@ -215,6 +224,7 @@
 
     // Delete state
     private Category? _deleteTarget;
+    private int _deleteAffectedCount;
 
     // Drag-and-drop state
     private Category? _dragging;
@@ -368,14 +378,24 @@
     };
 
     // ── Delete ───────────────────────────────────────────────────────────────
-    private void ConfirmDelete(Category cat) => _deleteTarget = cat;
-    private void CancelDelete()              => _deleteTarget = null;
+    private async Task ConfirmDelete(Category cat)
+    {
+        _deleteTarget = cat;
+        _deleteAffectedCount = await CategoryService.CountActiveUsageAsync(cat.Name);
+    }
+
+    private void CancelDelete()
+    {
+        _deleteTarget = null;
+        _deleteAffectedCount = 0;
+    }
 
     private async Task DeleteConfirmed()
     {
         if (_deleteTarget == null) return;
         await CategoryService.DeleteAsync(_deleteTarget.Id);
         _deleteTarget = null;
+        _deleteAffectedCount = 0;
         await Reload();
     }
 }
