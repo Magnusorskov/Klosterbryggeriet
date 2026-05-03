@@ -8,6 +8,7 @@
 
 @inject ProductService ProductService
 @inject DraftBeerService DraftBeerService
+@inject CategoryService CategoryService
 @inject IJSRuntime JS
 
 <PageTitle>Produkter</PageTitle>
@@ -785,15 +786,12 @@
         ("Category-asc",   "Kategori A→Å"),
     ];
 
-    // Categories listed in the dropdown come from regular products only —
-    // fadøl have their own dedicated Type pill so their FADØL category is
-    // redundant in this list.
-    private IEnumerable<string> _allCats => AllItems()
-        .Where(i => i.Kind == PendingProductKind.RegularProduct)
-        .Select(i => i.Category)
-        .Where(c => !string.IsNullOrWhiteSpace(c))
-        .Distinct()
-        .OrderBy(c => c);
+    // Sourced from the Categories table so deleted categories disappear immediately,
+    // even when products still carry the stale category string after a soft-delete.
+    private List<Category> _categories = [];
+    private IEnumerable<string> _allCats => _categories
+        .OrderBy(c => c.SortOrder)
+        .Select(c => c.Name);
 
     private IEnumerable<ListItem> AllItems()
     {
@@ -822,8 +820,10 @@
         _loading = true;
         var productsTask = ProductService.ListProducts();
         var beersTask = DraftBeerService.GetAllAsync();
+        var categoriesTask = CategoryService.GetAllAsync();
         _products = await productsTask;
         _draftBeers = await beersTask;
+        _categories = await categoriesTask;
         _loading = false;
         var first = SortItems(AllItems()).FirstOrDefault();
         if (first != null) DoSelect(first.OctopusId, first.Kind);

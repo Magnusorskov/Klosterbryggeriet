@@ -75,14 +75,35 @@ public class CategoryService
         await db.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    // Returns the number of products + draft beers that were deactivated as a result of this delete.
+    // Products keep their stale Category string so the user can still find them later under the
+    // "Ikke i brug" filter; only InUse is flipped.
+    public async Task<int> DeleteAsync(int id)
     {
         await using var db = _contextFactory.CreateDbContext();
         var category = await db.Categories.FindAsync(id)
             ?? throw new InvalidOperationException($"Category {id} not found");
 
+        var name = category.Name;
+        var productAffected = await db.Products
+            .Where(p => p.Category == name && p.InUse)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.InUse, false));
+        var beerAffected = await db.DraftBeers
+            .Where(b => b.Category == name && b.InUse)
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.InUse, false));
+
         db.Categories.Remove(category);
         await db.SaveChangesAsync();
+        return productAffected + beerAffected;
+    }
+
+    // Counts the active products + draft beers that would be deactivated if this category were deleted.
+    public async Task<int> CountActiveUsageAsync(string categoryName)
+    {
+        await using var db = _contextFactory.CreateDbContext();
+        var products = await db.Products.CountAsync(p => p.Category == categoryName && p.InUse);
+        var beers = await db.DraftBeers.CountAsync(b => b.Category == categoryName && b.InUse);
+        return products + beers;
     }
 
     public static List<(string FieldName, string DisplayLabel)> AvailableFields =>
