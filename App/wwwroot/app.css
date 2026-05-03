@@ -756,3 +756,136 @@ tr:hover .row-color-ctrl { opacity: 1; }
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* === EditableField / EditableSelect shared chrome ========================= */
+.ef-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    padding: 0.45rem 0.55rem;
+    margin: 0 -0.55rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.ef-row.is-dirty {
+    background: rgba(166, 95, 43, 0.06);
+    border-color: rgba(166, 95, 43, 0.25);
+}
+
+.ef-row.ef-editing {
+    background: #ffffff;
+    border-color: #a65f2b;
+    box-shadow: 0 0 0 3px rgba(166, 95, 43, 0.14);
+}
+
+.ef-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #8a7356;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ef-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    padding: 0.15rem 0;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    border-radius: 4px;
+    transition: background 0.1s ease;
+    min-height: 1.6rem;
+}
+
+.ef-display:hover { background: rgba(166, 95, 43, 0.06); }
+
+.ef-value-text {
+    font-size: 0.92rem;
+    color: #221812;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+}
+
+.ef-placeholder {
+    color: #c9b9a0;
+}
+
+.ef-pencil {
+    color: #c9b9a0;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s ease, color 0.1s ease;
+    display: inline-flex;
+}
+
+.ef-display:hover .ef-pencil { opacity: 1; color: #a65f2b; }
+
+.ef-row.is-dirty .ef-pencil { opacity: 0.6; color: #a65f2b; }
+
+.ef-row.ef-missing .ef-value-text {
+    color: #E65100;
+}
+
+.ef-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: #faf5ec;
+    border-radius: 6px;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: #221812;
+    font-variant-numeric: tabular-nums;
+    box-sizing: border-box;
+    -moz-appearance: textfield;
+}
+
+.ef-input:focus { background: #ffffff; }
+
+.ef-input::-webkit-outer-spin-button,
+.ef-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.mangler-chip {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    background: rgba(230, 81, 0, 0.12);
+    color: #E65100;
+    border-radius: 10px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}
+
+select.ef-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #ffffff;
+    padding-left: 0;
+    padding-right: 1.75rem;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%238a7356' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 10px 6px;
+    line-height: 1.2;
+}
+
+select.ef-input::-ms-expand { display: none; }
